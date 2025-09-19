@@ -24,6 +24,9 @@
         propW: document.getElementById('prop-w'),
         propH: document.getElementById('prop-h'),
         propA: document.getElementById('prop-a'),
+        wallTypePanel: document.getElementById('wall-properties'),
+        wallTypeOptions: document.getElementById('wall-type-options'),
+        wallTypeCaption: document.getElementById('wall-type-caption'),
         btnExport: document.getElementById('btnExport'),
         btnImport: document.getElementById('btnImport'),
         fileImport: document.getElementById('fileImport'),
@@ -44,6 +47,7 @@
         measurementLayer: document.getElementById('measurement-layer'),
         // слой для результатов анализа
         analysisLayer: document.getElementById('analysis-layer'),
+        wallLengthLabel: document.getElementById('wall-length-label'),
         // контекстное меню: фокусировка на объекте
         ctxFocus: document.getElementById('ctx-focus'),
         measureTableBody: document.getElementById('measure-table-body'),
@@ -70,6 +74,7 @@
         history: { stack: [], idx: -1, lock: false },
         activeTool: 'pointer',
         currentWallPoints: [],
+        defaultWallType: 'structural',
         // Хранилище для измерительного инструмента
         measurePoints: [],
         measurements: [],
@@ -100,6 +105,12 @@
     const wallIdMap = new Map();
     const componentStore = new Map();
     const componentIdMap = new Map();
+    const WALL_TYPES = [
+        { id: 'structural', label: 'Капитальная', description: 'Несущая стена, толщина ~250 мм' },
+        { id: 'partition', label: 'Перегородка', description: 'Лёгкая перегородка, толщина ~100 мм' },
+        { id: 'glass', label: 'Стеклянная', description: 'Витраж или стеклянная перегородка' },
+        { id: 'half', label: 'Полустена', description: 'Парапет, барная стойка или ограждение' }
+    ];
     const ESTIMATE_PRESETS = {
         standard: { finish: 50, perimeter: 12, engineering: 35 },
         economy: { finish: 35, perimeter: 8, engineering: 20 },
@@ -169,6 +180,122 @@
         return { x: cx * factor, y: cy * factor };
     }
 
+    // --- WALL TYPE HELPERS & UI ---
+    function ensureWallType(value) {
+        if (typeof value === 'string') {
+            const trimmed = value.trim().toLowerCase();
+            const direct = WALL_TYPES.find(t => t.id === trimmed);
+            if (direct) return direct.id;
+            if (trimmed.includes('капит')) return 'structural';
+            if (trimmed.includes('перегор') || trimmed.includes('partition')) return 'partition';
+            if (trimmed.includes('glass') || trimmed.includes('стек')) return 'glass';
+            if (trimmed.includes('half') || trimmed.includes('парап') || trimmed.includes('бар')) return 'half';
+        }
+        return WALL_TYPES[0].id;
+    }
+
+    function getWallTypeMeta(id) {
+        const resolved = ensureWallType(id);
+        return WALL_TYPES.find(t => t.id === resolved) || WALL_TYPES[0];
+    }
+
+    function highlightWallType(typeId) {
+        if (!dom.wallTypeOptions) return;
+        const resolved = ensureWallType(typeId);
+        dom.wallTypeOptions.querySelectorAll('button[data-type]').forEach(btn => {
+            const isActive = btn.dataset.type === resolved;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+        });
+    }
+
+    function updateWallTypeCaption(mode = 'default', typeId = state.defaultWallType) {
+        if (!dom.wallTypeCaption) return;
+        const meta = getWallTypeMeta(typeId);
+        const prefix = mode === 'selected' ? 'Выбранная стена:' : 'Новые стены:';
+        dom.wallTypeCaption.textContent = `${prefix} ${meta.label}`;
+    }
+
+    function initWallTypeOptions() {
+        if (!dom.wallTypeOptions) return;
+        dom.wallTypeOptions.innerHTML = '';
+        WALL_TYPES.forEach(type => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'wall-type-option';
+            btn.dataset.type = type.id;
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', 'false');
+            btn.title = type.description;
+            btn.innerHTML = `<svg viewBox="0 0 48 18" aria-hidden="true" focusable="false"><line x1="4" y1="9" x2="44" y2="9"></line></svg><span>${type.label}</span>`;
+            dom.wallTypeOptions.appendChild(btn);
+        });
+        dom.wallTypeOptions.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-type]');
+            if (!btn) return;
+            handleWallTypeOptionClick(btn.dataset.type);
+        });
+        dom.wallTypeOptions.addEventListener('keydown', e => {
+            const btn = e.target.closest('button[data-type]');
+            if (!btn) return;
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleWallTypeOptionClick(btn.dataset.type);
+            }
+        });
+    }
+
+    function handleWallTypeOptionClick(typeId) {
+        const resolved = ensureWallType(typeId);
+        state.defaultWallType = resolved;
+        highlightWallType(resolved);
+        if (state.selectedWall) {
+            const model = getWallModel(state.selectedWall);
+            if (model) {
+                if (model.type !== resolved) {
+                    model.type = resolved;
+                    state.selectedWall.dataset.type = resolved;
+                    updateWallElementGeometry(state.selectedWall);
+                    commit('wall_type');
+                }
+                updateWallTypeCaption('selected', resolved);
+            }
+        } else {
+            updateWallTypeCaption('default', resolved);
+            const meta = getWallTypeMeta(resolved);
+            utils.showToast(`Тип стен по умолчанию: ${meta.label}`);
+        }
+    }
+
+    // --- WALL LENGTH PREVIEW ---
+    function hideWallLengthPreview() {
+        if (!dom.wallLengthLabel) return;
+        dom.wallLengthLabel.setAttribute('visibility', 'hidden');
+        dom.wallLengthLabel.removeAttribute('transform');
+    }
+
+    function updateWallLengthPreview(a, b) {
+        if (!dom.wallLengthLabel || !a || !b) return;
+        const midX = (a.x + b.x) / 2;
+        const midY = (a.y + b.y) / 2;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        if (len < 0.5) {
+            hideWallLengthPreview();
+            return;
+        }
+        const pxPerMeter = state.pixelsPerMeter || state.gridSize || 1;
+        const meters = pxPerMeter ? len / pxPerMeter : len;
+        const angleRaw = Math.atan2(dy, dx) * 180 / Math.PI;
+        const angle = angleRaw > 90 || angleRaw < -90 ? angleRaw + 180 : angleRaw;
+        dom.wallLengthLabel.textContent = `${meters.toFixed(2)} м`;
+        dom.wallLengthLabel.setAttribute('x', midX);
+        dom.wallLengthLabel.setAttribute('y', midY);
+        dom.wallLengthLabel.setAttribute('transform', `rotate(${angle} ${midX} ${midY})`);
+        dom.wallLengthLabel.setAttribute('visibility', 'visible');
+    }
+
     // --- DATA & MODEL ---
     function getModel(el) { if (!el || !el.dataset) return {}; return { id: el.dataset.id, tpl: el.dataset.template || 'zone', x: +el.dataset.x || 0, y: +el.dataset.y || 0, a: +el.dataset.a || 0, sx: +el.dataset.sx || 1, sy: +el.dataset.sy || 1, cx: +el.dataset.cx || 0, cy: +el.dataset.cy || 0, ow: +el.dataset.ow || 0, oh: +el.dataset.oh || 0, locked: el.dataset.locked === 'true', visible: el.dataset.visible !== 'false' }; }
     function setModel(el, model) { for (const k in model) { if (model[k] !== undefined) el.dataset[k] = model[k]; } applyTransformFromDataset(el); updatePropertiesPanel(model); updateLayerItem(model); }
@@ -187,6 +314,8 @@
         state.selectedWallHandle = null;
         dom.layersList.querySelector('.selected')?.classList.remove('selected');
         updatePropertiesPanel(null);
+        highlightWallType(state.defaultWallType);
+        updateWallTypeCaption('default', state.defaultWallType);
     }
 
     /**
@@ -244,6 +373,15 @@
         clearSelections();
         state.selectedWall = wall;
         state.selectedWall.classList.add('selected');
+        const model = getWallModel(wall);
+        if (model) {
+            const resolved = ensureWallType(model.type || state.defaultWallType);
+            model.type = resolved;
+            wall.dataset.type = resolved;
+            state.defaultWallType = resolved;
+            highlightWallType(resolved);
+            updateWallTypeCaption('selected', resolved);
+        }
         updateWallHandles(wall);
     }
     function selectComponent(compEl) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedComponent = compEl; if (state.selectedComponent) { state.selectedComponent.classList.add('selected'); } }
@@ -399,6 +537,9 @@
     function updateWallElementGeometry(wallEl) {
         const model = getWallModel(wallEl);
         if (!model) return;
+        const resolvedType = ensureWallType(model.type || state.defaultWallType);
+        model.type = resolvedType;
+        wallEl.dataset.type = resolvedType;
         const path = wallEl.querySelector('path') || document.createElementNS('http://www.w3.org/2000/svg', 'path');
         if (!path.parentNode) wallEl.appendChild(path);
         const pts = model.points;
@@ -422,9 +563,11 @@
         wallEl.classList.add('wall');
         const id = `wall-${++state.wallCounter}`;
         wallEl.dataset.id = id;
-        const model = { id, points: points.map(p => ({ x: p.x, y: p.y })), closed, components: [] };
+        const type = ensureWallType(state.defaultWallType);
+        const model = { id, points: points.map(p => ({ x: p.x, y: p.y })), closed, components: [], type };
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         wallEl.appendChild(path);
+        wallEl.dataset.type = type;
         dom.wallsContainer.appendChild(wallEl);
         registerWall(wallEl, model);
         return wallEl;
@@ -592,6 +735,7 @@
         dom.wallPreview.setAttribute('points', '');
         dom.previewsContainer.innerHTML = '';
         state.pendingComponentPlacement = null;
+        hideWallLengthPreview();
         // Покидая режим измерения — сохраняем линии, но убираем предпросмотр
         if (state.activeTool !== 'measure') {
             resetMeasurementPreview();
@@ -618,6 +762,7 @@
         }
         state.currentWallPoints = [];
         dom.wallPreview.setAttribute('points', '');
+        hideWallLengthPreview();
     }
     function placeWallComponent(type, placement) {
         const wallEl = ensureWallElement(placement?.wallEl || (state.pendingComponentPlacement?.wallEl));
@@ -1251,7 +1396,8 @@
             walls: Array.from(wallStore.values()).map(model => ({
                 id: model.id,
                 points: model.points.map(p => ({ x: p.x, y: p.y })),
-                closed: model.closed
+                closed: model.closed,
+                type: ensureWallType(model.type || state.defaultWallType)
             })),
             components: Array.from(componentStore.values()).map(comp => ({
                 id: comp.id,
@@ -1260,6 +1406,7 @@
                 distance: comp.distance,
                 offset: comp.offset || 0
             })),
+            wallDefaults: { type: state.defaultWallType },
             measurements: state.measurements.map(m => ({ ...m })),
             normatives: {
                 corridorGuest: state.normativeCorridorGuest,
@@ -1292,6 +1439,11 @@
         componentIdMap.clear();
         state.componentCounter = 0;
         state.pendingComponentPlacement = null;
+
+        state.defaultWallType = ensureWallType(data?.wallDefaults?.type || state.defaultWallType);
+        highlightWallType(state.defaultWallType);
+        updateWallTypeCaption('default', state.defaultWallType);
+        hideWallLengthPreview();
 
         (data.items || []).forEach(m => {
             const el = createLayoutObject(m.tpl, m.x, m.y);
@@ -1363,6 +1515,9 @@
                 model.id = w.id;
                 wallEl.dataset.id = w.id;
             }
+            const resolvedType = ensureWallType(wallData?.type || wallData?.material || model.type);
+            model.type = resolvedType;
+            wallEl.dataset.type = resolvedType;
             model.closed = !!wallData.closed;
             model.components = [];
             wallStore.set(wallEl, model);
@@ -1676,14 +1831,21 @@
         dom.svg.addEventListener('mousemove', utils.rafThrottle(e => {
             const tool = state.activeTool;
             const p = utils.toSVGPoint(e.clientX, e.clientY);
-            // Обновление превью стены
-            if (tool === 'wall' && state.currentWallPoints.length > 0) {
-                const snappedP = { x: snap(p.x), y: snap(p.y) };
-                const pointsAttr = [...state.currentWallPoints, snappedP].map(pt => `${pt.x},${pt.y}`).join(' ');
-                dom.wallPreview.setAttribute('points', pointsAttr);
+            // Обновление превью стены и длины сегмента
+            if (tool === 'wall') {
+                if (state.currentWallPoints.length > 0) {
+                    const snappedP = { x: snap(p.x), y: snap(p.y) };
+                    const pointsAttr = [...state.currentWallPoints, snappedP].map(pt => `${pt.x},${pt.y}`).join(' ');
+                    dom.wallPreview.setAttribute('points', pointsAttr);
+                    const lastPoint = state.currentWallPoints[state.currentWallPoints.length - 1];
+                    updateWallLengthPreview(lastPoint, snappedP);
+                } else {
+                    hideWallLengthPreview();
+                }
             }
             // Превью дверей/окон
             else if (tool === 'door' || tool === 'window') {
+                hideWallLengthPreview();
                 dom.previewsContainer.innerHTML = '';
                 state.pendingComponentPlacement = null;
                 const closest = findClosestWallPlacement(p);
@@ -1700,6 +1862,7 @@
             }
             // Динамическое измерение: если одна точка выбрана, рисуем линию к курсору
             else if (tool === 'measure' && state.measurePoints.length === 1) {
+                hideWallLengthPreview();
                 const p0 = state.measurePoints[0];
                 const preview = {
                     p0,
@@ -1708,8 +1871,11 @@
                     angle: (Math.atan2(p.y - p0.y, p.x - p0.x) * 180 / Math.PI + 360) % 360
                 };
                 renderMeasurementOverlay(preview);
+            } else {
+                hideWallLengthPreview();
             }
         }));
+        dom.svg.addEventListener('mouseleave', hideWallLengthPreview);
         // Контекстное меню открывается только в режиме указателя. По ПКМ выбираем объект и отображаем меню.
         dom.svg.addEventListener('contextmenu', e => {
             e.preventDefault();
@@ -1820,6 +1986,11 @@
             });
         });
         dom.sidebar.insertBefore(fragment, dom.layersPanel);
+
+        initWallTypeOptions();
+        highlightWallType(state.defaultWallType);
+        updateWallTypeCaption('default', state.defaultWallType);
+        hideWallLengthPreview();
 
         // Setup interact.js
         interact('.draggable-item').draggable({ inertia: true, autoScroll: true, listeners: { start(e) { const g = e.target.cloneNode(true); Object.assign(g.style, { position: 'absolute', opacity: .7, pointerEvents: 'none', zIndex: 1000 }); document.body.appendChild(g); e.interaction.ghost = g; }, move(e) { const g = e.interaction.ghost; if (!g) return; g.style.left = `${e.clientX - e.rect.width / 2}px`; g.style.top = `${e.clientY - e.rect.height / 2}px`; }, end(e) { e.interaction.ghost?.remove(); } } });
