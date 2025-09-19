@@ -71,6 +71,7 @@
         isShiftHeld: false,
         gridSize: 50,
         pixelsPerMeter: 50,
+        gridStepMeters: 1,
         history: { stack: [], idx: -1, lock: false },
         activeTool: 'pointer',
         currentWallPoints: [],
@@ -116,6 +117,8 @@
         economy: { finish: 35, perimeter: 8, engineering: 20 },
         premium: { finish: 85, perimeter: 18, engineering: 55 }
     };
+    const GRID_MIN_METERS = 0.05;
+    const GRID_MAX_METERS = 20;
     const utils = {
         showToast(msg, ms = 1500) { dom.toast.textContent = msg; dom.toast.classList.add('show'); clearTimeout(this.showToast.t); this.showToast.t = setTimeout(() => dom.toast.classList.remove('show'), ms); },
         toSVGPoint(x, y) { const p = dom.svg.createSVGPoint(); p.x = x; p.y = y; return p.matrixTransform(dom.svg.getScreenCTM().inverse()); },
@@ -804,17 +807,91 @@
     // --- GRID & GUIDES ---
     function snap(v) { return Math.round(v / state.gridSize) * state.gridSize; }
     function snapSelectedToGrid(el, sizeToo = false) { const m = getModel(el); m.x = snap(m.x); m.y = snap(m.y); if (sizeToo) { m.sx = Math.max(0.1, (snap(m.ow * m.sx)) / m.ow); m.sy = Math.max(0.1, (snap(m.oh * m.sy)) / m.oh); } setModel(el, m); }
-    function updateGridSize() {
-        state.gridSize = +dom.gridSelect.value;
-        const w = String(state.gridSize);
+    function formatGridMeters(value) { return (Math.round(value * 1000) / 1000).toString(); }
+    function applyGridPatternSize(sizePx) {
+        if (!Number.isFinite(sizePx) || sizePx <= 0) return;
+        const normalized = Math.round(sizePx * 1000) / 1000;
+        state.gridSize = normalized;
+        if (!dom.gridPattern) return;
+        const w = normalized.toString();
         dom.gridPattern.setAttribute('width', w);
         dom.gridPattern.setAttribute('height', w);
         const path = dom.gridPattern.querySelector('path');
         path?.setAttribute('d', `M ${w} 0 L 0 0 0 ${w}`);
-        const selectedOption = dom.gridSelect.options[dom.gridSelect.selectedIndex];
-        const metersPerCell = parseFloat(selectedOption?.dataset?.meters || selectedOption?.textContent) || 1;
-        state.pixelsPerMeter = metersPerCell ? state.gridSize / metersPerCell : state.gridSize;
-        utils.showToast(`Сетка ${selectedOption?.text || ''}`);
+    }
+    function updateGridSize({ silent = false, deferInvalid = false } = {}) {
+        if (!dom.gridSelect) return;
+
+        let pxPerMeter = state.pixelsPerMeter;
+        if (!Number.isFinite(pxPerMeter) || pxPerMeter <= 0) {
+            pxPerMeter = 50;
+            state.pixelsPerMeter = pxPerMeter;
+        }
+
+        let fallbackMeters = state.gridStepMeters;
+        if (!Number.isFinite(fallbackMeters) || fallbackMeters <= 0) {
+            const derived = pxPerMeter ? state.gridSize / pxPerMeter : 0;
+            fallbackMeters = Number.isFinite(derived) && derived > 0 ? derived : 1;
+        }
+        fallbackMeters = Math.round(fallbackMeters * 1000) / 1000;
+
+        const rawValue = (dom.gridSelect.value ?? '').trim();
+        let commitMeters = null;
+        let effectiveMeters = null;
+        let inputValueAfter = null;
+
+        if (!rawValue) {
+            if (deferInvalid) return;
+            commitMeters = fallbackMeters;
+            effectiveMeters = fallbackMeters;
+            inputValueAfter = fallbackMeters;
+        } else if (deferInvalid && /[.,]$/.test(rawValue)) {
+            return;
+        } else {
+            const normalizedValue = rawValue.replace(/,/g, '.');
+            const rawMeters = parseFloat(normalizedValue);
+            if (!Number.isFinite(rawMeters) || rawMeters <= 0) {
+                if (deferInvalid) return;
+                commitMeters = fallbackMeters;
+                effectiveMeters = fallbackMeters;
+                inputValueAfter = fallbackMeters;
+            } else {
+                const processedMeters = deferInvalid ? rawMeters : utils.clamp(rawMeters, GRID_MIN_METERS, GRID_MAX_METERS);
+                const roundedMeters = Math.round(processedMeters * 1000) / 1000;
+                effectiveMeters = deferInvalid ? processedMeters : roundedMeters;
+                if (!deferInvalid) {
+                    commitMeters = roundedMeters;
+                    inputValueAfter = roundedMeters;
+                }
+            }
+        }
+
+        if (!Number.isFinite(effectiveMeters) || effectiveMeters <= 0) {
+            return;
+        }
+
+        if (!deferInvalid && inputValueAfter != null) {
+            dom.gridSelect.value = formatGridMeters(inputValueAfter);
+        }
+
+        applyGridPatternSize(effectiveMeters * pxPerMeter);
+        state.pixelsPerMeter = pxPerMeter;
+
+        let changed = false;
+        if (commitMeters != null) {
+            const prevMeters = Number.isFinite(state.gridStepMeters) && state.gridStepMeters > 0 ? state.gridStepMeters : fallbackMeters;
+            changed = Math.abs(prevMeters - commitMeters) > 1e-6;
+            state.gridStepMeters = commitMeters;
+        }
+
+        if (!silent && !deferInvalid) {
+            const messageMeters = state.gridStepMeters;
+            const formatted = messageMeters.toLocaleString('ru-RU', {
+                maximumFractionDigits: messageMeters < 1 ? 2 : 1
+            });
+            utils.showToast(`Сетка ${formatted} м`);
+            if (changed) commit('grid_step');
+        }
     }
     function drawGuideLine(x1, y1, x2, y2, id) { let l = document.getElementById(id); if (!l) { l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.id = id; l.setAttribute('stroke', '#8ecae6'); l.setAttribute('stroke-dasharray', '4 4'); l.setAttribute('vector-effect', 'non-scaling-stroke'); dom.svg.insertBefore(l, dom.itemsContainer); } l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); }
     function hideGuide(id) { document.getElementById(id)?.remove(); }
@@ -1407,6 +1484,10 @@
                 offset: comp.offset || 0
             })),
             wallDefaults: { type: state.defaultWallType },
+            grid: {
+                stepMeters: Number.isFinite(state.gridStepMeters) && state.gridStepMeters > 0 ? state.gridStepMeters : 1,
+                pixelsPerMeter: Number.isFinite(state.pixelsPerMeter) && state.pixelsPerMeter > 0 ? state.pixelsPerMeter : 50
+            },
             measurements: state.measurements.map(m => ({ ...m })),
             normatives: {
                 corridorGuest: state.normativeCorridorGuest,
@@ -1439,6 +1520,28 @@
         componentIdMap.clear();
         state.componentCounter = 0;
         state.pendingComponentPlacement = null;
+
+        const savedGrid = data?.grid;
+        if (savedGrid) {
+            const pxPerMeter = parseFloat(savedGrid.pixelsPerMeter);
+            if (Number.isFinite(pxPerMeter) && pxPerMeter > 0) {
+                state.pixelsPerMeter = pxPerMeter;
+            }
+            const stepMeters = parseFloat(savedGrid.stepMeters ?? savedGrid.step ?? savedGrid.meters);
+            if (Number.isFinite(stepMeters) && stepMeters > 0) {
+                state.gridStepMeters = Math.round(stepMeters * 1000) / 1000;
+            }
+        }
+        if (!Number.isFinite(state.pixelsPerMeter) || state.pixelsPerMeter <= 0) {
+            state.pixelsPerMeter = 50;
+        }
+        if (!Number.isFinite(state.gridStepMeters) || state.gridStepMeters <= 0) {
+            state.gridStepMeters = 1;
+        }
+        if (dom.gridSelect) {
+            dom.gridSelect.value = formatGridMeters(state.gridStepMeters);
+            updateGridSize({ silent: true });
+        }
 
         state.defaultWallType = ensureWallType(data?.wallDefaults?.type || state.defaultWallType);
         highlightWallType(state.defaultWallType);
@@ -1925,7 +2028,10 @@
             if (button) button.addEventListener('click', () => toggleTool(tool));
         });
 
-        dom.gridSelect.addEventListener('change', updateGridSize);
+        if (dom.gridSelect) {
+            dom.gridSelect.addEventListener('input', () => updateGridSize({ silent: true, deferInvalid: true }));
+            dom.gridSelect.addEventListener('change', () => updateGridSize());
+        }
         dom.btnExport.addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot(), null, 2)], { type: 'application/json' })); a.download = 'layout.json'; a.click(); URL.revokeObjectURL(a.href); });
         dom.btnImport.addEventListener('click', () => dom.fileImport.click());
         dom.fileImport.addEventListener('change', e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const data = JSON.parse(r.result); restore(data); commit('import'); utils.showToast('План импортирован'); } catch (err) { utils.showToast('Ошибка импорта'); } }; r.readAsText(f); });
@@ -2002,7 +2108,7 @@
 
         // Final setup
         toggleTool('pointer');
-        updateGridSize();
+        updateGridSize({ silent: true });
         renderMeasurementOverlay();
         renderMeasurementTable();
         syncNormativeControls();

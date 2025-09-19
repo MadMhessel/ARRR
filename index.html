@@ -58,12 +58,19 @@
                 </div>
                 
                 <div id="grid-controls-bar" class="ui-bar">
-                    <label>Сетка:
-                        <select id="gridStep">
-                            <option value="25" data-meters="0.5">0.5 м</option>
-                            <option value="50" data-meters="1" selected>1 м</option>
-                            <option value="100" data-meters="2">2 м</option>
-                        </select>
+                    <label class="grid-step-control">Сетка:
+                        <input id="gridStep" type="number" value="1" min="0.05" step="0.05" list="gridStepPresets" inputmode="decimal" aria-label="Шаг сетки, метры">
+                        <datalist id="gridStepPresets">
+                            <option value="0.25" label="0.25 м"></option>
+                            <option value="0.5" label="0.5 м"></option>
+                            <option value="0.75" label="0.75 м"></option>
+                            <option value="1" label="1 м"></option>
+                            <option value="1.5" label="1.5 м"></option>
+                            <option value="2" label="2 м"></option>
+                            <option value="3" label="3 м"></option>
+                            <option value="5" label="5 м"></option>
+                        </datalist>
+                        <span class="grid-step-unit">м</span>
                     </label>
                     <label><input type="checkbox" id="snapGuides" checked> Направляющие</label>
                 </div>
