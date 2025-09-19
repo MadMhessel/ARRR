@@ -108,6 +108,21 @@ svg.tool-active { cursor: crosshair; }
   pointer-events: none;
 }
 
+#snap-markers {
+  pointer-events: none;
+}
+
+#snap-markers circle {
+  fill: var(--accent);
+  opacity: 0.25;
+  stroke: none;
+  vector-effect: non-scaling-stroke;
+}
+
+#snap-markers circle[data-primary="true"] {
+  opacity: 0.45;
+}
+
 /* --- Collision highlighting (для анализа коллизий) --- */
 .layout-object.collision .shape {
   stroke: var(--danger) !important;
@@ -197,8 +212,13 @@ svg.tool-active { cursor: crosshair; }
   background:#f6f7f8;
 }
 #grid-controls-bar{right:12px;top:12px;}
-#grid-controls-bar select{border:1px solid var(--border);background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
 #grid-controls-bar label{display:flex;gap:6px;align-items:center}
+#grid-controls-bar .grid-step-control{gap:8px;white-space:nowrap}
+#grid-controls-bar input[type="number"]{border:1px solid var(--border);background:#fff;border-radius:10px;padding:6px 10px;width:88px;font-size:14px;line-height:1.3;}
+#grid-controls-bar input[type="number"]::-webkit-outer-spin-button,
+#grid-controls-bar input[type="number"]::-webkit-inner-spin-button{margin:0}
+#grid-controls-bar input[type="number"]{-moz-appearance:textfield}
+#grid-controls-bar .grid-step-unit{font-size:12px;color:var(--muted);}
 #toast{position:absolute;left:50%;top:20px;transform:translateX(-50%);background:#212529;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:9999;}
 #toast.show{opacity:0.95}
 
