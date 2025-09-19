@@ -4,9 +4,9 @@
     const LOCAL_STORAGE_KEY = 'layout-v10-pro'; // Incremented version to avoid loading old potentially corrupt data
     const dom = {
         svg: document.getElementById('svg'),
-        itemsContainer: document.getElementById('items'),
-        wallsContainer: document.getElementById('walls'),
-        wallComponentsContainer: document.getElementById('wall-components'),
+        itemsContainer: document.getElementById('items-layer'),
+        wallsContainer: document.getElementById('walls-layer'),
+        wallComponentsContainer: document.getElementById('openings-layer'),
         previewsContainer: document.getElementById('previews'),
         sidebar: document.getElementById('sidebar'),
         properties: document.getElementById('properties'),
@@ -41,7 +41,7 @@
         wallPreview: document.getElementById('wall-preview'),
         toggleSidebar: document.getElementById('toggle-sidebar'),
         toggleProperties: document.getElementById('toggle-properties'),
-        measurementLayer: document.getElementById('measurement'),
+        measurementLayer: document.getElementById('measurement-layer'),
         // слой для результатов анализа
         analysisLayer: document.getElementById('analysis-layer'),
         // контекстное меню: фокусировка на объекте
