@@ -153,6 +153,31 @@
         rafThrottle(fn) { let r = null, lastArgs = null; return function (...args) { lastArgs = args; if (r) return; r = requestAnimationFrame(() => { fn(...lastArgs); r = null; }); } }
     };
 
+    // === ИКОНКИ ДЛЯ КНОПОК ПАНЕЛЕЙ ===
+    function attachPanelIcons(root = document) {
+        const nodes = root.querySelectorAll('[data-icon]');
+        nodes.forEach(btn => {
+            if (btn.dataset.iconMounted === '1') return;
+
+            const iconId = btn.getAttribute('data-icon');
+            const labelText = btn.textContent.trim();
+
+            btn.textContent = '';
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'icon';
+            iconSpan.setAttribute('aria-hidden', 'true');
+            iconSpan.innerHTML = `<svg viewBox="0 0 24 24" focusable="false"><use href="#${iconId}"></use></svg>`;
+
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'label';
+            labelSpan.textContent = labelText;
+
+            btn.prepend(iconSpan);
+            btn.appendChild(labelSpan);
+            btn.dataset.iconMounted = '1';
+        });
+    }
+
     // --- GEOMETRY HELPERS ---
     function getClosestPointOnSegment(p, a, b) {
         const atob = { x: b.x - a.x, y: b.y - a.y };
@@ -2611,6 +2636,8 @@
         
         // Bind all event listeners
         bindEventListeners();
+
+        attachPanelIcons(document);
 
         // Final setup
         toggleTool('pointer');

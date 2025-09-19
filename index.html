@@ -20,12 +20,12 @@
             <h2>Инструменты</h2>
 
             <h3>Конструкции</h3>
-            <div id="tool-pointer" class="tool-button"> указатель</div>
-            <div id="tool-wall" class="tool-button"> Стена</div>
-            <div id="tool-door" class="tool-button"> Дверь</div>
-            <div id="tool-window" class="tool-button"> Окно</div>
+            <div id="tool-pointer" class="tool-button" data-icon="i-pointer">Указатель (V)</div>
+            <div id="tool-wall" class="tool-button" data-icon="i-wall">Стена (W)</div>
+            <div id="tool-door" class="tool-button" data-icon="i-door">Дверь (D)</div>
+            <div id="tool-window" class="tool-button" data-icon="i-window">Окно (O)</div>
             <!-- Новая кнопка для измерений -->
-            <div id="tool-measure" class="tool-button"> Измерение</div>
+            <div id="tool-measure" class="tool-button" data-icon="i-measure">Измерение (M)</div>
 
             <div id="layers-panel">
                 <h3>Слои</h3>
@@ -45,16 +45,16 @@
 
             <div id="wrap">
                 <div class="ui-bar" style="left:12px;top:auto;bottom:12px;right:auto">
-                    <button id="btnExport" title="Экспорт JSON">Экспорт</button>
+                    <button id="btnExport" title="Экспорт JSON" data-icon="i-export">Экспорт</button>
                     <input id="fileImport" type="file" accept="application/json" hidden>
                     <button id="btnImport" title="Импорт JSON">Импорт</button>
                     <button id="btnShare" title="Скопировать ссылку">Поделиться</button>
                     <!-- Кнопка для запуска анализа планировки -->
-                    <button id="btnAnalysis" title="Анализ планировки">Анализ</button>
-                <!-- Кнопка для экспорта сметы и данных в CSV -->
-                <button id="btnCsv" title="Экспорт сметы CSV">Смета CSV</button>
+                    <button id="btnAnalysis" title="Анализ планировки" data-icon="i-analyze">Анализ</button>
+                    <!-- Кнопка для экспорта сметы и данных в CSV -->
+                    <button id="btnCsv" title="Экспорт сметы CSV" data-icon="i-csv">Смета CSV</button>
                     <!-- Кнопка для загрузки шаблонного проекта -->
-                    <button id="btnTemplate" title="Загрузить мастер-проект">Шаблон</button>
+                    <button id="btnTemplate" title="Загрузить мастер-проект" data-icon="i-template">Шаблон</button>
                 </div>
                 
                 <div id="grid-controls-bar" class="ui-bar">
@@ -195,6 +195,56 @@
                     <!-- Слой для отображения измерительных линий и аннотаций. Размещаем ПОСЛЕ слоя анализа, чтобы линии и подписи были видны поверх зон. -->
                     <g id="measurement-layer" pointer-events="none"></g>
                     <g id="ui-layer" pointer-events="none"></g>
+                </svg>
+                <!-- SVG-СПРАЙТ С ИКОНКАМИ (скрыт) -->
+                <svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+                    <!-- Указатель -->
+                    <symbol id="i-pointer" viewBox="0 0 24 24">
+                        <path d="M5 3l12 7-5 2 4 7-3 2-4-7-4 1z" fill="currentColor"/>
+                    </symbol>
+                    <!-- Стена -->
+                    <symbol id="i-wall" viewBox="0 0 24 24">
+                        <path d="M3 7h18M3 12h18M3 17h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </symbol>
+                    <!-- Дверь -->
+                    <symbol id="i-door" viewBox="0 0 24 24">
+                        <rect x="6" y="3" width="12" height="18" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <circle cx="15" cy="12" r="1" fill="currentColor"/>
+                    </symbol>
+                    <!-- Окно -->
+                    <symbol id="i-window" viewBox="0 0 24 24">
+                        <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M12 5v14M4 12h16" stroke="currentColor" stroke-width="2"/>
+                    </symbol>
+                    <!-- Измерение -->
+                    <symbol id="i-measure" viewBox="0 0 24 24">
+                        <path d="M4 18l16-12" stroke="currentColor" stroke-width="2"/>
+                        <path d="M6 18h4M14 6h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </symbol>
+                    <!-- Анализ -->
+                    <symbol id="i-analyze" viewBox="0 0 24 24">
+                        <path d="M4 19h16M5 16l5-6 3 4 3-6 3 8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </symbol>
+                    <!-- Шаблон -->
+                    <symbol id="i-template" viewBox="0 0 24 24">
+                        <rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M7 7h10M7 11h10M7 15h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </symbol>
+                    <!-- CSV -->
+                    <symbol id="i-csv" viewBox="0 0 24 24">
+                        <path d="M6 4h8l4 4v12H6z" stroke="currentColor" stroke-width="2" fill="none"/>
+                        <path d="M9 15c0 1-.8 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2zm3 3l-2-6h1l2 6h-1zm5 0h-2v-1h1c.6 0 1-.4 1-1s-.4-1-1-1h-1v-1h2c1.1 0 2 .9 2 2s-.9 2-2 2z" fill="currentColor"/>
+                    </symbol>
+                    <!-- Экспорт -->
+                    <symbol id="i-export" viewBox="0 0 24 24">
+                        <path d="M12 3v10M8 7l4-4 4 4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        <rect x="4" y="13" width="16" height="8" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </symbol>
+                    <!-- Фокус (zoom-to-fit) -->
+                    <symbol id="i-zoom-to-fit" viewBox="0 0 24 24">
+                        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        <rect x="8" y="8" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
+                    </symbol>
                 </svg>
                 <div id="toast" aria-live="polite"></div>
             </div>
