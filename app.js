@@ -30,6 +30,7 @@
         toast: document.getElementById('toast'),
         ctx: document.getElementById('ctx'),
         gridPattern: document.getElementById('grid'),
+        gridRect: document.getElementById('grid-surface'),
         layersPanel: document.getElementById('layers-panel'),
         layersList: document.getElementById('layers-list'),
         main: document.getElementById('main'),
@@ -1019,6 +1020,25 @@
         setModel(el, m);
     }
     function formatGridMeters(value) { return (Math.round(value * 1000) / 1000).toString(); }
+    function ensureGridRect() {
+        if (dom.gridRect && dom.gridRect.ownerSVGElement) {
+            return dom.gridRect;
+        }
+        const rect = document.getElementById('grid-surface');
+        dom.gridRect = rect;
+        return rect;
+    }
+    function updateGridViewport() {
+        if (!state.viewBox) return;
+        const rect = ensureGridRect();
+        if (!rect) return;
+        const { x, y, width, height } = state.viewBox;
+        const padding = Math.max(state.gridSize || 0, 50);
+        rect.setAttribute('x', (x - padding).toString());
+        rect.setAttribute('y', (y - padding).toString());
+        rect.setAttribute('width', (width + padding * 2).toString());
+        rect.setAttribute('height', (height + padding * 2).toString());
+    }
     function applyGridPatternSize(sizePx) {
         if (!Number.isFinite(sizePx) || sizePx <= 0) return;
         const normalized = Math.round(sizePx * 1000) / 1000;
@@ -1029,6 +1049,7 @@
         dom.gridPattern.setAttribute('height', w);
         const path = dom.gridPattern.querySelector('path');
         path?.setAttribute('d', `M ${w} 0 L 0 0 0 ${w}`);
+        updateGridViewport();
     }
     function updateGridSize({ silent = false, deferInvalid = false } = {}) {
         if (!dom.gridSelect) return;
@@ -1113,6 +1134,7 @@
     function updateViewBox() {
         if (!state.viewBox) return;
         dom.svg.setAttribute('viewBox', `${state.viewBox.x} ${state.viewBox.y} ${state.viewBox.width} ${state.viewBox.height}`);
+        updateGridViewport();
     }
     function startPan(e) {
         if (!state.viewBox) {
@@ -2438,7 +2460,9 @@
             width: dom.svg.viewBox.baseVal.width,
             height: dom.svg.viewBox.baseVal.height
         };
-        
+
+        updateGridViewport();
+
         // Load saved data robustly
         try {
             const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
