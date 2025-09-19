@@ -1,7 +1,7 @@
 "use strict";
 (() => {
     // --- CONSTANTS & STATE ---
-    const LOCAL_STORAGE_KEY = 'layout-v9-pro'; // Incremented version to avoid loading old potentially corrupt data
+    const LOCAL_STORAGE_KEY = 'layout-v10-pro'; // Incremented version to avoid loading old potentially corrupt data
     const dom = {
         svg: document.getElementById('svg'),
         itemsContainer: document.getElementById('items'),
@@ -46,6 +46,18 @@
         analysisLayer: document.getElementById('analysis-layer'),
         // контекстное меню: фокусировка на объекте
         ctxFocus: document.getElementById('ctx-focus'),
+        measureTableBody: document.getElementById('measure-table-body'),
+        measureClear: document.getElementById('measure-clear'),
+        analysisSummary: document.getElementById('analysis-summary'),
+        analysisRoomsBody: document.getElementById('analysis-rooms-body'),
+        analysisRefresh: document.getElementById('analysis-refresh'),
+        normativeCorridorGuest: document.getElementById('normative-corridor-guest'),
+        normativeCorridorStaff: document.getElementById('normative-corridor-staff'),
+        normativeRadius: document.getElementById('normative-radius'),
+        pricingPreset: document.getElementById('pricing-preset'),
+        rateFinish: document.getElementById('rate-finish'),
+        ratePerimeter: document.getElementById('rate-perimeter'),
+        rateEngineering: document.getElementById('rate-engineering'),
     };
     const state = {
         selectedObject: null,
@@ -60,6 +72,8 @@
         currentWallPoints: [],
         // Хранилище для измерительного инструмента
         measurePoints: [],
+        measurements: [],
+        measureCounter: 0,
         // ViewBox и панорамирование/масштаб
         viewBox: null,
         isPanning: false,
@@ -73,7 +87,23 @@
         normativeCorridorStaff: 1.0,
         normativeRadius: 3.0,
         // Хранилище результатов последнего анализа (для экспорта CSV)
-        lastAnalysis: null
+        lastAnalysis: null,
+        // Хранилище выбранного узла стены для редактирования
+        selectedWallHandle: null,
+        wallCounter: 0,
+        componentCounter: 0,
+        estimatePreset: 'standard',
+        estimateRates: { finish: 50, perimeter: 10, engineering: 35 },
+        pendingComponentPlacement: null
+    };
+    const wallStore = new Map();
+    const wallIdMap = new Map();
+    const componentStore = new Map();
+    const componentIdMap = new Map();
+    const ESTIMATE_PRESETS = {
+        standard: { finish: 50, perimeter: 12, engineering: 35 },
+        economy: { finish: 35, perimeter: 8, engineering: 20 },
+        premium: { finish: 85, perimeter: 18, engineering: 55 }
     };
     const utils = {
         showToast(msg, ms = 1500) { dom.toast.textContent = msg; dom.toast.classList.add('show'); clearTimeout(this.showToast.t); this.showToast.t = setTimeout(() => dom.toast.classList.remove('show'), ms); },
@@ -94,6 +124,50 @@
         return { x: a.x + atob.x * t, y: a.y + atob.y * t };
     }
     function distance(p1, p2) { return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)); }
+    function polygonArea(pts) {
+        let area = 0;
+        for (let i = 0; i < pts.length; i++) {
+            const j = (i + 1) % pts.length;
+            area += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+        }
+        return area / 2;
+    }
+    function polygonPerimeter(pts) {
+        let peri = 0;
+        for (let i = 0; i < pts.length; i++) {
+            const j = (i + 1) % pts.length;
+            peri += distance(pts[i], pts[j]);
+        }
+        return peri;
+    }
+    function pointInPolygon(pt, poly) {
+        let inside = false;
+        for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+            const xi = poly[i].x, yi = poly[i].y;
+            const xj = poly[j].x, yj = poly[j].y;
+            const intersect = ((yi > pt.y) !== (yj > pt.y)) && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi + 0.0000001) + xi);
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    }
+    function polygonCentroid(pts) {
+        let cx = 0, cy = 0, area = 0;
+        for (let i = 0; i < pts.length; i++) {
+            const j = (i + 1) % pts.length;
+            const f = pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+            cx += (pts[i].x + pts[j].x) * f;
+            cy += (pts[i].y + pts[j].y) * f;
+            area += f;
+        }
+        area *= 0.5;
+        if (Math.abs(area) < 1e-6) {
+            const avgX = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+            const avgY = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+            return { x: avgX, y: avgY };
+        }
+        const factor = 1 / (6 * area);
+        return { x: cx * factor, y: cy * factor };
+    }
 
     // --- DATA & MODEL ---
     function getModel(el) { if (!el || !el.dataset) return {}; return { id: el.dataset.id, tpl: el.dataset.template || 'zone', x: +el.dataset.x || 0, y: +el.dataset.y || 0, a: +el.dataset.a || 0, sx: +el.dataset.sx || 1, sy: +el.dataset.sy || 1, cx: +el.dataset.cx || 0, cy: +el.dataset.cy || 0, ow: +el.dataset.ow || 0, oh: +el.dataset.oh || 0, locked: el.dataset.locked === 'true', visible: el.dataset.visible !== 'false' }; }
@@ -106,7 +180,14 @@
     function updateLayersList() { dom.layersList.innerHTML = ''; const items = Array.from(dom.itemsContainer.children).filter(n => n.classList.contains('layout-object')); items.reverse().forEach(el => { const model = getModel(el); const li = createLayerItem(model); dom.layersList.appendChild(li); }); }
     function createLayerItem(model) { const li = document.createElement('li'); li.dataset.id = model.id; li.className = state.selectedObject?.dataset.id === model.id ? 'selected' : ''; if (model.locked) li.classList.add('locked'); li.innerHTML = `<span class="layer-name">${ITEM_TEMPLATES[model.tpl]?.label || model.tpl}</span><button class="layer-vis" title="Видимость">${model.visible ? '👁️' : '⚪'}</button><button class="layer-lock" title="Блокировка">${model.locked ? '🔒' : '🔓'}</button>`; return li; }
     function updateLayerItem(model) { const li = dom.layersList.querySelector(`[data-id="${model.id}"]`); if (!li) return; li.querySelector('.layer-vis').textContent = model.visible ? '👁️' : '⚪'; li.querySelector('.layer-lock').textContent = model.locked ? '🔒' : '🔓'; model.locked ? li.classList.add('locked') : li.classList.remove('locked'); }
-    function clearSelections() { if (state.selectedObject) { state.selectedObject.classList.remove('selected'); state.selectedObject = null; } if (state.selectedWall) { state.selectedWall.classList.remove('selected'); state.selectedWall = null; } if (state.selectedComponent) { state.selectedComponent.classList.remove('selected'); state.selectedComponent = null; } dom.layersList.querySelector('.selected')?.classList.remove('selected'); updatePropertiesPanel(null); }
+    function clearSelections() {
+        if (state.selectedObject) { state.selectedObject.classList.remove('selected'); state.selectedObject = null; }
+        if (state.selectedWall) { state.selectedWall.classList.remove('selected'); state.selectedWall = null; }
+        if (state.selectedComponent) { state.selectedComponent.classList.remove('selected'); state.selectedComponent = null; }
+        state.selectedWallHandle = null;
+        dom.layersList.querySelector('.selected')?.classList.remove('selected');
+        updatePropertiesPanel(null);
+    }
 
     /**
      * Центрирует вид (viewBox) на выбранном объекте без изменения масштаба.
@@ -156,8 +237,341 @@
         }
     }
     function selectObject(el) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedObject = el ? el.closest('.layout-object') : null; if (state.selectedObject) { state.selectedObject.classList.add('selected'); dom.itemsContainer.appendChild(state.selectedObject); const model = getModel(state.selectedObject); updatePropertiesPanel(model); const li = dom.layersList.querySelector(`[data-id="${model.id}"]`); if (li) li.classList.add('selected'); } }
-    function selectWall(wallEl) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedWall = wallEl; if (state.selectedWall) { state.selectedWall.classList.add('selected'); } }
+    function selectWall(wallEl) {
+        if (state.activeTool !== 'pointer') return;
+        const wall = ensureWallElement(wallEl);
+        if (!wall) return;
+        clearSelections();
+        state.selectedWall = wall;
+        state.selectedWall.classList.add('selected');
+        updateWallHandles(wall);
+    }
     function selectComponent(compEl) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedComponent = compEl; if (state.selectedComponent) { state.selectedComponent.classList.add('selected'); } }
+
+    // --- WALL DATA MODEL & EDITING ---
+    let wallHandleDrag = null;
+
+    function ensureWallElement(el) {
+        if (!el) return null;
+        return el.classList.contains('wall') ? el : el.closest('.wall');
+    }
+
+    function getWallModel(el) {
+        const wallEl = ensureWallElement(el);
+        return wallEl ? wallStore.get(wallEl) || null : null;
+    }
+
+    function setWallModel(el, model) {
+        const wallEl = ensureWallElement(el);
+        if (!wallEl || !model) return;
+        wallStore.set(wallEl, model);
+        wallIdMap.set(model.id, wallEl);
+        updateWallElementGeometry(wallEl);
+    }
+
+    function registerWall(wallEl, model) {
+        wallStore.set(wallEl, model);
+        wallIdMap.set(model.id, wallEl);
+        updateWallElementGeometry(wallEl);
+        makeWallInteractive(wallEl);
+    }
+
+    function getWallSegments(model) {
+        const pts = model.points;
+        const count = pts.length;
+        const limit = model.closed ? count : count - 1;
+        const segments = [];
+        let accumulated = 0;
+        for (let i = 0; i < limit; i++) {
+            const a = pts[i];
+            const b = pts[(i + 1) % count];
+            const len = distance(a, b);
+            segments.push({ a, b, length: len, start: accumulated, end: accumulated + len });
+            accumulated += len;
+        }
+        return { segments, total: accumulated };
+    }
+
+    function pointAtWallDistance(model, dist) {
+        const { segments, total } = getWallSegments(model);
+        if (segments.length === 0) return { point: model.points[0] || { x: 0, y: 0 }, angle: 0 };
+        const target = utils.clamp(dist, 0, total);
+        for (const seg of segments) {
+            if (target <= seg.end || seg === segments[segments.length - 1]) {
+                const local = seg.length === 0 ? 0 : (target - seg.start) / seg.length;
+                const x = seg.a.x + (seg.b.x - seg.a.x) * local;
+                const y = seg.a.y + (seg.b.y - seg.a.y) * local;
+                const angle = Math.atan2(seg.b.y - seg.a.y, seg.b.x - seg.a.x) * 180 / Math.PI;
+                return { point: { x, y }, angle };
+            }
+        }
+        const lastSeg = segments[segments.length - 1];
+        const angle = Math.atan2(lastSeg.b.y - lastSeg.a.y, lastSeg.b.x - lastSeg.a.x) * 180 / Math.PI;
+        return { point: { x: lastSeg.b.x, y: lastSeg.b.y }, angle };
+    }
+
+    function findClosestWallPlacement(point) {
+        const result = { dist: Infinity, point: null, angle: 0, wallEl: null, distance: 0 };
+        if (!point) return result;
+        const walls = Array.from(dom.wallsContainer.querySelectorAll('.wall'));
+        walls.forEach(wall => {
+            const model = getWallModel(wall);
+            if (!model) return;
+            const { segments } = getWallSegments(model);
+            segments.forEach(seg => {
+                const segPt = getClosestPointOnSegment(point, seg.a, seg.b);
+                const d = distance(point, segPt);
+                if (d < result.dist) {
+                    const projDist = distance(seg.a, segPt);
+                    const angle = Math.atan2(seg.b.y - seg.a.y, seg.b.x - seg.a.x) * 180 / Math.PI;
+                    result.dist = d;
+                    result.point = { x: segPt.x, y: segPt.y };
+                    result.angle = angle;
+                    result.wallEl = wall;
+                    result.distance = seg.start + projDist;
+                }
+            });
+        });
+        return result;
+    }
+
+    function updateWallComponentsPosition(wallEl) {
+        const model = getWallModel(wallEl);
+        if (!model || !model.components) return;
+        model.components.forEach(comp => {
+            const compEl = componentIdMap.get(comp.id);
+            if (!compEl) return;
+            const { point, angle } = pointAtWallDistance(model, comp.distance);
+            const transform = `translate(${point.x}, ${point.y}) rotate(${angle})`;
+            compEl.setAttribute('transform', transform);
+        });
+    }
+
+    function updateWallHandles(wallEl) {
+        const model = getWallModel(wallEl);
+        if (!model) return;
+        let handles = wallEl.querySelector('.wall-handles');
+        if (!handles) {
+            handles = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            handles.classList.add('wall-handles');
+            handles.addEventListener('pointerdown', onWallHandlePointerDown);
+            handles.addEventListener('dblclick', onWallHandleDoubleClick);
+            wallEl.appendChild(handles);
+        }
+        handles.innerHTML = '';
+        model.points.forEach((pt, idx) => {
+            const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            c.classList.add('wall-handle');
+            c.dataset.index = String(idx);
+            c.setAttribute('cx', pt.x);
+            c.setAttribute('cy', pt.y);
+            c.setAttribute('r', 6);
+            if (state.selectedWallHandle && state.selectedWallHandle.wall === wallEl && state.selectedWallHandle.index === idx) {
+                c.classList.add('active');
+            }
+            handles.appendChild(c);
+        });
+        let inserts = wallEl.querySelector('.wall-inserts');
+        if (!inserts) {
+            inserts = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            inserts.classList.add('wall-inserts');
+            inserts.addEventListener('pointerdown', onWallInsertPointerDown);
+            wallEl.appendChild(inserts);
+        }
+        inserts.innerHTML = '';
+        const pts = model.points;
+        const count = pts.length;
+        const limit = model.closed ? count : count - 1;
+        for (let i = 0; i < limit; i++) {
+            const a = pts[i];
+            const b = pts[(i + 1) % count];
+            const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+            const insert = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            insert.classList.add('wall-segment-insert');
+            insert.dataset.index = String((i + 1) % count);
+            insert.setAttribute('cx', mid.x);
+            insert.setAttribute('cy', mid.y);
+            insert.setAttribute('r', 5);
+            inserts.appendChild(insert);
+        }
+    }
+
+    function updateWallElementGeometry(wallEl) {
+        const model = getWallModel(wallEl);
+        if (!model) return;
+        const path = wallEl.querySelector('path') || document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        if (!path.parentNode) wallEl.appendChild(path);
+        const pts = model.points;
+        if (!pts || pts.length === 0) {
+            path.removeAttribute('d');
+            return;
+        }
+        let d = `M ${pts[0].x} ${pts[0].y}`;
+        for (let i = 1; i < pts.length; i++) {
+            d += ` L ${pts[i].x} ${pts[i].y}`;
+        }
+        if (model.closed && pts.length > 2) d += ' Z';
+        path.setAttribute('d', d);
+        updateWallHandles(wallEl);
+        updateWallComponentsPosition(wallEl);
+    }
+
+    function createWall(points, closed = false) {
+        if (!points || points.length < 2) return null;
+        const wallEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        wallEl.classList.add('wall');
+        const id = `wall-${++state.wallCounter}`;
+        wallEl.dataset.id = id;
+        const model = { id, points: points.map(p => ({ x: p.x, y: p.y })), closed, components: [] };
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        wallEl.appendChild(path);
+        dom.wallsContainer.appendChild(wallEl);
+        registerWall(wallEl, model);
+        return wallEl;
+    }
+
+    function insertWallVertex(wallEl, index, point) {
+        const model = getWallModel(wallEl);
+        if (!model) return;
+        model.points.splice(index, 0, { x: point.x, y: point.y });
+        updateWallElementGeometry(wallEl);
+    }
+
+    function removeWallVertex(wallEl, index) {
+        const model = getWallModel(wallEl);
+        if (!model) return false;
+        const minPoints = model.closed ? 3 : 2;
+        if (model.points.length <= minPoints) {
+            utils.showToast('Нельзя удалить точку стены');
+            return false;
+        }
+        model.points.splice(index, 1);
+        updateWallElementGeometry(wallEl);
+        return true;
+    }
+
+    function deleteWall(wallEl) {
+        const model = getWallModel(wallEl);
+        if (!model) return;
+        if (model.components) {
+            model.components.forEach(comp => {
+                const compEl = componentIdMap.get(comp.id);
+                if (compEl) {
+                    componentStore.delete(compEl);
+                    componentIdMap.delete(comp.id);
+                    compEl.remove();
+                }
+            });
+        }
+        wallStore.delete(wallEl);
+        wallIdMap.delete(model.id);
+        wallEl.remove();
+        if (state.selectedWall === wallEl) {
+            state.selectedWall = null;
+        }
+        commit('wall_delete');
+    }
+
+    function onWallHandlePointerDown(e) {
+        const target = e.target;
+        if (!target.classList.contains('wall-handle')) return;
+        const wallEl = ensureWallElement(target);
+        if (state.activeTool !== 'pointer') return;
+        e.preventDefault();
+        const index = parseInt(target.dataset.index, 10);
+        state.selectedWallHandle = { wall: wallEl, index };
+        updateWallHandles(wallEl);
+        if (e.altKey) {
+            if (removeWallVertex(wallEl, index)) {
+                commit('wall_vertex_remove');
+            }
+            return;
+        }
+        wallHandleDrag = { wall: wallEl, index };
+        window.addEventListener('pointermove', onWallHandlePointerMove);
+        window.addEventListener('pointerup', onWallHandlePointerUp, { once: true });
+    }
+
+    function onWallHandlePointerMove(e) {
+        if (!wallHandleDrag) return;
+        const wallEl = wallHandleDrag.wall;
+        const model = getWallModel(wallEl);
+        if (!model) return;
+        const p = utils.toSVGPoint(e.clientX, e.clientY);
+        const snapped = { x: snap(p.x), y: snap(p.y) };
+        model.points[wallHandleDrag.index] = snapped;
+        updateWallElementGeometry(wallEl);
+    }
+
+    function onWallHandlePointerUp() {
+        if (!wallHandleDrag) return;
+        updateWallElementGeometry(wallHandleDrag.wall);
+        commit('wall_vertex_move');
+        wallHandleDrag = null;
+    }
+
+    function onWallHandleDoubleClick(e) {
+        const target = e.target;
+        if (!target.classList.contains('wall-handle')) return;
+        const wallEl = ensureWallElement(target);
+        const index = parseInt(target.dataset.index, 10);
+        if (removeWallVertex(wallEl, index)) {
+            commit('wall_vertex_remove');
+        }
+    }
+
+    function onWallInsertPointerDown(e) {
+        const target = e.target;
+        if (!target.classList.contains('wall-segment-insert')) return;
+        if (state.activeTool !== 'pointer') return;
+        e.preventDefault();
+        const wallEl = ensureWallElement(target);
+        const model = getWallModel(wallEl);
+        if (!model) return;
+        const index = parseInt(target.dataset.index, 10);
+        const p = utils.toSVGPoint(e.clientX, e.clientY);
+        const snapped = { x: snap(p.x), y: snap(p.y) };
+        insertWallVertex(wallEl, index, snapped);
+        state.selectedWallHandle = { wall: wallEl, index };
+        updateWallHandles(wallEl);
+        commit('wall_vertex_add');
+    }
+
+    function makeWallInteractive(wallEl) {
+        if (wallEl.dataset.interactive === 'true') return;
+        wallEl.dataset.interactive = 'true';
+        const path = wallEl.querySelector('path');
+        if (path) {
+            path.addEventListener('dblclick', e => {
+                if (state.activeTool !== 'pointer') return;
+                const model = getWallModel(wallEl);
+                if (!model) return;
+                const p = utils.toSVGPoint(e.clientX, e.clientY);
+                const snapped = { x: snap(p.x), y: snap(p.y) };
+                // Найдём ближайший сегмент для вставки
+                const pts = model.points;
+                const count = pts.length;
+                let bestIdx = 1;
+                let bestDist = Infinity;
+                const limit = model.closed ? count : count - 1;
+                for (let i = 0; i < limit; i++) {
+                    const a = pts[i];
+                    const b = pts[(i + 1) % count];
+                    const proj = getClosestPointOnSegment(snapped, a, b);
+                    const d = distance(snapped, proj);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        bestIdx = (i + 1) % count;
+                    }
+                }
+                insertWallVertex(wallEl, bestIdx, snapped);
+                state.selectedWallHandle = { wall: wallEl, index: bestIdx };
+                updateWallHandles(wallEl);
+                commit('wall_vertex_add');
+            });
+        }
+        updateWallHandles(wallEl);
+    }
 
     // --- OBJECT & WALL CREATION / MANIPULATION ---
     function createLayoutObject(tpl, x, y) { const el = document.createElementNS('http://www.w3.org/2000/svg', 'g'); el.classList.add('layout-object'); el.dataset.id = `el-${state.objectCounter++}`; const safeTpl = ITEM_TEMPLATES[tpl] ? tpl : 'zone'; el.dataset.template = safeTpl; el.innerHTML = (ITEM_TEMPLATES[safeTpl].svg() + `<rect class="selection-box"></rect><rect class="resize-handle" width="12" height="12"></rect><circle class="rotate-handle" r="8"></circle>`); dom.itemsContainer.appendChild(el); const core = el.querySelector('.core'); const b = core.getBBox(); const model = { x, y, a: 0, sx: 1, sy: 1, cx: b.x + b.width / 2, cy: b.y + b.height / 2, ow: b.width, oh: b.height, locked: false, visible: true }; setModel(el, model); makeInteractive(el); commit('add'); return el; }
@@ -177,13 +591,70 @@
         state.currentWallPoints = [];
         dom.wallPreview.setAttribute('points', '');
         dom.previewsContainer.innerHTML = '';
-        // Покидая режим измерения — очищаем слой измерений
+        state.pendingComponentPlacement = null;
+        // Покидая режим измерения — сохраняем линии, но убираем предпросмотр
         if (state.activeTool !== 'measure') {
-            clearMeasurement();
+            resetMeasurementPreview();
         }
     }
-    function finishCurrentWall() { if (state.currentWallPoints.length > 1) { const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); const d = state.currentWallPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' '); path.setAttribute('d', d); dom.wallsContainer.appendChild(path); commit('add_wall'); } state.currentWallPoints = []; dom.wallPreview.setAttribute('points', ''); }
-    function placeWallComponent(type, point, angle) { const el = document.createElementNS('http://www.w3.org/2000/svg', 'g'); el.classList.add('wall-component'); const width = type === 'door' ? 80 : 120; const mask = `<rect x="-${width / 2}" y="-11" width="${width}" height="22" fill="#fdfdfd" />`; const visual = type === 'door' ? `<path d="M -40 0 A 40 40 0 0 1 0 -40" stroke="#8B4513" stroke-width="2" fill="none"/><line x1="-40" y1="0" x2="-40" y2="-5" stroke="#8B4513" stroke-width="2"/>` : `<rect x="-60" y="-5.5" width="120" height="11" fill="#a3d5ff" stroke="#5b9ad4" stroke-width="2" />`; el.innerHTML = mask + visual; el.setAttribute('transform', `translate(${point.x}, ${point.y}) rotate(${angle})`); dom.wallComponentsContainer.appendChild(el); commit('add_component'); }
+    function finishCurrentWall(forceClose = false) {
+        if (state.currentWallPoints.length > 1) {
+            const points = state.currentWallPoints.map(p => ({ x: p.x, y: p.y }));
+            let closed = false;
+            if (points.length > 2) {
+                const first = points[0];
+                const last = points[points.length - 1];
+                const distToFirst = distance(first, last);
+                if (distToFirst < Math.max(1, state.gridSize * 0.2)) {
+                    points[points.length - 1] = { x: first.x, y: first.y };
+                    closed = true;
+                } else if (forceClose) {
+                    points.push({ x: first.x, y: first.y });
+                    closed = true;
+                }
+            }
+            createWall(points, closed);
+            commit('add_wall');
+        }
+        state.currentWallPoints = [];
+        dom.wallPreview.setAttribute('points', '');
+    }
+    function placeWallComponent(type, placement) {
+        const wallEl = ensureWallElement(placement?.wallEl || (state.pendingComponentPlacement?.wallEl));
+        const wallModel = getWallModel(wallEl);
+        if (!wallEl || !wallModel) {
+            utils.showToast('Не удалось определить стену для проёма');
+            return null;
+        }
+        const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        el.classList.add('wall-component');
+        const id = `comp-${++state.componentCounter}`;
+        el.dataset.id = id;
+        el.dataset.type = type;
+        el.dataset.wallId = wallModel.id;
+        const width = type === 'door' ? 80 : 120;
+        const mask = `<rect x="-${width / 2}" y="-11" width="${width}" height="22" fill="#fdfdfd" />`;
+        const visual = type === 'door'
+            ? `<path d="M -40 0 A 40 40 0 0 1 0 -40" stroke="#8B4513" stroke-width="2" fill="none"/><line x1="-40" y1="0" x2="-40" y2="-5" stroke="#8B4513" stroke-width="2"/>`
+            : `<rect x="-60" y="-5.5" width="120" height="11" fill="#a3d5ff" stroke="#5b9ad4" stroke-width="2" />`;
+        el.innerHTML = mask + visual;
+        dom.wallComponentsContainer.appendChild(el);
+        const distanceAlong = placement?.distance ?? state.pendingComponentPlacement?.distance ?? 0;
+        const initialPoint = placement?.point || state.pendingComponentPlacement?.point;
+        const initialAngle = placement?.angle ?? state.pendingComponentPlacement?.angle;
+        if (initialPoint) {
+            const ang = initialAngle ?? 0;
+            el.setAttribute('transform', `translate(${initialPoint.x}, ${initialPoint.y}) rotate(${ang})`);
+        }
+        const compModel = { id, type, wallId: wallModel.id, distance: distanceAlong, offset: 0 };
+        componentStore.set(el, compModel);
+        componentIdMap.set(id, el);
+        if (!Array.isArray(wallModel.components)) wallModel.components = [];
+        wallModel.components.push(compModel);
+        updateWallComponentsPosition(wallEl);
+        commit('add_component');
+        return el;
+    }
     
     // --- GRID & GUIDES ---
     function snap(v) { return Math.round(v / state.gridSize) * state.gridSize; }
@@ -249,49 +720,148 @@
     }
 
     // --- MEASUREMENT TOOL ---
-    function clearMeasurement() {
+    function resetMeasurementPreview() {
         state.measurePoints = [];
-        const layer = dom.measurementLayer;
-        if (layer) layer.innerHTML = '';
+        renderMeasurementOverlay();
     }
-    function drawMeasurementLine(p0, p1) {
+    function renderMeasurementOverlay(preview) {
         const layer = dom.measurementLayer;
         if (!layer) return;
         layer.innerHTML = '';
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', p0.x);
-        line.setAttribute('y1', p0.y);
-        line.setAttribute('x2', p1.x);
-        line.setAttribute('y2', p1.y);
-        line.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#0d6efd');
-        // Толстая линия для наглядности
-        line.setAttribute('stroke-width', 3);
-        line.setAttribute('marker-start', 'url(#dim-arrow)');
-        line.setAttribute('marker-end', 'url(#dim-arrow)');
-        layer.appendChild(line);
-        // подпись расстояния
-        const dist = distance(p0, p1);
         const pixelsPerMeter = state.pixelsPerMeter || state.gridSize || 1;
-        const meters = (dist / pixelsPerMeter).toFixed(2);
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        const midx = (p0.x + p1.x) / 2;
-        const midy = (p0.y + p1.y) / 2;
-        text.setAttribute('x', midx + 4);
-        text.setAttribute('y', midy - 4);
-        text.setAttribute('fill', getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#0d6efd');
-        text.setAttribute('font-size', '14');
-        text.setAttribute('font-weight', 'bold');
-        text.setAttribute('stroke', 'white');
-        text.setAttribute('stroke-width', '0.5');
-        text.setAttribute('paint-order', 'stroke');
-        text.textContent = `${meters} м`;
-        layer.appendChild(text);
+        const draw = (measurement, isPreview = false) => {
+            if (!measurement) return;
+            const p0 = measurement.p0;
+            const p1 = measurement.p1;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', p0.x);
+            line.setAttribute('y1', p0.y);
+            line.setAttribute('x2', p1.x);
+            line.setAttribute('y2', p1.y);
+            line.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#0d6efd');
+            line.setAttribute('stroke-width', 3);
+            line.setAttribute('marker-start', 'url(#dim-arrow)');
+            line.setAttribute('marker-end', 'url(#dim-arrow)');
+            if (isPreview) line.setAttribute('stroke-dasharray', '6 4');
+            layer.appendChild(line);
+            const dist = distance(p0, p1);
+            const meters = (measurement.meters ?? (dist / pixelsPerMeter)).toFixed(2);
+            const angleDeg = Math.round((measurement.angle ?? ((Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI) + 360)) % 360);
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const midx = (p0.x + p1.x) / 2;
+            const midy = (p0.y + p1.y) / 2;
+            text.setAttribute('x', midx + 4);
+            text.setAttribute('y', midy - 4);
+            text.setAttribute('fill', getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#0d6efd');
+            text.setAttribute('font-size', '14');
+            text.setAttribute('font-weight', 'bold');
+            text.setAttribute('stroke', 'white');
+            text.setAttribute('stroke-width', '0.5');
+            text.setAttribute('paint-order', 'stroke');
+            text.textContent = `${meters} м • ${angleDeg}°`;
+            if (isPreview) text.setAttribute('opacity', '0.6');
+            layer.appendChild(text);
+        };
+        state.measurements.forEach(m => draw(m, false));
+        if (preview) draw(preview, true);
     }
-    function finalizeMeasurement() {
-        if (state.measurePoints.length !== 2) return;
-        // Оставляем линию в слое measurements, сбрасываем массив для следующего измерения
-        state.measurePoints = [];
-        // Ничего не трогаем в слое, линия остается как есть
+    function addMeasurement(p0, p1) {
+        const pixels = distance(p0, p1);
+        if (pixels < 1) return;
+        const pixelsPerMeter = state.pixelsPerMeter || state.gridSize || 1;
+        const meters = pixels / pixelsPerMeter;
+        const angle = (Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI + 360) % 360;
+        const measurement = {
+            id: `measure-${++state.measureCounter}`,
+            p0: { x: p0.x, y: p0.y },
+            p1: { x: p1.x, y: p1.y },
+            pixels,
+            meters,
+            angle
+        };
+        state.measurements.push(measurement);
+        renderMeasurementOverlay();
+        renderMeasurementTable();
+        commit('measure_add');
+    }
+    function removeMeasurement(id) {
+        const idx = state.measurements.findIndex(m => m.id === id);
+        if (idx >= 0) {
+            state.measurements.splice(idx, 1);
+            renderMeasurementOverlay();
+            renderMeasurementTable();
+            commit('measure_remove');
+        }
+    }
+    function renderMeasurementTable() {
+        const body = dom.measureTableBody;
+        if (!body) return;
+        body.innerHTML = '';
+        state.measurements.forEach((m, idx) => {
+            const tr = document.createElement('tr');
+            const angleDeg = Math.round(m.angle);
+            tr.innerHTML = `<td>${idx + 1}</td><td>${m.meters.toFixed(2)} м</td><td>${angleDeg}°</td><td><button type="button" data-id="${m.id}">✕</button></td>`;
+            body.appendChild(tr);
+        });
+    }
+    function clearAllMeasurements() {
+        if (!state.measurements.length) return;
+        state.measurements = [];
+        state.measureCounter = 0;
+        renderMeasurementTable();
+        renderMeasurementOverlay();
+        commit('measure_clear');
+    }
+
+    function syncNormativeControls() {
+        if (dom.normativeCorridorGuest) dom.normativeCorridorGuest.value = state.normativeCorridorGuest;
+        if (dom.normativeCorridorStaff) dom.normativeCorridorStaff.value = state.normativeCorridorStaff;
+        if (dom.normativeRadius) dom.normativeRadius.value = state.normativeRadius;
+    }
+
+    function updateNormativesFromInputs() {
+        const guest = parseFloat(dom.normativeCorridorGuest?.value);
+        const staff = parseFloat(dom.normativeCorridorStaff?.value);
+        const radius = parseFloat(dom.normativeRadius?.value);
+        let changed = false;
+        if (!Number.isNaN(guest) && guest >= 0) { state.normativeCorridorGuest = guest; changed = true; }
+        if (!Number.isNaN(staff) && staff >= 0) { state.normativeCorridorStaff = staff; changed = true; }
+        if (!Number.isNaN(radius) && radius >= 0) { state.normativeRadius = radius; changed = true; }
+        if (changed) {
+            commit('normative_update');
+        }
+    }
+
+    function syncPricingControls() {
+        if (dom.pricingPreset) dom.pricingPreset.value = state.estimatePreset;
+        if (dom.rateFinish) dom.rateFinish.value = state.estimateRates.finish;
+        if (dom.ratePerimeter) dom.ratePerimeter.value = state.estimateRates.perimeter;
+        if (dom.rateEngineering) dom.rateEngineering.value = state.estimateRates.engineering;
+    }
+
+    function applyEstimatePreset(preset) {
+        if (!ESTIMATE_PRESETS[preset]) return;
+        state.estimatePreset = preset;
+        state.estimateRates = { ...ESTIMATE_PRESETS[preset] };
+        syncPricingControls();
+        commit('estimate_preset');
+    }
+
+    function updateRatesFromInputs() {
+        const finish = parseFloat(dom.rateFinish?.value);
+        const perimeter = parseFloat(dom.ratePerimeter?.value);
+        const engineering = parseFloat(dom.rateEngineering?.value);
+        const rates = { ...state.estimateRates };
+        let changed = false;
+        if (!Number.isNaN(finish) && finish >= 0) { rates.finish = finish; changed = true; }
+        if (!Number.isNaN(perimeter) && perimeter >= 0) { rates.perimeter = perimeter; changed = true; }
+        if (!Number.isNaN(engineering) && engineering >= 0) { rates.engineering = engineering; changed = true; }
+        if (changed) {
+            state.estimatePreset = 'custom';
+            state.estimateRates = rates;
+            syncPricingControls();
+            commit('estimate_update');
+        }
     }
 
     // --- ANALYSIS TOOL ---
@@ -302,101 +872,70 @@
      * объектами и дверями/окнами. Итоги выводятся в тост сообщениях,
      * а графические наложения добавляются в слой #analysis-layer.
      */
-    function analysisLayout() {
+    function analysisLayout({ silent = false } = {}) {
         try {
-            // Очистка предыдущих слоев анализа
             const analysisLayer = dom.analysisLayer;
             if (analysisLayer) analysisLayer.innerHTML = '';
-            // Сброс выделения коллизий
             dom.itemsContainer.querySelectorAll('.layout-object').forEach(el => el.classList.remove('collision'));
             dom.wallComponentsContainer.querySelectorAll('.wall-component').forEach(el => el.classList.remove('collision'));
-            const messages = [];
             const pixelsPerMeter = state.pixelsPerMeter || state.gridSize || 1;
-            // --- Поиск замкнутых помещений ---
-            const wallEls = Array.from(dom.wallsContainer.querySelectorAll('path'));
-            const rooms = [];
-            const parsePointsFromPath = (pathEl) => {
-                const d = pathEl.getAttribute('d');
-                const nums = d.match(/[-+]?[0-9]*\.?[0-9]+/g)?.map(Number) || [];
-                const pts = [];
-                for (let i = 0; i < nums.length; i += 2) {
-                    pts.push({ x: nums[i], y: nums[i + 1] });
-                }
-                return pts;
-            };
-            const polygonArea = (pts) => {
-                let area = 0;
-                for (let i = 0; i < pts.length; i++) {
-                    const j = (i + 1) % pts.length;
-                    area += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
-                }
-                return area / 2;
-            };
-            const perimeter = (pts) => {
-                let peri = 0;
-                for (let i = 0; i < pts.length; i++) {
-                    const j = (i + 1) % pts.length;
-                    peri += distance(pts[i], pts[j]);
-                }
-                return peri;
-            };
-            wallEls.forEach(w => {
-                const pts = parsePointsFromPath(w);
-                if (pts.length < 3) return;
-                // Закрыть путь, если последняя точка не совпадает с первой
-                const first = pts[0];
-                const last = pts[pts.length - 1];
-                const eps = 0.01;
-                if (Math.abs(first.x - last.x) > eps || Math.abs(first.y - last.y) > eps) {
-                    pts.push({ x: first.x, y: first.y });
-                }
-                const area = polygonArea(pts);
-                if (Math.abs(area) > 1) {
-                    rooms.push({ points: pts, area: Math.abs(area), perimeter: perimeter(pts) });
-                }
-            });
-            // --- Визуализация комнат, назначение зон и расчёт коридора ---
             const zoneNames = ['Гости', 'Бар', 'Кухня', 'Склад', 'Персонал'];
             const zoneColors = ['rgba(0,123,255,0.15)', 'rgba(40,167,69,0.15)', 'rgba(255,193,7,0.15)', 'rgba(108,117,125,0.15)', 'rgba(23,162,184,0.15)'];
-            const roomResults = [];
-            rooms.forEach((room, idx) => {
-                const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                poly.setAttribute('points', room.points.map(p => `${p.x},${p.y}`).join(' '));
+            const result = {
+                rooms: [],
+                totalSeats: 0,
+                sumArea: 0,
+                sumPerimeter: 0,
+                estimate: { finish: 0, perimeter: 0, engineering: 0, total: 0 },
+                rates: { ...state.estimateRates },
+                collisions: 0,
+                normatives: {
+                    corridorGuest: state.normativeCorridorGuest,
+                    corridorStaff: state.normativeCorridorStaff,
+                    radius: state.normativeRadius
+                }
+            };
+
+            const roomsData = [];
+            Array.from(wallStore.values()).forEach(model => {
+                if (!model.closed || model.points.length < 3) return;
+                const pts = model.points.map(p => ({ x: p.x, y: p.y }));
+                if (pts[0].x !== pts[pts.length - 1].x || pts[0].y !== pts[pts.length - 1].y) {
+                    pts.push({ x: pts[0].x, y: pts[0].y });
+                }
+                const areaPx = polygonArea(pts);
+                if (Math.abs(areaPx) < 1) return;
+                const perimeterPx = polygonPerimeter(pts);
+                const xs = pts.map(p => p.x);
+                const ys = pts.map(p => p.y);
+                const widthPx = Math.max(...xs) - Math.min(...xs);
+                const heightPx = Math.max(...ys) - Math.min(...ys);
+                roomsData.push({
+                    model,
+                    points: pts,
+                    areaPx: Math.abs(areaPx),
+                    perimeterPx,
+                    widthPx,
+                    heightPx
+                });
+            });
+
+            roomsData.forEach((room, idx) => {
                 const zoneName = zoneNames[idx % zoneNames.length];
                 const zoneColor = zoneColors[idx % zoneColors.length];
+                const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                poly.setAttribute('points', room.points.map(p => `${p.x},${p.y}`).join(' '));
                 poly.setAttribute('fill', zoneColor);
                 poly.setAttribute('stroke', 'var(--accent)');
                 poly.setAttribute('stroke-dasharray', '4 4');
                 poly.setAttribute('pointer-events', 'none');
                 poly.dataset.zone = zoneName;
                 analysisLayer?.appendChild(poly);
-                // вычислим ширину и высоту ограничивающего прямоугольника
-                const xs = room.points.map(p => p.x);
-                const ys = room.points.map(p => p.y);
-                const width = Math.max(...xs) - Math.min(...xs);
-                const height = Math.max(...ys) - Math.min(...ys);
-                const corridor = Math.min(width, height);
-                const minDim = Math.min(width, height);
-                // центроид для подписи зоны
-                let cx = 0, cy = 0, a2 = 0;
-                for (let i = 0; i < room.points.length - 1; i++) {
-                    const x0 = room.points[i].x, y0 = room.points[i].y;
-                    const x1 = room.points[i + 1].x, y1 = room.points[i + 1].y;
-                    const f = x0 * y1 - x1 * y0;
-                    cx += (x0 + x1) * f;
-                    cy += (y0 + y1) * f;
-                    a2 += f;
-                }
-                if (a2 !== 0) {
-                    cx = cx / (3 * a2);
-                    cy = cy / (3 * a2);
-                } else {
-                    cx = xs.reduce((s, v) => s + v, 0) / xs.length;
-                    cy = ys.reduce((s, v) => s + v, 0) / ys.length;
-                }
+
+                const centroid = polygonCentroid(room.points);
                 const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                lbl.setAttribute('x', cx);
-                lbl.setAttribute('y', cy);
+                lbl.setAttribute('x', centroid.x);
+                lbl.setAttribute('y', centroid.y);
                 lbl.setAttribute('fill', 'var(--accent)');
                 lbl.setAttribute('font-size', '14');
                 lbl.setAttribute('font-weight', 'bold');
@@ -405,72 +944,85 @@
                 lbl.setAttribute('pointer-events', 'none');
                 lbl.textContent = zoneName;
                 analysisLayer?.appendChild(lbl);
-                roomResults.push({ area: room.area, perimeter: room.perimeter, corridor, minDim, zone: zoneName });
+
+                const corridorPx = Math.min(room.widthPx, room.heightPx);
+                const minDimPx = Math.min(room.widthPx, room.heightPx);
+                const areaM2 = room.areaPx / (pixelsPerMeter * pixelsPerMeter);
+                const perimeterM = room.perimeterPx / pixelsPerMeter;
+                const corridorM = corridorPx / pixelsPerMeter;
+                const minDimM = minDimPx / pixelsPerMeter;
+                const normType = /персонал|склад|кухня/i.test(zoneName) ? 'staff' : 'guest';
+                const requiredCorridor = normType === 'staff' ? state.normativeCorridorStaff : state.normativeCorridorGuest;
+                const corridorStatus = corridorM >= requiredCorridor ? 'ok' : 'warn';
+                const radiusStatus = minDimM >= state.normativeRadius ? 'ok' : 'warn';
+
+                result.rooms.push({
+                    index: idx + 1,
+                    zone: zoneName,
+                    area_m2: parseFloat(areaM2.toFixed(2)),
+                    perimeter_m: parseFloat(perimeterM.toFixed(2)),
+                    seats: 0,
+                    corridor_m: parseFloat(corridorM.toFixed(2)),
+                    corridor_required: requiredCorridor,
+                    corridor_status: corridorStatus,
+                    radius_status: radiusStatus,
+                    min_dim_m: parseFloat(minDimM.toFixed(2))
+                });
+                room.zoneName = zoneName;
+                result.sumArea += areaM2;
+                result.sumPerimeter += perimeterM;
             });
-            // --- Подсчёт посадочных мест ---
-            let totalSeats = 0;
-            const seatsPerRoom = rooms.map(() => 0);
-            const pointInPoly = (pt, poly) => {
-                let inside = false;
-                for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-                    const xi = poly[i].x, yi = poly[i].y;
-                    const xj = poly[j].x, yj = poly[j].y;
-                    const intersect = ((yi > pt.y) !== (yj > pt.y)) && (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
-                    if (intersect) inside = !inside;
-                }
-                return inside;
-            };
+
             const allObjects = Array.from(dom.itemsContainer.querySelectorAll('.layout-object'));
             allObjects.forEach(el => {
                 const m = getModel(el);
-                const tpl = m.tpl;
-                const seats = ITEM_TEMPLATES[tpl]?.seats || 0;
+                const seats = ITEM_TEMPLATES[m.tpl]?.seats || 0;
                 if (seats > 0) {
-                    totalSeats += seats;
+                    result.totalSeats += seats;
                     const pt = { x: m.x, y: m.y };
-                    rooms.forEach((room, idx) => {
-                        if (pointInPoly(pt, room.points)) seatsPerRoom[idx] += seats;
+                    roomsData.forEach((room, idx) => {
+                        if (pointInPolygon(pt, room.points)) {
+                            result.rooms[idx].seats += seats;
+                        }
                     });
                 }
             });
-            // --- Проверка коллизий ---
+
             const getBoundingBox = (el) => {
+                const target = el.querySelector?.('.core') || el;
                 try {
-                    const bbox = el.getBBox();
-                    if (bbox) {
-                        return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
-                    }
-                } catch (err) {
-                    // Если getBBox недоступен, перейдём к ручному расчёту ниже
+                    const bbox = target.getBBox();
+                    if (!bbox) return null;
+                    return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
+                } catch (e) {
+                    const m = getModel(el);
+                    if (!m) return null;
+                    const w = m.ow * m.sx;
+                    const h = m.oh * m.sy;
+                    const halfW = w / 2;
+                    const halfH = h / 2;
+                    const rad = (m.a || 0) * Math.PI / 180;
+                    const cos = Math.cos(rad);
+                    const sin = Math.sin(rad);
+                    const corners = [
+                        { x: -halfW, y: -halfH },
+                        { x: halfW, y: -halfH },
+                        { x: halfW, y: halfH },
+                        { x: -halfW, y: halfH }
+                    ].map(({ x, y }) => ({
+                        x: m.x + x * cos - y * sin,
+                        y: m.y + x * sin + y * cos
+                    }));
+                    const xs = corners.map(p => p.x);
+                    const ys = corners.map(p => p.y);
+                    const minX = Math.min(...xs);
+                    const maxX = Math.max(...xs);
+                    const minY = Math.min(...ys);
+                    const maxY = Math.max(...ys);
+                    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
                 }
-                const m = getModel(el);
-                const w = m.ow * m.sx;
-                const h = m.oh * m.sy;
-                const halfW = w / 2;
-                const halfH = h / 2;
-                const rad = (m.a || 0) * Math.PI / 180;
-                const cos = Math.cos(rad);
-                const sin = Math.sin(rad);
-                const corners = [
-                    { x: -halfW, y: -halfH },
-                    { x: halfW, y: -halfH },
-                    { x: halfW, y: halfH },
-                    { x: -halfW, y: halfH }
-                ].map(({ x, y }) => ({
-                    x: m.x + x * cos - y * sin,
-                    y: m.y + x * sin + y * cos
-                }));
-                const xs = corners.map(p => p.x);
-                const ys = corners.map(p => p.y);
-                const minX = Math.min(...xs);
-                const maxX = Math.max(...xs);
-                const minY = Math.min(...ys);
-                const maxY = Math.max(...ys);
-                return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
             };
-            const boxesOverlap = (a, b) => {
-                return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-            };
+            const boxesOverlap = (a, b) => a && b && a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
             let collisionCount = 0;
             for (let i = 0; i < allObjects.length; i++) {
                 for (let j = i + 1; j < allObjects.length; j++) {
@@ -485,91 +1037,98 @@
             }
             const comps = Array.from(dom.wallComponentsContainer.querySelectorAll('.wall-component'));
             comps.forEach(comp => {
-                // Некоторые узлы могут не быть SVG‑элементами, поэтому проверяем наличие метода getBBox
-                if (typeof comp.getBBox === 'function') {
-                    try {
-                        const bbox = comp.getBBox();
-                        const compBox = { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
-                        allObjects.forEach(obj => {
-                            const oBox = getBoundingBox(obj);
-                            if (boxesOverlap(compBox, oBox)) {
-                                collisionCount++;
-                                obj.classList.add('collision');
-                                comp.classList.add('collision');
-                            }
-                        });
-                    } catch (ex) {
-                        // если getBBox неожиданно бросает исключение, пропускаем компонент
+                const compBox = getBoundingBox(comp);
+                if (!compBox) return;
+                allObjects.forEach(obj => {
+                    const oBox = getBoundingBox(obj);
+                    if (boxesOverlap(compBox, oBox)) {
+                        collisionCount++;
+                        obj.classList.add('collision');
+                        comp.classList.add('collision');
                     }
-                }
-            });
-            // --- Формирование сообщений ---
-            // Заполнить хранилище результатов анализа для экспорта CSV
-            const analysisResult = { rooms: [], totalSeats: 0, sumArea: 0, sumPerimeter: 0, estimate: 0, collisions: 0 };
-
-            if (rooms.length > 0) {
-                messages.push(`Помещений обнаружено: ${rooms.length}`);
-                // Итоги по помещениям
-                let sumArea = 0;
-                let sumPerimeter = 0;
-                roomResults.forEach((res, idx) => {
-                    const areaM2 = res.area / (pixelsPerMeter * pixelsPerMeter);
-                    const perimeterM = res.perimeter / pixelsPerMeter;
-                    sumArea += areaM2;
-                    sumPerimeter += perimeterM;
-                    const seats = seatsPerRoom[idx];
-                    const corridorWidthM = (res.corridor / pixelsPerMeter).toFixed(1);
-                    // нормативная ширина коридора 1 метр
-                    const corridorOk = (res.corridor / pixelsPerMeter) >= state.normativeCorridorGuest ? 'норма' : 'узко';
-                    // проверка радиуса разворота (минимальный размер ≥ нормативRadius м)
-                    const radiusOk = (res.minDim / pixelsPerMeter) >= state.normativeRadius ? 'норма' : 'мал радиус';
-                    messages.push(`Помещение #${idx + 1} (${res.zone}): площадь ${areaM2.toFixed(1)} м², периметр ${perimeterM.toFixed(1)} м, мест ${seats}, мин. ширина ${corridorWidthM} м (${corridorOk}), радиус (${radiusOk})`);
-                    // Добавляем в анализ для экспорта
-                    analysisResult.rooms.push({
-                        index: idx + 1,
-                        zone: res.zone,
-                        area_m2: parseFloat(areaM2.toFixed(2)),
-                        perimeter_m: parseFloat(perimeterM.toFixed(2)),
-                        seats: seats,
-                        corridor_m: parseFloat(corridorWidthM),
-                        corridor_status: corridorOk,
-                        radius_status: radiusOk
-                    });
                 });
-                // Черновая смета
-                const priceArea = 50; // условная стоимость отделки за м²
-                const pricePerimeter = 10; // условная стоимость плинтуса за метр
-                const estimate = sumArea * priceArea + sumPerimeter * pricePerimeter;
-                messages.push(`Всего посадочных мест: ${totalSeats}`);
-                messages.push(`Черновая смета: ${estimate.toFixed(0)} (площадь ${sumArea.toFixed(1)} м² × ${priceArea}/м² + периметр ${sumPerimeter.toFixed(1)} м × ${pricePerimeter}/м)`);
-                // Записываем в analysisResult
-                analysisResult.totalSeats = totalSeats;
-                analysisResult.sumArea = parseFloat(sumArea.toFixed(2));
-                analysisResult.sumPerimeter = parseFloat(sumPerimeter.toFixed(2));
-                analysisResult.estimate = parseFloat(estimate.toFixed(2));
-            } else {
-                messages.push('Замкнутых помещений не обнаружено');
-                messages.push(`Всего посадочных мест: ${totalSeats}`);
-                analysisResult.totalSeats = totalSeats;
+            });
+            result.collisions = collisionCount;
+
+            const rates = state.estimateRates;
+            result.estimate.finish = parseFloat((result.sumArea * rates.finish).toFixed(2));
+            result.estimate.perimeter = parseFloat((result.sumPerimeter * rates.perimeter).toFixed(2));
+            result.estimate.engineering = parseFloat((result.sumArea * rates.engineering).toFixed(2));
+            result.estimate.total = parseFloat((result.estimate.finish + result.estimate.perimeter + result.estimate.engineering).toFixed(2));
+
+            result.sumArea = parseFloat(result.sumArea.toFixed(2));
+            result.sumPerimeter = parseFloat(result.sumPerimeter.toFixed(2));
+
+            state.lastAnalysis = result;
+            renderAnalysisPanel(result);
+
+            if (!silent) {
+                const summary = `Помещений: ${result.rooms.length}, площадь ${result.sumArea.toFixed(1)} м², мест ${result.totalSeats}, коллизий ${result.collisions}`;
+                utils.showToast(summary, Math.max(3000, summary.length * 60));
             }
-            messages.push(`Обнаружено конфликтов: ${collisionCount}`);
-            analysisResult.collisions = collisionCount;
-            const msg = messages.join('\n');
-            utils.showToast(msg, Math.max(3000, msg.length * 60));
-            // Сохраняем результаты для последующего экспорта в CSV
-            state.lastAnalysis = analysisResult;
         } catch (err) {
             console.error(err);
             utils.showToast('Ошибка анализа: ' + err.message, 5000);
         }
     }
 
-    /**
-     * Загружает готовый мастер‑проект кофейни (пример) на пустой холст.
-     * Все текущие элементы будут удалены. Стены и мебель расставлены
-     * с использованием существующих шаблонов. После загрузки
-     * автоматически создаётся история для отката.
-     */
+    function renderAnalysisPanel(result) {
+        if (dom.analysisSummary) {
+            dom.analysisSummary.innerHTML = '';
+            const nf = typeof Intl !== 'undefined' ? new Intl.NumberFormat('ru-RU') : { format: v => v };
+            const cards = [
+                { label: 'Помещения', value: result.rooms.length },
+                { label: 'Площадь', value: `${result.sumArea.toFixed(1)} м²` },
+                { label: 'Периметр', value: `${result.sumPerimeter.toFixed(1)} м` },
+                { label: 'Места', value: result.totalSeats },
+                { label: 'Коллизии', value: result.collisions },
+                { label: 'Смета', value: `${nf.format(result.estimate.total)} ₽` }
+            ];
+            cards.forEach(card => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'summary-card';
+                const title = document.createElement('h4');
+                title.textContent = card.label;
+                const span = document.createElement('span');
+                span.textContent = card.value;
+                cardEl.appendChild(title);
+                cardEl.appendChild(span);
+                dom.analysisSummary.appendChild(cardEl);
+            });
+            const breakdown = document.createElement('div');
+            breakdown.className = 'summary-card';
+            breakdown.innerHTML = `<h4>Ставки</h4><span>${result.rates.finish} ₽/м² • ${result.rates.perimeter} ₽/м • ${result.rates.engineering} ₽/м² (инж.)</span>`;
+            dom.analysisSummary.appendChild(breakdown);
+        }
+
+        if (dom.analysisRoomsBody) {
+            dom.analysisRoomsBody.innerHTML = '';
+            if (!result.rooms.length) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 8;
+                td.textContent = 'Замкнутые помещения не найдены';
+                tr.appendChild(td);
+                dom.analysisRoomsBody.appendChild(tr);
+            } else {
+                result.rooms.forEach(room => {
+                    const tr = document.createElement('tr');
+                    const corridorClass = room.corridor_status === 'ok' ? 'status-ok' : 'status-warn';
+                    const radiusClass = room.radius_status === 'ok' ? 'status-ok' : 'status-warn';
+                    tr.innerHTML = `
+                        <td>${room.index}</td>
+                        <td>${room.zone}</td>
+                        <td>${room.area_m2.toFixed(2)} м²</td>
+                        <td>${room.perimeter_m.toFixed(2)} м</td>
+                        <td>${room.seats}</td>
+                        <td>${room.min_dim_m.toFixed(2)} м</td>
+                        <td><span class="${corridorClass}">${room.corridor_m.toFixed(2)} м / ≥ ${room.corridor_required} м</span></td>
+                        <td><span class="${radiusClass}">${room.radius_status === 'ok' ? 'норма' : 'меньше нормы'}</span></td>`;
+                    dom.analysisRoomsBody.appendChild(tr);
+                });
+            }
+        }
+    }
     function loadMasterProject() {
         try {
             // подтверждение для перезаписи текущего проекта
@@ -580,10 +1139,22 @@
             // Размер помещения: 10×8 метров (500×400 px при сетке 50)
             const roomWidth = 500;
             const roomHeight = 400;
-            // Создание стен прямоугольника
-            const wallPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            wallPath.setAttribute('d', `M 0 0 L ${roomWidth} 0 L ${roomWidth} ${roomHeight} L 0 ${roomHeight} Z`);
-            dom.wallsContainer.appendChild(wallPath);
+            // Создание стен прямоугольника через новую систему стен
+            const wallPoints = [
+                { x: 0, y: 0 },
+                { x: roomWidth, y: 0 },
+                { x: roomWidth, y: roomHeight },
+                { x: 0, y: roomHeight }
+            ];
+            const wallEl = createWall(wallPoints, true);
+            if (!wallEl) {
+                throw new Error('Не удалось создать стены шаблона');
+            }
+            const wallModel = getWallModel(wallEl);
+            if (wallModel) {
+                wallModel.closed = true;
+                setWallModel(wallEl, wallModel);
+            }
             // Добавление нескольких мебельных элементов
             const objects = [
                 { tpl: 'bar-counter-straight', x: roomWidth / 2, y: 60 },
@@ -617,9 +1188,8 @@
      */
     function exportCsv() {
         try {
-            // Если нет результатов анализа, запустим анализ.
             if (!state.lastAnalysis || !state.lastAnalysis.rooms || state.lastAnalysis.rooms.length === 0) {
-                analysisLayout();
+                analysisLayout({ silent: true });
             }
             const res = state.lastAnalysis;
             if (!res || !res.rooms) {
@@ -627,16 +1197,39 @@
                 return;
             }
             const lines = [];
-            // Заголовок
-            lines.push('Номер,Зона,Площадь (м²),Периметр (м),Места,Ширина коридора (м),Статус коридора,Статус радиуса');
+            lines.push('Номер,Зона,Площадь (м²),Периметр (м),Места,Мин. габарит (м),Коридор (м),Норма коридора,Статус коридора,Статус радиуса');
             res.rooms.forEach(room => {
-                lines.push([room.index, room.zone, room.area_m2, room.perimeter_m, room.seats, room.corridor_m, room.corridor_status, room.radius_status].join(','));
+                lines.push([
+                    room.index,
+                    room.zone,
+                    room.area_m2.toFixed(2),
+                    room.perimeter_m.toFixed(2),
+                    room.seats,
+                    room.min_dim_m.toFixed(2),
+                    room.corridor_m.toFixed(2),
+                    room.corridor_required,
+                    room.corridor_status,
+                    room.radius_status
+                ].join(','));
             });
-            // Сводка
-            lines.push('Сводка,,,,,,');
-            lines.push(['Всего','', res.sumArea, res.sumPerimeter, res.totalSeats,'','',''].join(','));
-            lines.push(['Смета','', res.estimate,'','','','',''].join(','));
-            lines.push(['Коллизии','', res.collisions,'','','','',''].join(','));
+            lines.push('');
+            lines.push('Сводка');
+            lines.push(`Всего помещений,${res.rooms.length}`);
+            lines.push(`Суммарная площадь (м²),${res.sumArea.toFixed(2)}`);
+            lines.push(`Суммарный периметр (м),${res.sumPerimeter.toFixed(2)}`);
+            lines.push(`Всего мест,${res.totalSeats}`);
+            lines.push(`Коллизии,${res.collisions}`);
+            lines.push('');
+            lines.push('Смета');
+            lines.push(`Отделка (₽),${res.estimate.finish}`);
+            lines.push(`Плинтус (₽),${res.estimate.perimeter}`);
+            lines.push(`Инженерия (₽),${res.estimate.engineering}`);
+            lines.push(`Итого (₽),${res.estimate.total}`);
+            lines.push('');
+            lines.push('Нормативы');
+            lines.push(`Коридор гости (м),${res.normatives?.corridorGuest ?? state.normativeCorridorGuest}`);
+            lines.push(`Коридор персонал (м),${res.normatives?.corridorStaff ?? state.normativeCorridorStaff}`);
+            lines.push(`Радиус (м),${res.normatives?.radius ?? state.normativeRadius}`);
             const csv = lines.join('\n');
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
@@ -652,29 +1245,195 @@
     }
 
     // --- HISTORY (UNDO/REDO) ---
-    function snapshot() { return { items: Array.from(dom.itemsContainer.children).filter(n => n.classList.contains('layout-object')).map(getModel), walls: Array.from(dom.wallsContainer.children).map(w => w.getAttribute('d')), components: Array.from(dom.wallComponentsContainer.children).map(c => c.outerHTML) }; }
+    function snapshot() {
+        return {
+            items: Array.from(dom.itemsContainer.children).filter(n => n.classList.contains('layout-object')).map(getModel),
+            walls: Array.from(wallStore.values()).map(model => ({
+                id: model.id,
+                points: model.points.map(p => ({ x: p.x, y: p.y })),
+                closed: model.closed
+            })),
+            components: Array.from(componentStore.values()).map(comp => ({
+                id: comp.id,
+                type: comp.type,
+                wallId: comp.wallId,
+                distance: comp.distance,
+                offset: comp.offset || 0
+            })),
+            measurements: state.measurements.map(m => ({ ...m })),
+            normatives: {
+                corridorGuest: state.normativeCorridorGuest,
+                corridorStaff: state.normativeCorridorStaff,
+                radius: state.normativeRadius
+            },
+            estimate: {
+                preset: state.estimatePreset,
+                rates: { ...state.estimateRates }
+            }
+        };
+    }
     function restore(data) {
         state.history.lock = true;
-        
-        // Clear existing elements
-        Array.from(dom.itemsContainer.children).slice().forEach(n => { if (n.classList.contains('layout-object')) { interact(n).unset(); n.remove(); } });
-        dom.wallsContainer.innerHTML = '';
-        dom.wallComponentsContainer.innerHTML = '';
-        
-        // Restore elements safely
-        (data.items || []).forEach(m => { const el = createLayoutObject(m.tpl, m.x, m.y); setModel(el, m); el.style.display = m.visible ? '' : 'none'; });
-        (data.walls || []).forEach(d => { const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', d); dom.wallsContainer.appendChild(path); });
-        
-        // Safer component restoration
-        const tempDiv = document.createElement('div');
-        (data.components || []).forEach(c => {
-            tempDiv.innerHTML = c;
-            dom.wallComponentsContainer.appendChild(tempDiv.firstChild);
+
+        Array.from(dom.itemsContainer.children).slice().forEach(n => {
+            if (n.classList.contains('layout-object')) {
+                interact(n).unset();
+                n.remove();
+            }
         });
-        
+
+        dom.wallsContainer.innerHTML = '';
+        wallStore.clear();
+        wallIdMap.clear();
+        state.wallCounter = 0;
+
+        dom.wallComponentsContainer.innerHTML = '';
+        componentStore.clear();
+        componentIdMap.clear();
+        state.componentCounter = 0;
+        state.pendingComponentPlacement = null;
+
+        (data.items || []).forEach(m => {
+            const el = createLayoutObject(m.tpl, m.x, m.y);
+            setModel(el, m);
+            el.style.display = m.visible ? '' : 'none';
+        });
+
+        const parseLegacyWall = (raw) => {
+            if (typeof raw !== 'string') return null;
+            const nums = raw.match(/[-+]?\d*\.?\d+/g)?.map(Number) || [];
+            const pts = [];
+            for (let i = 0; i < nums.length; i += 2) {
+                if (Number.isFinite(nums[i]) && Number.isFinite(nums[i + 1])) {
+                    pts.push({ x: nums[i], y: nums[i + 1] });
+                }
+            }
+            if (pts.length < 2) return null;
+            const first = pts[0];
+            const last = pts[pts.length - 1];
+            const closed = Math.abs(first.x - last.x) < 1e-2 && Math.abs(first.y - last.y) < 1e-2;
+            return { points: pts, closed };
+        };
+
+        const parseLegacyComponent = (raw) => {
+            if (typeof raw !== 'string') return null;
+            const transformMatch = raw.match(/transform="([^"]+)"/i);
+            if (!transformMatch) return null;
+            const translateMatch = transformMatch[1].match(/translate\(([-+\d.]+)[ ,]([-+\d.]+)\)/i);
+            if (!translateMatch) return null;
+            const rotateMatch = transformMatch[1].match(/rotate\(([-+\d.]+)\)/i);
+            const x = parseFloat(translateMatch[1]);
+            const y = parseFloat(translateMatch[2]);
+            const angle = rotateMatch ? parseFloat(rotateMatch[1]) : 0;
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+            const type = /<path/i.test(raw) ? 'door' : 'window';
+            return { type, x, y, angle };
+        };
+
+        const restoreLegacyComponent = (raw) => {
+            const legacy = parseLegacyComponent(raw);
+            if (!legacy) return;
+            const placement = findClosestWallPlacement({ x: legacy.x, y: legacy.y });
+            if (!placement.wallEl) return;
+            const compEl = placeWallComponent(legacy.type, {
+                wallEl: placement.wallEl,
+                distance: placement.distance,
+                point: { x: legacy.x, y: legacy.y },
+                angle: legacy.angle
+            });
+            if (!compEl) return;
+            const compModel = componentStore.get(compEl);
+            if (compModel) {
+                compModel.offset = 0;
+                componentStore.set(compEl, compModel);
+            }
+        };
+
+        (data.walls || []).forEach(w => {
+            let wallData = w;
+            if (!wallData || typeof wallData !== 'object' || !Array.isArray(wallData.points)) {
+                wallData = parseLegacyWall(w);
+                if (!wallData) return;
+            }
+            const wallEl = createWall(wallData.points || [], !!wallData.closed);
+            const model = getWallModel(wallEl);
+            if (!model) return;
+            const originalId = model.id;
+            if (w?.id) {
+                model.id = w.id;
+                wallEl.dataset.id = w.id;
+            }
+            model.closed = !!wallData.closed;
+            model.components = [];
+            wallStore.set(wallEl, model);
+            if (originalId && originalId !== model.id) {
+                wallIdMap.delete(originalId);
+            }
+            wallIdMap.set(model.id, wallEl);
+            const num = parseInt(String(model.id).replace(/[^0-9]/g, ''), 10);
+            if (!Number.isNaN(num)) state.wallCounter = Math.max(state.wallCounter, num);
+        });
+
+        (data.components || []).forEach(c => {
+            if (typeof c === 'string') {
+                restoreLegacyComponent(c);
+                return;
+            }
+            const wallEl = wallIdMap.get(c.wallId);
+            if (!wallEl) return;
+            const compEl = placeWallComponent(c.type, { wallEl, distance: c.distance || 0 });
+            const compModel = componentStore.get(compEl);
+            if (!compModel) return;
+            const originalId = compModel.id;
+            if (c.id) {
+                compModel.id = c.id;
+                compEl.dataset.id = c.id;
+            }
+            compModel.offset = c.offset || 0;
+            componentStore.set(compEl, compModel);
+            if (originalId && originalId !== compModel.id) {
+                componentIdMap.delete(originalId);
+            }
+            componentIdMap.set(compModel.id, compEl);
+            const wallModel = getWallModel(wallEl);
+            if (wallModel) {
+                wallModel.components = wallModel.components || [];
+                if (!wallModel.components.includes(compModel)) wallModel.components.push(compModel);
+            }
+            const num = parseInt(String(compModel.id).replace(/[^0-9]/g, ''), 10);
+            if (!Number.isNaN(num)) state.componentCounter = Math.max(state.componentCounter, num);
+        });
+
+        state.measurements = Array.isArray(data.measurements) ? data.measurements.map(m => ({ ...m })) : [];
+        if (state.measurements.length) {
+            const maxMeasureId = state.measurements.reduce((max, m) => {
+                const num = parseInt(String(m.id).replace(/[^0-9]/g, ''), 10);
+                return Number.isNaN(num) ? max : Math.max(max, num);
+            }, 0);
+            state.measureCounter = maxMeasureId;
+        } else {
+            state.measureCounter = 0;
+        }
+        renderMeasurementOverlay();
+        renderMeasurementTable();
+
+        if (data.normatives) {
+            if (typeof data.normatives.corridorGuest === 'number') state.normativeCorridorGuest = data.normatives.corridorGuest;
+            if (typeof data.normatives.corridorStaff === 'number') state.normativeCorridorStaff = data.normatives.corridorStaff;
+            if (typeof data.normatives.radius === 'number') state.normativeRadius = data.normatives.radius;
+            syncNormativeControls();
+        }
+
+        if (data.estimate) {
+            state.estimatePreset = data.estimate.preset || 'custom';
+            state.estimateRates = { ...state.estimateRates, ...(data.estimate.rates || {}) };
+            syncPricingControls();
+        }
+
         clearSelections();
         state.history.lock = false;
         updateLayersList();
+        analysisLayout({ silent: true });
     }
     function commit(reason) { if (state.history.lock) return; const snap = snapshot(); state.history.stack = state.history.stack.slice(0, state.history.idx + 1); state.history.stack.push(snap); state.history.idx++; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(snap)); if (reason !== 'add_wall') { updateLayersList(); } }
     function undo() { if (state.history.idx > 0) { state.history.idx--; restore(state.history.stack[state.history.idx]); } }
@@ -758,16 +1517,16 @@
 
         // Удаление объектов
         if (e.key === 'Delete' || e.key === 'Backspace') {
-            if (state.selectedObject) deleteObject(state.selectedObject);
-            if (state.selectedWall) {
-                state.selectedWall.remove();
-                clearSelections();
-                commit('delete_wall');
-            }
-            if (state.selectedComponent) {
-                state.selectedComponent.remove();
-                clearSelections();
-                commit('delete_component');
+            if (state.selectedObject) { deleteObject(state.selectedObject); return; }
+            if (state.selectedComponent) { const comp = state.selectedComponent; clearSelections(); deleteComponent(comp); return; }
+            if (state.selectedWall) { const wall = state.selectedWall; clearSelections(); deleteWall(wall); return; }
+            if (state.selectedWallHandle) {
+                const { wall, index } = state.selectedWallHandle;
+                if (removeWallVertex(wall, index)) {
+                    state.selectedWallHandle = null;
+                    commit('wall_vertex_remove');
+                }
+                return;
             }
             return;
         }
@@ -819,6 +1578,23 @@
         }
     }
     function deleteObject(el) { if (!el) return; if (getModel(el).locked) { utils.showToast('Объект заблокирован'); return; } interact(el).unset(); el.remove(); selectObject(null); commit('delete'); }
+    function deleteComponent(compEl) {
+        if (!compEl) return;
+        const compModel = componentStore.get(compEl);
+        if (compModel) {
+            const wallEl = wallIdMap.get(compModel.wallId);
+            const wallModel = getWallModel(wallEl);
+            if (wallModel && Array.isArray(wallModel.components)) {
+                wallModel.components = wallModel.components.filter(c => c.id !== compModel.id);
+            }
+            componentStore.delete(compEl);
+            componentIdMap.delete(compModel.id);
+            if (wallEl) updateWallComponentsPosition(wallEl);
+        }
+        compEl.remove();
+        if (state.selectedComponent === compEl) state.selectedComponent = null;
+        commit('delete_component');
+    }
     function duplicateObject(el) { if (getModel(el).locked) { utils.showToast('Объект заблокирован'); return; } const m = getModel(el); m.x += 16; m.y += 16; const copy = createLayoutObject(m.tpl, m.x, m.y); setModel(copy, m); selectObject(copy); commit('duplicate'); }
     function handleKeyUp(e) {
         if (e.key === 'Shift') state.isShiftHeld = false;
@@ -848,17 +1624,13 @@
             // Измерительный инструмент
             if (state.activeTool === 'measure') {
                 const p = utils.toSVGPoint(e.clientX, e.clientY);
-                // Если ещё не зафиксировали первую точку, запоминаем её и очищаем только визуальный слой,
-                // не сбрасывая массив measurePoints. Это позволяет правильно отрисовать вторую точку.
                 if (state.measurePoints.length === 0) {
-                    state.measurePoints.push(p);
-                    // очищаем прошлые линии, но не сбрасываем measurePoints
-                    if (dom.measurementLayer) dom.measurementLayer.innerHTML = '';
+                    state.measurePoints.push({ x: p.x, y: p.y });
+                    renderMeasurementOverlay();
                 } else if (state.measurePoints.length === 1) {
-                    // Завершаем измерение: добавляем вторую точку, рисуем линию и подпись, затем сбрасываем state.measurePoints
-                    state.measurePoints.push(p);
-                    drawMeasurementLine(state.measurePoints[0], state.measurePoints[1]);
-                    finalizeMeasurement();
+                    const start = state.measurePoints[0];
+                    addMeasurement(start, { x: p.x, y: p.y });
+                    state.measurePoints = [];
                 }
                 return;
             }
@@ -873,20 +1645,18 @@
             }
             // Установка двери/окна
             else if (state.activeTool === 'door' || state.activeTool === 'window') {
-                const preview = dom.previewsContainer.firstChild;
-                if (preview) {
-                    const transform = preview.getAttribute('transform');
-                    const regex = /translate\(([^,\s]+)[\s,]*([^)]+)\)\srotate\(([^)]+)\)/;
-                    const match = transform.match(regex);
-                    if (match) {
-                        placeWallComponent(state.activeTool, { x: parseFloat(match[1]), y: parseFloat(match[2]) }, parseFloat(match[3]));
-                    }
+                if (state.pendingComponentPlacement && state.pendingComponentPlacement.wallEl) {
+                    placeWallComponent(state.activeTool, state.pendingComponentPlacement);
+                    state.pendingComponentPlacement = null;
+                    dom.previewsContainer.innerHTML = '';
+                } else {
+                    utils.showToast('Нет стены рядом для установки');
                 }
             }
             // Выбор объектов (указатель)
             else {
                 if (e.button === 0) {
-                    const interactive = e.target.closest('.layout-object, .wall-component, #walls path');
+                    const interactive = e.target.closest('.layout-object, .wall-component, .wall');
                     if (!interactive) {
                         e.preventDefault();
                         startPan(e);
@@ -895,7 +1665,7 @@
                 }
                 const t = e.target.closest('.layout-object');
                 if (t) { selectObject(t); return; }
-                const w = e.target.closest('#walls path');
+                const w = ensureWallElement(e.target.closest('.wall path, .wall'));
                 if (w) { selectWall(w); return; }
                 const c = e.target.closest('.wall-component');
                 if (c) { selectComponent(c); return; }
@@ -915,23 +1685,9 @@
             // Превью дверей/окон
             else if (tool === 'door' || tool === 'window') {
                 dom.previewsContainer.innerHTML = '';
-                const walls = Array.from(dom.wallsContainer.children);
-                let closest = { dist: Infinity, point: null, angle: 0, wall: null };
-                walls.forEach(wall => {
-                    const len = wall.getTotalLength();
-                    for (let i = 0; i < len; i += 5) {
-                        const pt1 = wall.getPointAtLength(i);
-                        const pt2 = wall.getPointAtLength(i + 5);
-                        if (!pt2) continue;
-                        const segPt = getClosestPointOnSegment(p, pt1, pt2);
-                        const d = distance(p, segPt);
-                        if (d < closest.dist) {
-                            const angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x) * 180 / Math.PI;
-                            closest = { dist: d, point: segPt, angle: angle, wall: wall };
-                        }
-                    }
-                });
-                if (closest.dist < 50) {
+                state.pendingComponentPlacement = null;
+                const closest = findClosestWallPlacement(p);
+                if (closest.wallEl && closest.dist < 60) {
                     const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                     const visual = tool === 'door'
                         ? `<path d="M -40 0 A 40 40 0 0 1 0 -40" stroke="#8B4513" stroke-width="2" fill="rgba(255,228,196,0.5)"/><line x1="-40" y1="0" x2="-40" y2="-5" stroke="#8B4513" stroke-width="2"/>`
@@ -939,12 +1695,19 @@
                     el.innerHTML = visual;
                     el.setAttribute('transform', `translate(${closest.point.x}, ${closest.point.y}) rotate(${closest.angle})`);
                     dom.previewsContainer.appendChild(el);
+                    state.pendingComponentPlacement = closest;
                 }
             }
             // Динамическое измерение: если одна точка выбрана, рисуем линию к курсору
             else if (tool === 'measure' && state.measurePoints.length === 1) {
                 const p0 = state.measurePoints[0];
-                drawMeasurementLine(p0, p);
+                const preview = {
+                    p0,
+                    p1: { x: p.x, y: p.y },
+                    meters: distance(p0, p) / (state.pixelsPerMeter || state.gridSize || 1),
+                    angle: (Math.atan2(p.y - p0.y, p.x - p0.x) * 180 / Math.PI + 360) % 360
+                };
+                renderMeasurementOverlay(preview);
             }
         }));
         // Контекстное меню открывается только в режиме указателя. По ПКМ выбираем объект и отображаем меню.
@@ -964,6 +1727,27 @@
         dom.propControls.addEventListener('change', updateFromProperties);
         dom.propControls.addEventListener('keydown', e => e.stopPropagation());
         dom.layersList.addEventListener('click', onLayersClick);
+        dom.measureTableBody?.addEventListener('click', e => {
+            const btn = e.target.closest('button[data-id]');
+            if (!btn) return;
+            removeMeasurement(btn.dataset.id);
+        });
+        dom.measureClear?.addEventListener('click', clearAllMeasurements);
+        dom.normativeCorridorGuest?.addEventListener('change', () => { updateNormativesFromInputs(); analysisLayout({ silent: true }); });
+        dom.normativeCorridorStaff?.addEventListener('change', () => { updateNormativesFromInputs(); analysisLayout({ silent: true }); });
+        dom.normativeRadius?.addEventListener('change', () => { updateNormativesFromInputs(); analysisLayout({ silent: true }); });
+        dom.pricingPreset?.addEventListener('change', e => {
+            const value = e.target.value;
+            if (value === 'custom') {
+                state.estimatePreset = 'custom';
+                commit('estimate_preset');
+                return;
+            }
+            applyEstimatePreset(value);
+            analysisLayout({ silent: true });
+        });
+        const rateInputs = [dom.rateFinish, dom.ratePerimeter, dom.rateEngineering];
+        rateInputs.forEach(input => input?.addEventListener('change', () => { updateRatesFromInputs(); analysisLayout({ silent: true }); }));
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
         dom.toggleSidebar?.addEventListener('click', () => dom.sidebar.classList.toggle('visible'));
@@ -1048,6 +1832,10 @@
         // Final setup
         toggleTool('pointer');
         updateGridSize();
+        renderMeasurementOverlay();
+        renderMeasurementTable();
+        syncNormativeControls();
+        syncPricingControls();
 
         // Инициализация ViewBox для поддержания масштабирования и панорамирования
         state.viewBox = {
@@ -1060,14 +1848,15 @@
         // Load saved data robustly
         try {
             const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-            if (saved) { 
+            if (saved) {
                 restore(JSON.parse(saved));
             }
         } catch (e) {
             console.error("Failed to load or restore layout, starting fresh.", e);
             // If restoring fails, we still have a working app, just empty.
         }
-        
+
+        analysisLayout({ silent: true });
         commit('init');
     }
 
