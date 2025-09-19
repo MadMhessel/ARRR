@@ -23,7 +23,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 .draggable-item, .tool-button {display:flex;align-items:center;gap:8px;line-height:1;padding:9px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fafafa;cursor:pointer;user-select:none;transition:.2s}
 .draggable-item:hover, .tool-button:hover {background:#e9ecef;box-shadow:0 2px 4px rgba(0,0,0,.08);transform:translateY(-1px)}
 .tool-button.active { background-color: var(--accent); color: white; border-color: var(--accent); }
-#btnExport, #btnAnalysis, #btnCsv, #btnTemplate, #btnFocus, #btn-focus {
+#btnExport, #btnAnalysis, #btnCsv, #btnTemplate, #btnFocus, #btn-focus, .ui-bar button[data-icon] {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -31,13 +31,13 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 }
 
 /* Иконки в кнопках панелей */
-.tool-button .icon, #btnExport .icon, #btnAnalysis .icon, #btnCsv .icon, #btnTemplate .icon, #btnFocus .icon, #btn-focus .icon {
+.tool-button .icon, .ui-bar button[data-icon] .icon, #btnFocus .icon, #btn-focus .icon {
   width: 18px;
   height: 18px;
   display: inline-flex;
 }
 
-.tool-button .icon svg, #btnExport .icon svg, #btnAnalysis .icon svg, #btnCsv .icon svg, #btnTemplate .icon svg, #btnFocus .icon svg, #btn-focus .icon svg {
+.tool-button .icon svg, .ui-bar button[data-icon] .icon svg, #btnFocus .icon svg, #btn-focus .icon svg {
   width: 18px;
   height: 18px;
   fill: currentColor;
@@ -49,7 +49,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
   opacity: 1;
 }
 
-.tool-button .label, #btnExport .label, #btnAnalysis .label, #btnCsv .label, #btnTemplate .label, #btnFocus .label, #btn-focus .label {
+.tool-button .label, .ui-bar button[data-icon] .label, #btnFocus .label, #btn-focus .label {
   white-space: nowrap;
 }
 #trash{margin-top:auto;padding:14px;border:2px dashed var(--border);border-radius:8px;text-align:center;color:var(--muted);transition:.3s}
@@ -71,38 +71,29 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 }
 svg{width:100%;height:100%}
 svg.tool-active { cursor: crosshair; }
-.wall,.inner-wall,.win,.col,.door-arc,.dim-line, #walls-layer path {vector-effect:non-scaling-stroke}
-#walls-layer .wall path {
-  fill: none;
+.wall,.inner-wall,.win,.col,.door-arc,.dim-line {vector-effect:non-scaling-stroke}
+#walls-layer .wall {
   cursor: pointer;
-  stroke-linejoin: round;
-  stroke-linecap: round;
+}
+#walls-layer .wall .wall-body,
+#walls-layer .wall .wall-edge {
+  fill: none;
   transition: stroke .2s ease, stroke-width .2s ease, stroke-dasharray .2s ease;
 }
-#walls-layer .wall[data-type="structural"] path {
-  stroke: #343a40;
-  stroke-width: 16;
-}
-#walls-layer .wall[data-type="partition"] path {
-  stroke: #868e96;
-  stroke-width: 10;
-  stroke-dasharray: 28 12;
+#walls-layer .wall .wall-body {
   stroke-linecap: butt;
+  stroke-linejoin: round;
 }
-#walls-layer .wall[data-type="glass"] path {
-  stroke: rgba(77,171,247,.9);
-  stroke-width: 8;
-  stroke-dasharray: 12 8;
+#walls-layer .wall .wall-edge {
   stroke-linecap: butt;
+  stroke-linejoin: round;
+  pointer-events: stroke;
 }
-#walls-layer .wall[data-type="half"] path {
-  stroke: #adb5bd;
-  stroke-width: 8;
-  stroke-dasharray: 6 8;
-  stroke-linecap: butt;
-}
-#walls-layer .wall.selected path {
+#walls-layer .wall.selected .wall-edge {
   filter: drop-shadow(0 0 6px rgba(0,102,204,.6));
+}
+#walls-layer .wall.selected .wall-body {
+  filter: drop-shadow(0 0 4px rgba(0,102,204,.35));
 }
 .wall-component { cursor: pointer; }
 .wall-component.selected > * { stroke: var(--accent) !important; stroke-width: 3; vector-effect: non-scaling-stroke; }
@@ -299,11 +290,11 @@ svg.tool-active { cursor: crosshair; }
   color:var(--text);
 }
 .wall-type-option svg{width:48px;height:18px;overflow:visible;}
-.wall-type-option line{stroke-linecap:round;stroke-linejoin:round;}
-.wall-type-option[data-type="structural"] line{stroke:#343a40;stroke-width:12;}
-.wall-type-option[data-type="partition"] line{stroke:#868e96;stroke-width:9;stroke-dasharray:22 10;stroke-linecap:butt;}
-.wall-type-option[data-type="glass"] line{stroke:rgba(77,171,247,.9);stroke-width:7;stroke-dasharray:10 6;stroke-linecap:butt;}
-.wall-type-option[data-type="half"] line{stroke:#adb5bd;stroke-width:7;stroke-dasharray:5 7;stroke-linecap:butt;}
+.wall-type-option line{stroke-linecap:butt;stroke-linejoin:round;}
+.wall-type-option[data-type="structural"] line{stroke:#0F2E2B;stroke-width:12;stroke-opacity:.85;}
+.wall-type-option[data-type="partition"] line{stroke:#0F2E2B;stroke-width:9;stroke-dasharray:18 8;stroke-opacity:.7;}
+.wall-type-option[data-type="glass"] line{stroke:#2F7EBB;stroke-width:7;stroke-dasharray:12 6;}
+.wall-type-option[data-type="half"] line{stroke:#0F2E2B;stroke-width:7;stroke-dasharray:8 6;stroke-opacity:.55;}
 .wall-type-option.active{
   border-color:var(--accent);
   box-shadow:0 0 0 2px rgba(0,102,204,.2);
