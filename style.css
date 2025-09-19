@@ -41,16 +41,21 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 }
 svg{width:100%;height:100%}
 svg.tool-active { cursor: crosshair; }
-.wall,.inner-wall,.win,.col,.door-arc,.dim-line, #walls path {vector-effect:non-scaling-stroke}
-#walls path { fill:none;stroke:#343a40;stroke-width:11;stroke-linejoin:round;stroke-linecap:round; cursor: pointer; }
-#walls path.selected { stroke: var(--accent); }
+.wall,.inner-wall,.win,.col,.door-arc,.dim-line, #walls-layer path {vector-effect:non-scaling-stroke}
+#walls-layer path { fill:none;stroke:#343a40;stroke-width:11;stroke-linejoin:round;stroke-linecap:round; cursor: pointer; }
+#walls-layer path.selected { stroke: var(--accent); }
 .wall-component { cursor: pointer; }
 .wall-component.selected > * { stroke: var(--accent) !important; stroke-width: 3; vector-effect: non-scaling-stroke; }
 .floor{fill:#fdfdfd;}
-#gridRect{pointer-events:none}
+#grid-layer{pointer-events:none}
+
+#preview-layer,
+#analysis-layer,
+#measurement-layer,
+#ui-layer{pointer-events:none}
 
 /* --- Measurement Layer --- */
-#measurement line {
+#measurement-layer line {
   vector-effect: non-scaling-stroke;
   stroke: var(--accent);
   /* Толще, чтобы линия была лучше видна */
@@ -58,7 +63,7 @@ svg.tool-active { cursor: crosshair; }
   marker-start: url(#dim-arrow);
   marker-end: url(#dim-arrow);
 }
-#measurement text {
+#measurement-layer text {
   font-size: 14px;
   font-weight: bold;
   fill: var(--accent);
@@ -69,7 +74,7 @@ svg.tool-active { cursor: crosshair; }
 }
 
 /* Слой измерений не должен перехватывать события мыши, иначе клики перестанут работать */
-#measurement {
+#measurement-layer {
   pointer-events: none;
 }
 
@@ -192,8 +197,8 @@ svg.tool-active { cursor: crosshair; }
 .wall-handles circle{fill:var(--accent);stroke:#fff;stroke-width:2;pointer-events:all;cursor:pointer}
 .wall-handles circle.active{fill:var(--danger)}
 .wall-segment-insert{fill:#fff;stroke:var(--accent);stroke-dasharray:2 2;pointer-events:all;cursor:crosshair;opacity:.7}
-#walls .wall.selected .wall-handles,#walls .wall.selected .wall-segment-insert{display:block}
-#walls .wall .wall-handles,#walls .wall .wall-segment-insert{display:none}
+#walls-layer .wall.selected .wall-handles,#walls-layer .wall.selected .wall-segment-insert{display:block}
+#walls-layer .wall .wall-handles,#walls-layer .wall .wall-segment-insert{display:none}
 .status-ok{color:#2b8a3e;font-weight:600}
 .status-warn{color:var(--danger);font-weight:600}
 
