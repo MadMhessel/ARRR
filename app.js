@@ -54,6 +54,7 @@
         objectCounter: 0,
         isShiftHeld: false,
         gridSize: 50,
+        pixelsPerMeter: 50,
         history: { stack: [], idx: -1, lock: false },
         activeTool: 'pointer',
         currentWallPoints: [],
@@ -187,7 +188,18 @@
     // --- GRID & GUIDES ---
     function snap(v) { return Math.round(v / state.gridSize) * state.gridSize; }
     function snapSelectedToGrid(el, sizeToo = false) { const m = getModel(el); m.x = snap(m.x); m.y = snap(m.y); if (sizeToo) { m.sx = Math.max(0.1, (snap(m.ow * m.sx)) / m.ow); m.sy = Math.max(0.1, (snap(m.oh * m.sy)) / m.oh); } setModel(el, m); }
-    function updateGridSize() { state.gridSize = +dom.gridSelect.value; const w = String(state.gridSize); dom.gridPattern.setAttribute('width', w); dom.gridPattern.setAttribute('height', w); const path = dom.gridPattern.querySelector('path'); path?.setAttribute('d', `M ${w} 0 L 0 0 0 ${w}`); utils.showToast(`Сетка ${dom.gridSelect.options[dom.gridSelect.selectedIndex].text}`); }
+    function updateGridSize() {
+        state.gridSize = +dom.gridSelect.value;
+        const w = String(state.gridSize);
+        dom.gridPattern.setAttribute('width', w);
+        dom.gridPattern.setAttribute('height', w);
+        const path = dom.gridPattern.querySelector('path');
+        path?.setAttribute('d', `M ${w} 0 L 0 0 0 ${w}`);
+        const selectedOption = dom.gridSelect.options[dom.gridSelect.selectedIndex];
+        const metersPerCell = parseFloat(selectedOption?.dataset?.meters || selectedOption?.textContent) || 1;
+        state.pixelsPerMeter = metersPerCell ? state.gridSize / metersPerCell : state.gridSize;
+        utils.showToast(`Сетка ${selectedOption?.text || ''}`);
+    }
     function drawGuideLine(x1, y1, x2, y2, id) { let l = document.getElementById(id); if (!l) { l = document.createElementNS('http://www.w3.org/2000/svg', 'line'); l.id = id; l.setAttribute('stroke', '#8ecae6'); l.setAttribute('stroke-dasharray', '4 4'); l.setAttribute('vector-effect', 'non-scaling-stroke'); dom.svg.insertBefore(l, dom.itemsContainer); } l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2); }
     function hideGuide(id) { document.getElementById(id)?.remove(); }
     function clearGuides() { hideGuide('gX'); hideGuide('gY'); }
@@ -199,6 +211,11 @@
         dom.svg.setAttribute('viewBox', `${state.viewBox.x} ${state.viewBox.y} ${state.viewBox.width} ${state.viewBox.height}`);
     }
     function startPan(e) {
+        if (!state.viewBox) {
+            const vb = dom.svg.viewBox?.baseVal;
+            if (!vb) return;
+            state.viewBox = { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
+        }
         state.isPanning = true;
         state.panStart = { x: e.clientX, y: e.clientY };
         state.panViewBox = { ...state.viewBox };
@@ -254,7 +271,8 @@
         layer.appendChild(line);
         // подпись расстояния
         const dist = distance(p0, p1);
-        const meters = (dist / state.gridSize).toFixed(2);
+        const pixelsPerMeter = state.pixelsPerMeter || state.gridSize || 1;
+        const meters = (dist / pixelsPerMeter).toFixed(2);
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         const midx = (p0.x + p1.x) / 2;
         const midy = (p0.y + p1.y) / 2;
@@ -293,6 +311,7 @@
             dom.itemsContainer.querySelectorAll('.layout-object').forEach(el => el.classList.remove('collision'));
             dom.wallComponentsContainer.querySelectorAll('.wall-component').forEach(el => el.classList.remove('collision'));
             const messages = [];
+            const pixelsPerMeter = state.pixelsPerMeter || state.gridSize || 1;
             // --- Поиск замкнутых помещений ---
             const wallEls = Array.from(dom.wallsContainer.querySelectorAll('path'));
             const rooms = [];
@@ -416,12 +435,38 @@
             });
             // --- Проверка коллизий ---
             const getBoundingBox = (el) => {
+                try {
+                    const bbox = el.getBBox();
+                    if (bbox) {
+                        return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
+                    }
+                } catch (err) {
+                    // Если getBBox недоступен, перейдём к ручному расчёту ниже
+                }
                 const m = getModel(el);
                 const w = m.ow * m.sx;
                 const h = m.oh * m.sy;
-                const minX = m.x - m.cx * m.sx;
-                const minY = m.y - m.cy * m.sy;
-                return { x: minX, y: minY, w: w, h: h };
+                const halfW = w / 2;
+                const halfH = h / 2;
+                const rad = (m.a || 0) * Math.PI / 180;
+                const cos = Math.cos(rad);
+                const sin = Math.sin(rad);
+                const corners = [
+                    { x: -halfW, y: -halfH },
+                    { x: halfW, y: -halfH },
+                    { x: halfW, y: halfH },
+                    { x: -halfW, y: halfH }
+                ].map(({ x, y }) => ({
+                    x: m.x + x * cos - y * sin,
+                    y: m.y + x * sin + y * cos
+                }));
+                const xs = corners.map(p => p.x);
+                const ys = corners.map(p => p.y);
+                const minX = Math.min(...xs);
+                const maxX = Math.max(...xs);
+                const minY = Math.min(...ys);
+                const maxY = Math.max(...ys);
+                return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
             };
             const boxesOverlap = (a, b) => {
                 return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -468,16 +513,16 @@
                 let sumArea = 0;
                 let sumPerimeter = 0;
                 roomResults.forEach((res, idx) => {
-                    const areaM2 = res.area / (state.gridSize * state.gridSize);
-                    const perimeterM = res.perimeter / state.gridSize;
+                    const areaM2 = res.area / (pixelsPerMeter * pixelsPerMeter);
+                    const perimeterM = res.perimeter / pixelsPerMeter;
                     sumArea += areaM2;
                     sumPerimeter += perimeterM;
                     const seats = seatsPerRoom[idx];
-                    const corridorWidthM = (res.corridor / state.gridSize).toFixed(1);
+                    const corridorWidthM = (res.corridor / pixelsPerMeter).toFixed(1);
                     // нормативная ширина коридора 1 метр
-                    const corridorOk = (res.corridor / state.gridSize) >= state.normativeCorridorGuest ? 'норма' : 'узко';
+                    const corridorOk = (res.corridor / pixelsPerMeter) >= state.normativeCorridorGuest ? 'норма' : 'узко';
                     // проверка радиуса разворота (минимальный размер ≥ нормативRadius м)
-                    const radiusOk = (res.minDim / state.gridSize) >= state.normativeRadius ? 'норма' : 'мал радиус';
+                    const radiusOk = (res.minDim / pixelsPerMeter) >= state.normativeRadius ? 'норма' : 'мал радиус';
                     messages.push(`Помещение #${idx + 1} (${res.zone}): площадь ${areaM2.toFixed(1)} м², периметр ${perimeterM.toFixed(1)} м, мест ${seats}, мин. ширина ${corridorWidthM} м (${corridorOk}), радиус (${radiusOk})`);
                     // Добавляем в анализ для экспорта
                     analysisResult.rooms.push({
@@ -840,6 +885,14 @@
             }
             // Выбор объектов (указатель)
             else {
+                if (e.button === 0) {
+                    const interactive = e.target.closest('.layout-object, .wall-component, #walls path');
+                    if (!interactive) {
+                        e.preventDefault();
+                        startPan(e);
+                        return;
+                    }
+                }
                 const t = e.target.closest('.layout-object');
                 if (t) { selectObject(t); return; }
                 const w = e.target.closest('#walls path');
