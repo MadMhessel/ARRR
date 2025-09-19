@@ -31,6 +31,7 @@
         ctx: document.getElementById('ctx'),
         gridPattern: document.getElementById('grid'),
         gridRect: document.getElementById('grid-surface'),
+        gridLinesGroup: document.getElementById('grid-lines'),
         layersPanel: document.getElementById('layers-panel'),
         layersList: document.getElementById('layers-list'),
         main: document.getElementById('main'),
@@ -204,6 +205,12 @@
 
     const snapState = {
         markerPool: [],
+    };
+
+    const gridRenderState = {
+        majorStride: 5,
+        minorPath: null,
+        majorPath: null,
     };
 
     function getSnapRadiusSvg() {
@@ -1028,16 +1035,112 @@
         dom.gridRect = rect;
         return rect;
     }
+    function ensureGridLines() {
+        if (!dom.gridLinesGroup || !dom.gridLinesGroup.ownerSVGElement) {
+            const layer = document.getElementById('grid-layer');
+            if (!layer) return null;
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.id = 'grid-lines';
+            group.setAttribute('pointer-events', 'none');
+            layer.appendChild(group);
+            dom.gridLinesGroup = group;
+            gridRenderState.minorPath = null;
+            gridRenderState.majorPath = null;
+        }
+        const group = dom.gridLinesGroup;
+        if (!gridRenderState.minorPath || gridRenderState.minorPath.parentNode !== group) {
+            const minor = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            minor.dataset.role = 'grid-minor';
+            minor.setAttribute('fill', 'none');
+            minor.setAttribute('stroke', '#e7ebf2');
+            minor.setAttribute('stroke-width', '0.6');
+            minor.setAttribute('vector-effect', 'non-scaling-stroke');
+            minor.setAttribute('shape-rendering', 'crispEdges');
+            group.appendChild(minor);
+            gridRenderState.minorPath = minor;
+        }
+        if (!gridRenderState.majorPath || gridRenderState.majorPath.parentNode !== group) {
+            const major = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            major.dataset.role = 'grid-major';
+            major.setAttribute('fill', 'none');
+            major.setAttribute('stroke', '#c7d0dd');
+            major.setAttribute('stroke-width', '1.1');
+            major.setAttribute('vector-effect', 'non-scaling-stroke');
+            major.setAttribute('shape-rendering', 'crispEdges');
+            group.appendChild(major);
+            gridRenderState.majorPath = major;
+        }
+        return group;
+    }
+    function roundTo(value, digits = 3) {
+        const factor = 10 ** digits;
+        return Math.round(value * factor) / factor;
+    }
+    function renderGridLines() {
+        const view = state.viewBox;
+        const step = state.gridSize;
+        if (!view || !Number.isFinite(step) || step <= 0) return;
+        const group = ensureGridLines();
+        if (!group || !gridRenderState.minorPath || !gridRenderState.majorPath) return;
+
+        const margin = Math.max(step * 4, Math.min(view.width, view.height) * 0.25);
+        const startCol = Math.floor((view.x - margin) / step);
+        const endCol = Math.ceil((view.x + view.width + margin) / step);
+        const startRow = Math.floor((view.y - margin) / step);
+        const endRow = Math.ceil((view.y + view.height + margin) / step);
+
+        const x0 = roundTo(view.x - margin, 3);
+        const x1 = roundTo(view.x + view.width + margin, 3);
+        const y0 = roundTo(view.y - margin, 3);
+        const y1 = roundTo(view.y + view.height + margin, 3);
+
+        let minorSegments = '';
+        let majorSegments = '';
+        const stride = Math.max(1, Math.round(gridRenderState.majorStride));
+
+        for (let col = startCol; col <= endCol; col++) {
+            const x = roundTo(col * step, 3);
+            const isMajor = ((col % stride) + stride) % stride === 0;
+            const segment = `M ${x} ${y0} V ${y1}`;
+            if (isMajor) {
+                majorSegments += segment;
+            } else {
+                minorSegments += segment;
+            }
+        }
+        for (let row = startRow; row <= endRow; row++) {
+            const y = roundTo(row * step, 3);
+            const isMajor = ((row % stride) + stride) % stride === 0;
+            const segment = `M ${x0} ${y} H ${x1}`;
+            if (isMajor) {
+                majorSegments += segment;
+            } else {
+                minorSegments += segment;
+            }
+        }
+
+        gridRenderState.minorPath.setAttribute('d', minorSegments || 'M 0 0');
+        gridRenderState.majorPath.setAttribute('d', majorSegments || 'M 0 0');
+    }
+    function updateGridMajorStride() {
+        const meters = Number.isFinite(state.gridStepMeters) && state.gridStepMeters > 0
+            ? state.gridStepMeters
+            : CONST.GRID;
+        const stride = Math.max(1, Math.round(1 / meters));
+        gridRenderState.majorStride = Math.min(50, stride);
+    }
     function updateGridViewport() {
         if (!state.viewBox) return;
         const rect = ensureGridRect();
-        if (!rect) return;
-        const { x, y, width, height } = state.viewBox;
-        const padding = Math.max(state.gridSize || 0, 50);
-        rect.setAttribute('x', (x - padding).toString());
-        rect.setAttribute('y', (y - padding).toString());
-        rect.setAttribute('width', (width + padding * 2).toString());
-        rect.setAttribute('height', (height + padding * 2).toString());
+        if (rect) {
+            const { x, y, width, height } = state.viewBox;
+            const padding = Math.max(state.gridSize || 0, Math.min(width, height) * 0.1);
+            rect.setAttribute('x', roundTo(x - padding, 3).toString());
+            rect.setAttribute('y', roundTo(y - padding, 3).toString());
+            rect.setAttribute('width', roundTo(width + padding * 2, 3).toString());
+            rect.setAttribute('height', roundTo(height + padding * 2, 3).toString());
+        }
+        renderGridLines();
     }
     function applyGridPatternSize(sizePx) {
         if (!Number.isFinite(sizePx) || sizePx <= 0) return;
@@ -1115,6 +1218,8 @@
             changed = Math.abs(prevMeters - commitMeters) > 1e-6;
             state.gridStepMeters = commitMeters;
         }
+
+        updateGridMajorStride();
 
         if (!silent && !deferInvalid) {
             const messageMeters = state.gridStepMeters;
