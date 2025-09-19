@@ -82,7 +82,7 @@
                             <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.1"/>
                         </filter>
                         <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-                            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e9ecef" stroke-width="1"/>
+                            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e9ecef" stroke-width="1" vector-effect="non-scaling-stroke" shape-rendering="crispEdges"/>
                         </pattern>
                         <marker id="dim-arrow" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                             <path d="M0 0L10 5L0 10z" fill="#aaa" />
@@ -177,7 +177,8 @@
                     </defs>
                     <rect width="100%" height="100%" class="floor"/>
                     <g id="grid-layer" pointer-events="none">
-                        <rect width="100%" height="100%" fill="url(#grid)" opacity="0.7"/>
+                        <rect id="grid-surface" width="100%" height="100%" fill="none" opacity="1"/>
+                        <g id="grid-lines" aria-hidden="true"></g>
                     </g>
                     <g id="underlay-layer"></g>
                     <g id="walls-layer"></g>
