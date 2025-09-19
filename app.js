@@ -748,12 +748,47 @@
         }
     }
 
+    function getSvgDisplayScale() {
+        if (!dom.svg) return null;
+        const view = state.viewBox || dom.svg.viewBox?.baseVal;
+        if (!view) return null;
+        const rect = dom.svg.getBoundingClientRect();
+        const scaleX = rect.width ? rect.width / view.width : null;
+        const scaleY = rect.height ? rect.height / view.height : null;
+        const candidates = [scaleX, scaleY].filter(v => Number.isFinite(v) && v > 0);
+        if (!candidates.length) return null;
+        return Math.min(...candidates);
+    }
+
+    function updateWallStrokeWidth(path, basePx, scale) {
+        if (!path) return;
+        const resolvedBase = Number(basePx);
+        if (Number.isFinite(resolvedBase) && resolvedBase > 0) {
+            path.dataset.strokeBasePx = String(resolvedBase);
+        }
+        const base = Number(path.dataset.strokeBasePx);
+        if (!Number.isFinite(base) || base <= 0) return;
+        const effectiveScale = Number.isFinite(scale) && scale > 0 ? scale : getSvgDisplayScale();
+        if (!Number.isFinite(effectiveScale) || effectiveScale <= 0) return;
+        const unitsWidth = base / effectiveScale;
+        if (Number.isFinite(unitsWidth) && unitsWidth > 0) {
+            path.style.strokeWidth = `${unitsWidth}`;
+        }
+    }
+
+    function refreshWallStrokeWidths() {
+        const scale = getSvgDisplayScale();
+        if (!Number.isFinite(scale) || scale <= 0) return;
+        dom.wallsContainer?.querySelectorAll('.wall path').forEach(path => {
+            updateWallStrokeWidth(path, Number(path.dataset.strokeBasePx), scale);
+        });
+    }
+
     function applyWallStrokeStyle(path, type) {
         if (!path) return;
         const style = WALL_STYLE_MAP[type] || WALL_STYLE_MAP.structural;
         path.setAttribute('fill', 'none');
         path.setAttribute('stroke', style.stroke);
-        path.setAttribute('stroke-width', String(style.width));
         path.setAttribute('stroke-linejoin', 'round');
         path.setAttribute('stroke-linecap', style.linecap || 'round');
         if (style.dasharray) {
@@ -762,6 +797,7 @@
             path.removeAttribute('stroke-dasharray');
         }
         path.setAttribute('vector-effect', 'non-scaling-stroke');
+        updateWallStrokeWidth(path, style.width);
     }
 
     function updateWallElementGeometry(wallEl) {
@@ -1263,6 +1299,7 @@
         if (!state.viewBox) return;
         dom.svg.setAttribute('viewBox', `${state.viewBox.x} ${state.viewBox.y} ${state.viewBox.width} ${state.viewBox.height}`);
         updateGridViewport();
+        refreshWallStrokeWidths();
     }
     function startPan(e) {
         if (!state.viewBox) {
@@ -2134,6 +2171,7 @@
         clearSelections();
         state.history.lock = false;
         updateLayersList();
+        refreshWallStrokeWidths();
         analysisLayout({ silent: true });
     }
     function commit(reason) { if (state.history.lock) return; const snap = snapshot(); state.history.stack = state.history.stack.slice(0, state.history.idx + 1); state.history.stack.push(snap); state.history.idx++; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(snap)); if (reason !== 'add_wall') { updateLayersList(); } }
@@ -2479,6 +2517,7 @@
         rateInputs.forEach(input => input?.addEventListener('change', () => { updateRatesFromInputs(); analysisLayout({ silent: true }); }));
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('resize', utils.rafThrottle(refreshWallStrokeWidths));
         window.addEventListener('blur', () => {
             state.isSpaceDown = false;
             state.isShiftHeld = false;
@@ -2590,6 +2629,7 @@
         };
 
         updateGridViewport();
+        refreshWallStrokeWidths();
 
         // Load saved data robustly
         try {
