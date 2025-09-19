@@ -16,6 +16,63 @@
   // Prevent double installation
   if (window.interact) return;
 
+  const dropzones = new Map();
+
+  function getParentNode(node) {
+    if (!node) return null;
+    if (node.parentElement) return node.parentElement;
+    if (node.parentNode instanceof Element) return node.parentNode;
+    if (node.parentNode && node.parentNode.host) return node.parentNode.host;
+    return null;
+  }
+
+  function acceptsDrop(options, relatedTarget) {
+    if (!options || !options.accept) return true;
+    const { accept } = options;
+    if (typeof accept === 'string') {
+      return relatedTarget?.matches?.(accept);
+    }
+    if (typeof accept === 'function') {
+      return !!accept({ relatedTarget });
+    }
+    if (accept instanceof Element) {
+      return relatedTarget === accept;
+    }
+    if (Array.isArray(accept)) {
+      return accept.some(item => acceptsDrop({ accept: item }, relatedTarget));
+    }
+    return false;
+  }
+
+  function findDropzoneAt(clientX, clientY, relatedTarget) {
+    let node = document.elementFromPoint(clientX, clientY);
+    while (node) {
+      const record = dropzones.get(node);
+      if (record && acceptsDrop(record.options, relatedTarget)) {
+        return record;
+      }
+      node = getParentNode(node);
+    }
+    return null;
+  }
+
+  function fireDropEvent(record, type, interaction, pointerEvent) {
+    if (!record) return;
+    const evt = {
+      target: record.el,
+      relatedTarget: interaction.dragElement,
+      interaction,
+      clientX: pointerEvent?.clientX,
+      clientY: pointerEvent?.clientY,
+      dragEvent: pointerEvent
+    };
+    const listeners = record.options?.listeners || {};
+    const listener = listeners[type];
+    if (typeof listener === 'function') listener(evt);
+    const handler = record.options?.['on' + type];
+    if (typeof handler === 'function') handler(evt);
+  }
+
   class InteractWrapper {
     constructor(elements) {
       this.elements = elements;
@@ -34,19 +91,34 @@
           // Только основная клавиша мыши
           if (event.button !== 0) return;
           // Минимальный объект interaction для обратной связи
-          const interaction = {};
-          const startEvent = {
-            target: event.target,
+          const interaction = {
+            dragElement: el,
+            rect: el.getBoundingClientRect(),
+            activeDropzones: new Set(),
+            dropTarget: null
+          };
+          const listeners = options.listeners || {};
+          const baseStartEvent = {
+            target: el,
             button: event.button,
             clientX: event.clientX,
             clientY: event.clientY,
             interaction,
+            rect: interaction.rect,
+            event
           };
-          // Если onstart возвращает false, отменяем перетаскивание
-          if (typeof options.onstart === 'function') {
-            const res = options.onstart(startEvent);
+          // Если обработчик start возвращает false, отменяем перетаскивание
+          if (typeof listeners.start === 'function') {
+            const res = listeners.start(baseStartEvent);
             if (res === false) return;
           }
+          if (typeof options.onstart === 'function') {
+            const res = options.onstart(baseStartEvent);
+            if (res === false) return;
+          }
+          // обновляем target, если обработчик изменил interaction.dragElement
+          const targetEl = interaction.dragElement || el;
+          interaction.dragElement = targetEl;
           // Не подавляем всплытие событий и не вызываем preventDefault, чтобы
           // родительские mousedown‑обработчики в app.js смогли отреагировать
           // и выбрать объект. Этого достаточно для drag, выделение текста при
@@ -58,15 +130,42 @@
             const dy = ev.clientY - lastY;
             lastX = ev.clientX;
             lastY = ev.clientY;
-            if (options.listeners && typeof options.listeners.move === 'function') {
-              options.listeners.move({ dx, dy, clientX: ev.clientX, clientY: ev.clientY, interaction });
+            if (listeners && typeof listeners.move === 'function') {
+              listeners.move({ dx, dy, clientX: ev.clientX, clientY: ev.clientY, interaction, rect: interaction.rect, target: targetEl, event: ev });
+            }
+            if (typeof options.onmove === 'function') {
+              options.onmove({ dx, dy, clientX: ev.clientX, clientY: ev.clientY, interaction, rect: interaction.rect, target: targetEl, event: ev });
+            }
+            if (interaction.dragElement) {
+              const record = findDropzoneAt(ev.clientX, ev.clientY, interaction.dragElement);
+              const current = interaction.dropTarget;
+              if (current && current !== record) {
+                fireDropEvent(current, 'dragleave', interaction, ev);
+              }
+              if (record && record !== current) {
+                interaction.activeDropzones.add(record);
+                fireDropEvent(record, 'dragenter', interaction, ev);
+              }
+              interaction.dropTarget = record;
             }
           };
           const upHandler = (ev) => {
             document.removeEventListener('pointermove', moveHandler);
             document.removeEventListener('pointerup', upHandler);
-            if (options.listeners && typeof options.listeners.end === 'function') {
-              options.listeners.end({ interaction, clientX: ev.clientX, clientY: ev.clientY, target: ev.target });
+            if (interaction.dragElement) {
+              const record = findDropzoneAt(ev.clientX, ev.clientY, interaction.dragElement) || interaction.dropTarget;
+              if (record) {
+                fireDropEvent(record, 'drop', interaction, ev);
+              }
+              interaction.activeDropzones.forEach(r => fireDropEvent(r, 'dropdeactivate', interaction, ev));
+              interaction.activeDropzones.clear();
+              interaction.dropTarget = null;
+            }
+            if (listeners && typeof listeners.end === 'function') {
+              listeners.end({ interaction, clientX: ev.clientX, clientY: ev.clientY, target: interaction.dragElement || ev.target, event: ev });
+            }
+            if (typeof options.onend === 'function') {
+              options.onend({ interaction, clientX: ev.clientX, clientY: ev.clientY, target: interaction.dragElement || ev.target, event: ev });
             }
           };
           document.addEventListener('pointermove', moveHandler);
@@ -161,10 +260,20 @@
     }
 
     /*
-     * The dropzone API is not implemented.  Calls to this method
-     * simply return the wrapper so that chaining continues.
+     * Basic dropzone support: remember accepted targets and fire
+     * dragenter/leave/drop/dropdeactivate callbacks to mimic
+     * InteractJS behaviour for the editor's needs.
      */
-    dropzone() {
+    dropzone(options = {}) {
+      this.elements.forEach(el => {
+        if (dropzones.has(el)) dropzones.delete(el);
+        const record = { el, options };
+        dropzones.set(el, record);
+        if (!el._interactDropzones) {
+          el._interactDropzones = new Set();
+        }
+        el._interactDropzones.add(record);
+      });
       return this;
     }
 
@@ -182,6 +291,12 @@
           });
           delete el._interactHandlers;
         }
+        if (el._interactDropzones) {
+          el._interactDropzones.forEach(record => {
+            dropzones.delete(record.el);
+          });
+          delete el._interactDropzones;
+        }
         // Also remove handlers from children
         const all = el.querySelectorAll('*');
         all.forEach(node => {
@@ -190,6 +305,12 @@
               node.removeEventListener(type, handler);
             });
             delete node._interactHandlers;
+          }
+          if (node._interactDropzones) {
+            node._interactDropzones.forEach(record => {
+              dropzones.delete(record.el);
+            });
+            delete node._interactDropzones;
           }
         });
       });
