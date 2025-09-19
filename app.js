@@ -57,6 +57,7 @@
         btnAnalysis: document.getElementById('btnAnalysis'),
         btnCsv: document.getElementById('btnCsv'),
         btnTemplate: document.getElementById('btnTemplate'),
+        btnClearHost: document.getElementById('btnClearHost'),
         gridSelect: document.getElementById('gridStep'),
         snapGuidesEl: document.getElementById('snapGuides'),
         toolPointer: document.getElementById('tool-pointer'),
@@ -2199,6 +2200,29 @@
             }
         }
     }
+    function clearHost(confirmPrompt = true) {
+        const message = 'Очистить текущий план? Все стены, объекты, проёмы и измерения будут удалены.';
+        if (confirmPrompt && !window.confirm(message)) {
+            return;
+        }
+
+        state.currentWallPoints = [];
+        if (dom.wallPreview) {
+            dom.wallPreview.setAttribute('points', '');
+        }
+        dom.previewsContainer.innerHTML = '';
+        hideWallLengthPreview();
+        state.measurePoints = [];
+
+        restore({ items: [], walls: [], components: [], measurements: [] });
+        resetMeasurementPreview();
+        if (dom.ctx) {
+            dom.ctx.style.display = 'none';
+        }
+        commit('clear_host');
+        utils.showToast('План очищен');
+    }
+
     function loadMasterProject() {
         try {
             // подтверждение для перезаписи текущего проекта
@@ -2933,6 +2957,12 @@
         if (dom.btnTemplate) {
             dom.btnTemplate.addEventListener('click', () => {
                 loadMasterProject();
+            });
+        }
+
+        if (dom.btnClearHost) {
+            dom.btnClearHost.addEventListener('click', () => {
+                clearHost();
             });
         }
 
