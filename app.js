@@ -2200,10 +2200,22 @@
             }
         }
     }
+    function hasLayoutContent() {
+        const hasObjects = !!dom.itemsContainer?.querySelector('.layout-object');
+        const hasWalls = (dom.wallsContainer?.childElementCount || 0) > 0;
+        const hasComponents = (dom.wallComponentsContainer?.childElementCount || 0) > 0;
+        const hasPreviews = (dom.previewsContainer?.childElementCount || 0) > 0;
+        const hasMeasurements = Array.isArray(state.measurements) && state.measurements.length > 0;
+        const hasMeasureDraft = Array.isArray(state.measurePoints) && state.measurePoints.length > 0;
+        return hasObjects || hasWalls || hasComponents || hasPreviews || hasMeasurements || hasMeasureDraft;
+    }
     function clearHost(confirmPrompt = true) {
+        if (!hasLayoutContent()) {
+            return false;
+        }
         const message = 'Очистить текущий план? Все стены, объекты, проёмы и измерения будут удалены.';
         if (confirmPrompt && !window.confirm(message)) {
-            return;
+            return false;
         }
 
         state.currentWallPoints = [];
@@ -2221,6 +2233,7 @@
         }
         commit('clear_host');
         utils.showToast('План очищен');
+        return true;
     }
 
     function loadMasterProject() {
@@ -2962,7 +2975,19 @@
 
         if (dom.btnClearHost) {
             dom.btnClearHost.addEventListener('click', () => {
-                clearHost();
+                if (!hasLayoutContent()) {
+                    utils.showToast('План уже пуст');
+                    dom.btnClearHost.blur();
+                    return;
+                }
+                try {
+                    clearHost();
+                } catch (err) {
+                    console.error('Не удалось очистить план', err);
+                    utils.showToast('Не удалось очистить план');
+                } finally {
+                    dom.btnClearHost.blur();
+                }
             });
         }
 

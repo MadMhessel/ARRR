@@ -23,7 +23,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 .draggable-item, .tool-button {display:flex;align-items:center;gap:8px;line-height:1;padding:9px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fafafa;cursor:pointer;user-select:none;transition:.2s}
 .draggable-item:hover, .tool-button:hover {background:#e9ecef;box-shadow:0 2px 4px rgba(0,0,0,.08);transform:translateY(-1px)}
 .tool-button.active { background-color: var(--accent); color: white; border-color: var(--accent); }
-#btnExport, #btnAnalysis, #btnCsv, #btnTemplate, #btnFocus, #btn-focus {
+#btnExport, #btnAnalysis, #btnCsv, #btnTemplate, #btnFocus, #btn-focus, .ui-bar button[data-icon] {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -31,13 +31,13 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 }
 
 /* Иконки в кнопках панелей */
-.tool-button .icon, #btnExport .icon, #btnAnalysis .icon, #btnCsv .icon, #btnTemplate .icon, #btnFocus .icon, #btn-focus .icon {
+.tool-button .icon, .ui-bar button[data-icon] .icon, #btnFocus .icon, #btn-focus .icon {
   width: 18px;
   height: 18px;
   display: inline-flex;
 }
 
-.tool-button .icon svg, #btnExport .icon svg, #btnAnalysis .icon svg, #btnCsv .icon svg, #btnTemplate .icon svg, #btnFocus .icon svg, #btn-focus .icon svg {
+.tool-button .icon svg, .ui-bar button[data-icon] .icon svg, #btnFocus .icon svg, #btn-focus .icon svg {
   width: 18px;
   height: 18px;
   fill: currentColor;
@@ -49,7 +49,7 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
   opacity: 1;
 }
 
-.tool-button .label, #btnExport .label, #btnAnalysis .label, #btnCsv .label, #btnTemplate .label, #btnFocus .label, #btn-focus .label {
+.tool-button .label, .ui-bar button[data-icon] .label, #btnFocus .label, #btn-focus .label {
   white-space: nowrap;
 }
 #trash{margin-top:auto;padding:14px;border:2px dashed var(--border);border-radius:8px;text-align:center;color:var(--muted);transition:.3s}
