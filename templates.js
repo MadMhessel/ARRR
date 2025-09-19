@@ -1,5 +1,51 @@
 const FURNITURE_CATEGORIES = [
     {
+        name: 'Кофейня',
+        items: [
+            { id: 'cafe-table-round-60', label: 'Стол круглый Ø60' },
+            { id: 'cafe-table-square-70', label: 'Стол квадрат 70×70' },
+            { id: 'cafe-hightop-round-70', label: 'Хай-топ Ø70' },
+            { id: 'cafe-communal-240', label: 'Коммунальный 240×90' },
+            { id: 'banquette-160', label: 'Банкетка 160 (3 места)' },
+            { id: 'banquette-220', label: 'Банкетка 220 (4 места)' },
+            { id: 'booth-2', label: 'Кабинка на 2' },
+            { id: 'booth-4', label: 'Кабинка на 4' },
+            { id: 'bar-counter-straight-180', label: 'Барная стойка 180' },
+            { id: 'bar-counter-straight-240', label: 'Барная стойка 240' },
+            { id: 'bar-counter-l-180x180', label: 'Барная стойка Г 180×180' },
+            { id: 'bar-counter-island-180x90', label: 'Бар-остров 180×90' },
+            { id: 'bar-back-shelf-180', label: 'Задняя барная полка 180' },
+            { id: 'espresso-2g', label: 'Эспрессо-машина 2 группы' },
+            { id: 'espresso-3g', label: 'Эспрессо-машина 3 группы' },
+            { id: 'grinder-80mm', label: 'Кофемолка 80 мм' },
+            { id: 'batch-brewer-2', label: 'Бэтч-брю (2 станции)' },
+            { id: 'pour-over-3', label: 'Пуровер-станция ×3' },
+            { id: 'kettle-electric', label: 'Электрочайник' },
+            { id: 'water-filter', label: 'Фильтр воды под мойкой' },
+            { id: 'ice-machine-60', label: 'Льдогенератор 60' },
+            { id: 'undercounter-fridge-90', label: 'Холод под столеш. 90' },
+            { id: 'upright-fridge-60', label: 'Холодильник 60' },
+            { id: 'milk-fridge-60', label: 'Молочный холодильник 60' },
+            { id: 'freezer-60', label: 'Морозильник 60' },
+            { id: 'pastry-case-120', label: 'Витрина кондит. прямая 120' },
+            { id: 'pastry-case-120-curved', label: 'Витрина кондит. радиус 120' },
+            { id: 'pos-terminal', label: 'POS-терминал' },
+            { id: 'cash-drawer', label: 'Денежный ящик' },
+            { id: 'condiment-120', label: 'Станция приправ 120' },
+            { id: 'syrup-rack-90', label: 'Рейл сиропов 90' },
+            { id: 'trash-single', label: 'Урна одинарная' },
+            { id: 'trash-double', label: 'Урна двойная' },
+            { id: 'hand-sink', label: 'Раковина для рук' },
+            { id: 'triple-sink', label: 'Мойка 3-секц.' },
+            { id: 'dishwasher-pro', label: 'Посудомойка подстол.' },
+            { id: 'drying-rack-120', label: 'Сушка посуды 120' },
+            { id: 'queue-post', label: 'Стойка очереди' },
+            { id: 'menu-board-120', label: 'Меню-борд 120' },
+            { id: 'planter-long-120', label: 'Кашпо длинное 120' },
+            { id: 'partition-120x10', label: 'Перегородка 120×10' },
+        ]
+    },
+    {
         name: 'Сиденья',
         items: [
             { id: 'chair', label: 'Стул' },
@@ -93,6 +139,309 @@ const FURNITURE_CATEGORIES = [
 
 const ITEM_TEMPLATES = {
     'zone': { label: 'Зона', svg: () => `<g class="core"><rect x="-100" y="-75" class="shape" width="200" height="150" rx="10" fill="rgba(13,110,253,0.1)" stroke="rgba(13,110,253,0.3)"/></g>` },
+    /* === КОФЕЙНЯ === */
+    'cafe-table-round-60': { label: 'Стол круглый Ø60', svg: () => `<g class="core">
+        <circle class="shape" r="30" fill="url(#wood-oak)" stroke="var(--stroke)"/>
+        <circle r="26" fill="#ffffff" fill-opacity="0.08"/>
+        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <line x1="0" y1="30" x2="0" y2="42"/>
+            <line x1="-10" y1="42" x2="10" y2="42"/>
+        </g>
+    </g>` },
+    'cafe-table-square-70': { label: 'Стол квадрат 70×70', svg: () => `<g class="core">
+        <rect class="shape" x="-35" y="-35" width="70" height="70" rx="8"
+            fill="url(#wood-oak)" stroke="var(--stroke)"/>
+        <rect x="-30" y="-30" width="60" height="60" rx="6"
+            fill="#ffffff" fill-opacity="0.08"/>
+        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <line x1="0" y1="35" x2="0" y2="44"/><line x1="-12" y1="44" x2="12" y2="44"/>
+        </g>
+    </g>` },
+    'cafe-hightop-round-70': { label: 'Хай-топ Ø70', svg: () => `<g class="core">
+        <circle class="shape" r="35" fill="url(#wood-espresso)" stroke="var(--stroke)"/>
+        <circle r="30" fill="#000" fill-opacity="0.08"/>
+        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <line x1="0" y1="35" x2="0" y2="48"/><line x1="-12" y1="48" x2="12" y2="48"/>
+        </g>
+    </g>` },
+    'cafe-communal-240': { label: 'Коммунальный 240×90', svg: () => `<g class="core">
+        <rect class="shape" x="-120" y="-45" width="240" height="90" rx="10"
+            fill="url(#wood-oak)" stroke="var(--stroke)"/>
+        <rect x="-112" y="-37" width="224" height="74" rx="8"
+            fill="#ffffff" fill-opacity="0.06"/>
+        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <line x1="-90" y1="45" x2="-90" y2="54"/>
+            <line x1="0" y1="45" x2="0" y2="54"/>
+            <line x1="90" y1="45" x2="90" y2="54"/>
+        </g>
+    </g>` },
+    'banquette-160': { label: 'Банкетка 160 (3 места)', svg: () => `<g class="core">
+        <rect class="shape" x="-80" y="-25" width="160" height="50" rx="14"
+            fill="url(#upholstery-cream)" stroke="#5d636b"/>
+        <rect x="-80" y="-40" width="160" height="20" rx="10"
+            fill="url(#upholstery-slate)" stroke="#3b4149"/>
+        <g stroke="#ffffff" stroke-opacity="0.18" stroke-width="4" stroke-linecap="round">
+            <line x1="-40" y1="-12" x2="-40" y2="18"/><line x1="0" y1="-12" x2="0" y2="18"/><line x1="40" y1="-12" x2="40" y2="18"/>
+        </g>
+    </g>` },
+    'banquette-220': { label: 'Банкетка 220 (4 места)', svg: () => `<g class="core">
+        <rect class="shape" x="-110" y="-25" width="220" height="50" rx="14"
+            fill="url(#upholstery-cream)" stroke="#5d636b"/>
+        <rect x="-110" y="-40" width="220" height="20" rx="10"
+            fill="url(#upholstery-slate)" stroke="#3b4149"/>
+        <g stroke="#ffffff" stroke-opacity="0.18" stroke-width="4" stroke-linecap="round">
+            <line x1="-66" y1="-12" x2="-66" y2="18"/><line x1="-22" y1="-12" x2="-22" y2="18"/>
+            <line x1="22" y1="-12" x2="22" y2="18"/><line x1="66" y1="-12" x2="66" y2="18"/>
+        </g>
+    </g>` },
+    'booth-2': { label: 'Кабинка на 2', svg: () => `<g class="core">
+        <rect x="-45" y="-35" width="90" height="70" rx="12"
+            fill="url(#upholstery-cream)" stroke="#5d636b"/>
+        <rect x="-45" y="-52" width="90" height="20" rx="10"
+            fill="url(#upholstery-slate)" stroke="#3b4149"/>
+        <rect x="-18" y="-10" width="36" height="20" rx="6"
+            fill="url(#wood-oak)" stroke="var(--stroke)"/>
+    </g>` },
+    'booth-4': { label: 'Кабинка на 4', svg: () => `<g class="core">
+        <rect x="-70" y="-40" width="140" height="80" rx="12"
+            fill="url(#upholstery-cream)" stroke="#5d636b"/>
+        <rect x="-70" y="-58" width="140" height="20" rx="10"
+            fill="url(#upholstery-slate)" stroke="#3b4149"/>
+        <rect x="-24" y="-12" width="48" height="24" rx="6"
+            fill="url(#wood-oak)" stroke="var(--stroke)"/>
+    </g>` },
+    'bar-counter-straight-180': { label: 'Барная стойка 180', svg: () => `<g class="core">
+        <rect class="shape" x="-90" y="-36" width="180" height="72" rx="8"
+            fill="url(#counter-marble)" stroke="var(--stroke)"/>
+        <rect x="-90" y="-8" width="180" height="16" rx="6"
+            fill="rgba(0,0,0,0.08)"/>
+        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <line x1="-70" y1="36" x2="-70" y2="48"/>
+            <line x1="70" y1="36" x2="70" y2="48"/>
+        </g>
+    </g>` },
+    'bar-counter-straight-240': { label: 'Барная стойка 240', svg: () => `<g class="core">
+        <rect class="shape" x="-120" y="-36" width="240" height="72" rx="8"
+            fill="url(#counter-marble)" stroke="var(--stroke)"/>
+        <rect x="-120" y="-8" width="240" height="16" rx="6"
+            fill="rgba(0,0,0,0.08)"/>
+        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <line x1="-100" y1="36" x2="-100" y2="48"/>
+            <line x1="0" y1="36" x2="0" y2="48"/>
+            <line x1="100" y1="36" x2="100" y2="48"/>
+        </g>
+    </g>` },
+    'bar-counter-l-180x180': { label: 'Барная стойка Г 180×180', svg: () => `<g class="core">
+        <path class="shape" d="M-90 -36 H90 V36 H-36 V90 H-90 Z"
+            fill="url(#counter-marble)" stroke="var(--stroke)"/>
+        <rect x="-90" y="-8" width="180" height="16" rx="6" fill="rgba(0,0,0,0.08)"/>
+        <rect x="-8" y="-36" width="16" height="126" rx="6" fill="rgba(0,0,0,0.08)"/>
+    </g>` },
+    'bar-counter-island-180x90': { label: 'Бар-остров 180×90', svg: () => `<g class="core">
+        <rect class="shape" x="-90" y="-45" width="180" height="90" rx="10"
+            fill="url(#counter-marble)" stroke="var(--stroke)"/>
+        <rect x="-90" y="-10" width="180" height="20" rx="8" fill="rgba(0,0,0,0.08)"/>
+    </g>` },
+    'bar-back-shelf-180': { label: 'Задняя барная полка 180', svg: () => `<g class="core">
+        <rect class="shape" x="-90" y="-8" width="180" height="16" rx="4"
+            fill="url(#wood-espresso)" stroke="#2c180d"/>
+        <rect x="-90" y="-28" width="180" height="12" rx="3"
+            fill="url(#wood-espresso)" stroke="#2c180d"/>
+        <rect x="-90" y="-48" width="180" height="12" rx="3"
+            fill="url(#wood-espresso)" stroke="#2c180d"/>
+    </g>` },
+    'espresso-2g': { label: 'Эспрессо-машина 2 группы', svg: () => `<g class="core">
+        <rect class="shape" x="-46" y="-22" width="92" height="44" rx="8"
+            fill="url(#metal-chrome)" stroke="var(--stroke)"/>
+        <rect x="-40" y="-30" width="80" height="10" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <g fill="url(#metal-steel)">
+            <rect x="-28" y="-6" width="16" height="12" rx="2"/>
+            <rect x="12"  y="-6" width="16" height="12" rx="2"/>
+        </g>
+        <rect x="-42" y="12" width="84" height="6" rx="3" fill="#111" fill-opacity="0.45"/>
+    </g>` },
+    'espresso-3g': { label: 'Эспрессо-машина 3 группы', svg: () => `<g class="core">
+        <rect class="shape" x="-66" y="-22" width="132" height="44" rx="8"
+            fill="url(#metal-chrome)" stroke="var(--stroke)"/>
+        <rect x="-60" y="-30" width="120" height="10" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <g fill="url(#metal-steel)">
+            <rect x="-40" y="-6" width="16" height="12" rx="2"/>
+            <rect x="-8"  y="-6" width="16" height="12" rx="2"/>
+            <rect x="24"  y="-6" width="16" height="12" rx="2"/>
+        </g>
+        <rect x="-62" y="12" width="124" height="6" rx="3" fill="#111" fill-opacity="0.45"/>
+    </g>` },
+    'grinder-80mm': { label: 'Кофемолка 80 мм', svg: () => `<g class="core">
+        <rect class="shape" x="-12" y="-18" width="24" height="36" rx="4"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <polygon points="-10,-20 10,-20 6,-34 -6,-34"
+                fill="url(#glass-soft)" stroke="var(--stroke)"/>
+    </g>` },
+    'batch-brewer-2': { label: 'Бэтч-брю (2 станции)', svg: () => `<g class="core">
+        <rect class="shape" x="-40" y="-22" width="80" height="44" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <g fill="url(#glass-soft)" stroke="var(--stroke)">
+            <rect x="-26" y="-10" width="18" height="18" rx="3"/>
+            <rect x="8"   y="-10" width="18" height="18" rx="3"/>
+        </g>
+    </g>` },
+    'pour-over-3': { label: 'Пуровер-станция ×3', svg: () => `<g class="core">
+        <rect class="shape" x="-60" y="-18" width="120" height="36" rx="6"
+            fill="url(#wood-oak)" stroke="var(--stroke)"/>
+        <g fill="url(#glass-soft)" stroke="var(--stroke)">
+            <circle cx="-40" r="10"/><circle cx="0" r="10"/><circle cx="40" r="10"/>
+        </g>
+    </g>` },
+    'kettle-electric': { label: 'Электрочайник', svg: () => `<g class="core">
+        <ellipse class="shape" cx="0" cy="0" rx="16" ry="12"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <rect x="-10" y="-8" width="20" height="16" rx="4"
+            fill="url(#metal-chrome)" stroke="var(--stroke)"/>
+    </g>` },
+    'water-filter': { label: 'Фильтр воды под мойкой', svg: () => `<g class="core">
+        <rect class="shape" x="-20" y="-14" width="40" height="28" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <g fill="url(#metal-chrome)" stroke="var(--stroke)">
+            <rect x="-14" y="-8" width="10" height="16" rx="3"/>
+            <rect x="4"   y="-8" width="10" height="16" rx="3"/>
+        </g>
+    </g>` },
+    'ice-machine-60': { label: 'Льдогенератор 60', svg: () => `<g class="core">
+        <rect class="shape" x="-30" y="-30" width="60" height="60" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <rect x="-26" y="-10" width="52" height="14" rx="4"
+            fill="#111" fill-opacity="0.35"/>
+    </g>` },
+    'undercounter-fridge-90': { label: 'Холод под столеш. 90', svg: () => `<g class="core">
+        <rect class="shape" x="-45" y="-30" width="90" height="60" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <rect x="-41" y="-26" width="82" height="52" rx="4"
+            fill="#dfe6ee" stroke="var(--stroke)"/>
+        <line x1="0" y1="-26" x2="0" y2="26" stroke="var(--stroke)"/>
+    </g>` },
+    'upright-fridge-60': { label: 'Холодильник 60', svg: () => `<g class="core">
+        <rect class="shape" x="-30" y="-36" width="60" height="72" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <rect x="-26" y="-32" width="52" height="64" rx="4"
+            fill="#dfe6ee" stroke="var(--stroke)"/>
+    </g>` },
+    'milk-fridge-60': { label: 'Молочный холодильник 60', svg: () => `<g class="core">
+        <rect class="shape" x="-30" y="-28" width="60" height="56" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <rect x="-24" y="-22" width="48" height="44" rx="4"
+            fill="#dfe6ee" stroke="var(--stroke)"/>
+        <rect x="-20" y="-18" width="40" height="10" rx="3"
+            fill="#fff" fill-opacity="0.7" stroke="var(--stroke)"/>
+    </g>` },
+    'freezer-60': { label: 'Морозильник 60', svg: () => `<g class="core">
+        <rect class="shape" x="-30" y="-30" width="60" height="60" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <rect x="-25" y="-10" width="50" height="20" rx="3"
+            fill="#eaf6ff" stroke="var(--stroke)"/>
+    </g>` },
+    'pastry-case-120': { label: 'Витрина кондит. прямая 120', svg: () => `<g class="core">
+        <rect class="shape" x="-60" y="-30" width="120" height="60" rx="8"
+            fill="url(#wood-espresso)" stroke="#2c180d"/>
+        <rect x="-58" y="-38" width="116" height="16" rx="6"
+            fill="url(#glass-soft)" stroke="var(--stroke)"/>
+    </g>` },
+    'pastry-case-120-curved': { label: 'Витрина кондит. радиус 120', svg: () => `<g class="core">
+        <rect class="shape" x="-60" y="-30" width="120" height="60" rx="8"
+            fill="url(#wood-espresso)" stroke="#2c180d"/>
+        <path d="M-58 -30 Q0 -50 58 -30" fill="url(#glass-soft)" stroke="var(--stroke)"/>
+        <rect x="-58" y="-38" width="116" height="8" rx="4"
+            fill="url(#glass-soft)" stroke="var(--stroke)"/>
+    </g>` },
+    'pos-terminal': { label: 'POS-терминал', svg: () => `<g class="core">
+        <rect class="shape" x="-18" y="-12" width="36" height="24" rx="4"
+            fill="#1e2330" stroke="#3a4050"/>
+        <rect x="-14" y="-8" width="28" height="16" rx="3"
+            fill="#0e1320"/>
+        <rect x="-3" y="12" width="6" height="6" rx="2" fill="#5ad1ff"/>
+    </g>` },
+    'cash-drawer': { label: 'Денежный ящик', svg: () => `<g class="core">
+        <rect class="shape" x="-24" y="-14" width="48" height="28" rx="4"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <circle cx="0" cy="0" r="2.5" fill="#333"/>
+    </g>` },
+    'condiment-120': { label: 'Станция приправ 120', svg: () => `<g class="core">
+        <rect class="shape" x="-60" y="-22" width="120" height="44" rx="6"
+            fill="url(#wood-oak)" stroke="var(--stroke)"/>
+        <g fill="#fff" fill-opacity="0.75" stroke="#ccc">
+            <rect x="-48" y="-12" width="24" height="18" rx="3"/>
+            <rect x="-12" y="-12" width="24" height="18" rx="3"/>
+            <rect x="24"  y="-12" width="24" height="18" rx="3"/>
+        </g>
+    </g>` },
+    'syrup-rack-90': { label: 'Рейл сиропов 90', svg: () => `<g class="core">
+        <rect class="shape" x="-45" y="-10" width="90" height="20" rx="5"
+            fill="url(#wood-espresso)" stroke="#2c180d"/>
+        <g fill="#f6d5ff" stroke="#a86ad0">
+            <circle cx="-30" r="4"/><circle cx="-15" r="4"/><circle cx="0" r="4"/><circle cx="15" r="4"/><circle cx="30" r="4"/>
+        </g>
+    </g>` },
+    'trash-single': { label: 'Урна одинарная', svg: () => `<g class="core">
+        <rect class="shape" x="-16" y="-20" width="32" height="40" rx="6"
+            fill="#40464f" stroke="#242a33"/>
+        <rect x="-12" y="-24" width="24" height="8" rx="3" fill="#303640"/>
+    </g>` },
+    'trash-double': { label: 'Урна двойная', svg: () => `<g class="core">
+        <rect class="shape" x="-32" y="-20" width="64" height="40" rx="6"
+            fill="#40464f" stroke="#242a33"/>
+        <rect x="-26" y="-24" width="24" height="8" rx="3" fill="#303640"/>
+        <rect x="2"    y="-24" width="24" height="8" rx="3" fill="#303640"/>
+    </g>` },
+    'hand-sink': { label: 'Раковина для рук', svg: () => `<g class="core">
+        <rect class="shape" x="-20" y="-16" width="40" height="32" rx="6"
+            fill="#e9f1fb" stroke="var(--stroke)"/>
+        <circle r="5" fill="#c8d7ea"/>
+    </g>` },
+    'triple-sink': { label: 'Мойка 3-секц.', svg: () => `<g class="core">
+        <rect class="shape" x="-90" y="-26" width="180" height="52" rx="8"
+            fill="#e9f1fb" stroke="var(--stroke)"/>
+        <g fill="#c8d7ea" stroke="var(--stroke)">
+            <rect x="-70" y="-14" width="40" height="28" rx="5"/>
+            <rect x="-20" y="-14" width="40" height="28" rx="5"/>
+            <rect x="30"  y="-14" width="40" height="28" rx="5"/>
+        </g>
+    </g>` },
+    'dishwasher-pro': { label: 'Посудомойка подстол.', svg: () => `<g class="core">
+        <rect class="shape" x="-28" y="-24" width="56" height="48" rx="6"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <rect x="-24" y="-6" width="48" height="12" rx="3"
+            fill="#eaf6ff" stroke="var(--stroke)"/>
+    </g>` },
+    'drying-rack-120': { label: 'Сушка посуды 120', svg: () => `<g class="core">
+        <rect class="shape" x="-60" y="-10" width="120" height="20" rx="4"
+            fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <g stroke="#aab7c6">
+            <line x1="-50" y1="-8" x2="-50" y2="8"/><line x1="-30" y1="-8" x2="-30" y2="8"/>
+            <line x1="-10" y1="-8" x2="-10" y2="8"/><line x1="10" y1="-8" x2="10" y2="8"/>
+            <line x1="30"  y1="-8" x2="30" y2="8"/><line x1="50" y1="-8" x2="50" y2="8"/>
+        </g>
+    </g>` },
+    'queue-post': { label: 'Стойка очереди', svg: () => `<g class="core">
+        <circle class="shape" r="10" fill="url(#metal-steel)" stroke="var(--stroke)"/>
+        <circle r="14" fill="#000" fill-opacity="0.06"/>
+    </g>` },
+    'menu-board-120': { label: 'Меню-борд 120', svg: () => `<g class="core">
+        <rect class="shape" x="-60" y="-6" width="120" height="12" rx="3"
+            fill="#1e2330" stroke="#3a4050"/>
+        <rect x="-56" y="-2" width="112" height="4" rx="2"
+            fill="#0e1320"/>
+    </g>` },
+    'planter-long-120': { label: 'Кашпо длинное 120', svg: () => `<g class="core">
+        <rect class="shape" x="-60" y="-14" width="120" height="28" rx="6"
+            fill="url(#wood-oak)" stroke="var(--stroke)"/>
+        <rect x="-56" y="-18" width="112" height="10" rx="5"
+            fill="url(#foliage-rich)" stroke="#2c6b3f"/>
+    </g>` },
+    'partition-120x10': { label: 'Перегородка 120×10', svg: () => `<g class="core">
+        <rect class="shape" x="-60" y="-5" width="120" height="10" rx="3"
+            fill="#cbd3dd" stroke="#9aa4b0"/>
+    </g>` },
     'chair': { label: 'Стул', svg: () => `<g class="core">
         <g fill="none" stroke="url(#metal-steel)" stroke-width="3.4" stroke-linecap="round">
             <path d="M-15 10 L-12 32"/>
@@ -367,6 +716,18 @@ Object.assign(ITEM_TEMPLATES['dining-4'] || {}, { seats: 4 });
 Object.assign(ITEM_TEMPLATES['dining-6'] || {}, { seats: 6 });
 Object.assign(ITEM_TEMPLATES['dining-8'] || {}, { seats: 8 });
 Object.assign(ITEM_TEMPLATES['office-chair'] || {}, { seats: 1 });
+Object.assign(ITEM_TEMPLATES['cafe-table-round-60'] || {}, { seats: 2 });
+Object.assign(ITEM_TEMPLATES['cafe-table-square-70'] || {}, { seats: 2 });
+Object.assign(ITEM_TEMPLATES['cafe-hightop-round-70'] || {}, { seats: 2 });
+Object.assign(ITEM_TEMPLATES['cafe-communal-240'] || {}, { seats: 6 });
+Object.assign(ITEM_TEMPLATES['banquette-160'] || {}, { seats: 3 });
+Object.assign(ITEM_TEMPLATES['banquette-220'] || {}, { seats: 4 });
+Object.assign(ITEM_TEMPLATES['booth-2'] || {}, { seats: 2 });
+Object.assign(ITEM_TEMPLATES['booth-4'] || {}, { seats: 4 });
+Object.assign(ITEM_TEMPLATES['bar-counter-straight-180'] || {}, { seats: 4 });
+Object.assign(ITEM_TEMPLATES['bar-counter-straight-240'] || {}, { seats: 6 });
+Object.assign(ITEM_TEMPLATES['bar-counter-l-180x180'] || {}, { seats: 5 });
+Object.assign(ITEM_TEMPLATES['bar-counter-island-180x90'] || {}, { seats: 6 });
 
 // Добавляем шаблоны барных стоек с параметрами посадки
 ITEM_TEMPLATES['bar-counter-straight'] = {

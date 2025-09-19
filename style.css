@@ -7,6 +7,7 @@
   --muted:#6c757d;
   --accent:#0066cc;
   --danger:#dc3545;
+  --stroke:#3b4149;
   --handle:var(--accent);
   --select:rgba(0,102,204,0.85);
   --radius:12px;
@@ -19,9 +20,38 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 #sidebar{width:var(--sidebar-width);background:var(--paper);border-right:1px solid var(--border);padding:18px;display:flex;flex-direction:column;gap:10px;overflow:auto;box-shadow:0 0 15px rgba(0,0,0,.05)}
 #sidebar h2{font-size:18px;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
 #sidebar h3{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px}
-.draggable-item, .tool-button {display:flex;align-items:center;padding:9px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fafafa;cursor:pointer;user-select:none;transition:.2s}
+.draggable-item, .tool-button {display:flex;align-items:center;gap:8px;line-height:1;padding:9px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fafafa;cursor:pointer;user-select:none;transition:.2s}
 .draggable-item:hover, .tool-button:hover {background:#e9ecef;box-shadow:0 2px 4px rgba(0,0,0,.08);transform:translateY(-1px)}
 .tool-button.active { background-color: var(--accent); color: white; border-color: var(--accent); }
+#btnExport, #btnAnalysis, #btnCsv, #btnTemplate, #btnFocus, #btn-focus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+/* Иконки в кнопках панелей */
+.tool-button .icon, #btnExport .icon, #btnAnalysis .icon, #btnCsv .icon, #btnTemplate .icon, #btnFocus .icon, #btn-focus .icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+}
+
+.tool-button .icon svg, #btnExport .icon svg, #btnAnalysis .icon svg, #btnCsv .icon svg, #btnTemplate .icon svg, #btnFocus .icon svg, #btn-focus .icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  stroke: currentColor;
+  opacity: 0.92;
+}
+
+.tool-button.active .icon svg {
+  opacity: 1;
+}
+
+.tool-button .label, #btnExport .label, #btnAnalysis .label, #btnCsv .label, #btnTemplate .label, #btnFocus .label, #btn-focus .label {
+  white-space: nowrap;
+}
 #trash{margin-top:auto;padding:14px;border:2px dashed var(--border);border-radius:8px;text-align:center;color:var(--muted);transition:.3s}
 #trash.drag-enter{background:rgba(220,53,69,.08);border-color:var(--danger);color:var(--danger)}
 
