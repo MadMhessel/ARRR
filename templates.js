@@ -93,58 +93,189 @@ const FURNITURE_CATEGORIES = [
 
 const ITEM_TEMPLATES = {
     'zone': { label: 'Зона', svg: () => `<g class="core"><rect x="-100" y="-75" class="shape" width="200" height="150" rx="10" fill="rgba(13,110,253,0.1)" stroke="rgba(13,110,253,0.3)"/></g>` },
-    'chair': { label: 'Стул', svg: () => `<g class="core" >
-        <defs><linearGradient id="gradChairLeg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#C0C0C0;stop-opacity:1" /><stop offset="50%" style="stop-color:#F5F5F5;stop-opacity:1" /><stop offset="100%" style="stop-color:#C0C0C0;stop-opacity:1" /></linearGradient></defs>
-        <rect x="-18" y="13" width="4" height="10" fill="url(#gradChairLeg)" stroke="#808080" />
-        <rect x="14" y="13" width="4" height="10" fill="url(#gradChairLeg)" stroke="#808080" />
-        <rect x="-18" y="-25" width="36" height="40" rx="6" fill="#D2B48C" stroke="#8B4513" />
-        <rect x="-15" y="-1" width="30" height="12" rx="4" fill="#F5DEB3" stroke="#A0522D" />
-        <rect x="-20" y="-22" width="40" height="10" rx="5" fill="#DEB887" stroke="#8B4513"/>
+    'chair': { label: 'Стул', svg: () => `<g class="core">
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.4" stroke-linecap="round">
+            <path d="M-15 10 L-12 32"/>
+            <path d="M15 10 L12 32"/>
+            <path d="M-15 -10 L-20 8"/>
+            <path d="M15 -10 L20 8"/>
+        </g>
+        <path class="shape" d="M-22 -12 Q0 -32 22 -12 V-4 Q0 -22 -22 -4 Z" fill="url(#upholstery-amber)" stroke="#714624"/>
+        <rect class="shape" x="-20" y="-2" width="40" height="24" rx="7" fill="url(#upholstery-amber)" stroke="#714624"/>
+        <rect x="-18" y="-20" width="36" height="10" rx="5" fill="url(#wood-espresso)" stroke="#2c180d"/>
+        <rect x="-14" y="2" width="28" height="6" rx="3" fill="#fff4de" fill-opacity="0.25"/>
     </g>` },
     'armchair': { label: 'Кресло', svg: () => `<g class="core">
-        <defs><linearGradient id="gradArmchair" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#A9A9A9;stop-opacity:1" /><stop offset="100%" style="stop-color:#696969;stop-opacity:1" /></linearGradient></defs>
-        <rect x="-35" y="-32.5" width="70" height="65" rx="10" fill="url(#gradArmchair)" stroke="#404040" />
-        <rect x="-25" y="-2.5" width="50" height="25" rx="5" fill="#D3D3D3" stroke="#808080" />
-        <rect x="-30" y="-27.5" width="60" height="20" rx="8" fill="#C0C0C0" stroke="#708090" />
-        <rect x="-30" y="-27.5" width="10" height="60" rx="8" fill="#B0C4DE" stroke="#708090" />
-        <rect x="20" y="-27.5" width="10" height="60" rx="8" fill="#B0C4DE" stroke="#708090" />
+        <rect x="-44" y="-32" width="88" height="64" rx="20" fill="url(#upholstery-slate)" stroke="#2f363f"/>
+        <rect x="-42" y="-20" width="18" height="48" rx="8" fill="url(#leather-caramel)" stroke="#4d2d17"/>
+        <rect x="24" y="-20" width="18" height="48" rx="8" fill="url(#leather-caramel)" stroke="#4d2d17"/>
+        <rect class="shape" x="-32" y="-8" width="64" height="40" rx="14" fill="url(#upholstery-cream)" stroke="#5d636b"/>
+        <rect class="shape" x="-30" y="-24" width="60" height="22" rx="12" fill="url(#upholstery-slate)" stroke="#3b4149"/>
+        <path d="M-30 -10 H30" stroke="#ffffff" stroke-opacity="0.18" stroke-width="4" stroke-linecap="round"/>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <path d="M-28 26 L-24 44"/>
+            <path d="M28 26 L24 44"/>
+        </g>
     </g>` },
     'sofa-2': { label: 'Диван 2-местный', svg: () => `<g class="core">
-        <defs><linearGradient id="gradSofa" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#6B8E23;stop-opacity:1" /><stop offset="100%" style="stop-color:#556B2F;stop-opacity:1" /></linearGradient></defs>
-        <rect x="-75" y="-37.5" width="150" height="75" rx="12" fill="url(#gradSofa)" stroke="#2F4F4F"/>
-        <rect x="-60" y="-2.5" width="55" height="30" rx="6" fill="#9ACD32" stroke="#6B8E23"/>
-        <rect x="5" y="-2.5" width="55" height="30" rx="6" fill="#9ACD32" stroke="#6B8E23"/>
-        <rect x="-67" y="-29.5" width="134" height="20" rx="8" fill="#8FBC8F" stroke="#556B2F"/>
-        <rect x="-67" y="-29.5" width="12" height="60" rx="8" fill="#98FB98" stroke="#556B2F"/>
-        <rect x="55" y="-29.5" width="12" height="60" rx="8" fill="#98FB98" stroke="#556B2F"/>
+        <rect class="shape" x="-88" y="-38" width="176" height="76" rx="24" fill="url(#upholstery-forest)" stroke="#253523"/>
+        <rect x="-84" y="18" width="168" height="12" rx="5" fill="url(#wood-espresso)" stroke="#1a120b"/>
+        <g fill="url(#upholstery-cream)" stroke="#8c805f">
+            <rect class="shape" x="-66" y="-2" width="58" height="34" rx="12"/>
+            <rect class="shape" x="8" y="-2" width="58" height="34" rx="12"/>
+        </g>
+        <g fill="url(#upholstery-forest)" stroke="#314b31">
+            <rect x="-74" y="-26" width="60" height="20" rx="10"/>
+            <rect x="14" y="-26" width="60" height="20" rx="10"/>
+        </g>
+        <g fill="#ffffff" fill-opacity="0.65" stroke="none">
+            <circle cx="-37" cy="-4" r="10"/>
+            <circle cx="39" cy="-4" r="10"/>
+        </g>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="5" stroke-linecap="round">
+            <path d="M-70 30 L-70 44"/>
+            <path d="M70 30 L70 44"/>
+        </g>
     </g>` },
     'sofa-3': { label: 'Диван 3-местный', svg: () => `<g class="core">
-        <defs><linearGradient id="gradSofa3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#4682B4;stop-opacity:1" /><stop offset="100%" style="stop-color:#4169E1;stop-opacity:1" /></linearGradient></defs>
-        <rect x="-100" y="-37.5" width="200" height="75" rx="12" fill="url(#gradSofa3)" stroke="#191970"/>
-        <rect x="-85" y="-2.5" width="50" height="30" rx="6" fill="#87CEEB" stroke="#4682B4"/>
-        <rect x="-25" y="-2.5" width="50" height="30" rx="6" fill="#87CEEB" stroke="#4682B4"/>
-        <rect x="35" y="-2.5" width="50" height="30" rx="6" fill="#87CEEB" stroke="#4682B4"/>
-        <rect x="-92" y="-29.5" width="184" height="20" rx="8" fill="#B0E0E6" stroke="#4169E1"/>
-        <rect x="-92" y="-29.5" width="12" height="60" rx="8" fill="#ADD8E6" stroke="#4169E1"/>
-        <rect x="80" y="-29.5" width="12" height="60" rx="8" fill="#ADD8E6" stroke="#4169E1"/>
+        <rect class="shape" x="-110" y="-38" width="220" height="76" rx="26" fill="url(#upholstery-slate)" stroke="#283039"/>
+        <rect x="-106" y="18" width="212" height="12" rx="5" fill="url(#wood-espresso)" stroke="#1a120b"/>
+        <g fill="url(#upholstery-cream)" stroke="#6c6960">
+            <rect class="shape" x="-84" y="-2" width="54" height="34" rx="12"/>
+            <rect class="shape" x="-18" y="-2" width="54" height="34" rx="12"/>
+            <rect class="shape" x="48" y="-2" width="54" height="34" rx="12"/>
+        </g>
+        <g fill="url(#upholstery-slate)" stroke="#3b424b">
+            <rect x="-92" y="-26" width="60" height="20" rx="10"/>
+            <rect x="-26" y="-26" width="60" height="20" rx="10"/>
+            <rect x="40" y="-26" width="60" height="20" rx="10"/>
+        </g>
+        <g fill="url(#fabric-hatching)" stroke="#c2ae8c" stroke-width="1.2">
+            <rect x="-60" y="10" width="44" height="18" rx="8"/>
+            <rect x="16" y="10" width="44" height="18" rx="8"/>
+        </g>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="5" stroke-linecap="round">
+            <path d="M-90 30 L-90 44"/>
+            <path d="M0 30 L0 44"/>
+            <path d="M90 30 L90 44"/>
+        </g>
     </g>` },
-    'sectional-l': { label: 'Диван угловой L', svg: () => `<g class="core"><path transform="translate(-100, -75)" class="shape" d="M0 12 C0 5.373 5.373 0 12 0 H188 C194.627 0 200 5.373 200 12 V75 H80 V150 H12 C5.373 150 0 144.627 0 138 V12 Z" fill="#696969" stroke="#404040"/></g>` },
-    'stool': { label: 'Табурет', svg: () => `<g class="core"><circle class="shape" r="18" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'barstool': { label: 'Барный стул', svg: () => `<g class="core"><circle class="shape" r="18" fill="url(#wood-grain)" stroke="#855a3c"/><circle r="12" fill="none" stroke="#6c757d" stroke-width="2.5"/></g>` },
-    'coffee-round': { label: 'Стол журнальный', svg: () => `<g class="core"><circle class="shape" r="35" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'coffee-rect': { label: 'Стол журнальный', svg: () => `<g class="core"><rect x="-45" y="-25" class="shape" width="90" height="50" rx="8" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'dining-4': { label: 'Стол обеденный', svg: () => `<g class="core"><rect x="-60" y="-40" class="shape" width="120" height="80" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'dining-6': { label: 'Стол обеденный', svg: () => `<g class="core"><rect x="-80" y="-45" class="shape" width="160" height="90" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'dining-8': { label: 'Стол обеденный', svg: () => `<g class="core"><rect x="-100" y="-45" class="shape" width="200" height="90" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'desk': { label: 'Стол письменный', svg: () => `<g class="core"><rect x="-70" y="-35" class="shape" width="140" height="70" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'workstation-l': { label: 'Рабочая станция L', svg: () => `<g class="core"><path transform="translate(-80, -65)" class="shape" d="M0 6 C0 2.686 2.686 0 6 0 H154 C157.314 0 160 2.686 160 6 V60 H100 V124 C100 127.314 97.314 130 94 130 H60 V70 H6 C2.686 70 0 67.314 0 64 V6 Z" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'office-chair': { label: 'Кресло офисное', svg: () => `<g class="core" transform="translate(-22, -25)">
-        <path d="M11,50 L14,50 Q12,48 11,46 L11,50 M33,50 L30,50 Q32,48 33,46 L33,50 M18,50 L20,50 Q19,48 18,46 L18,50 M26,50 L24,50 Q25,48 26,46 L26,50" fill="#202020" />
-        <path class="shape" d="M22,0 L22,4 L12,4 Q8,4 8,8 L8,36 Q8,40 12,40 L32,40 Q36,40 36,36 L36,8 Q36,4 32,4 L22,4 Z" fill="#495057" stroke="#212529"/>
-        <path d="M4,12 L4,32 L8,32 L8,12 Z M40,12 L40,32 L36,32 L36,12 Z" fill="#606060" stroke="#212529"/>
-        <path d="M11,46 L33,46 M22,42 V50 M14,42 L11,46 L14,50 M30,42 L33,46 L30,50 M18,42 L18,50 M26,42 L26,50" fill="none" stroke="#212529" stroke-width="2" stroke-linecap="round"/>
+    'sectional-l': { label: 'Диван угловой L', svg: () => `<g class="core">
+        <path class="shape" d="M-108 -50 H88 Q106 -50 106 -32 V30 H30 V96 H-96 Q-108 96 -108 84 Z" fill="url(#upholstery-forest)" stroke="#253523"/>
+        <rect x="-104" y="18" width="134" height="12" rx="5" fill="url(#wood-espresso)" stroke="#1a120b"/>
+        <rect x="6" y="30" width="24" height="56" rx="10" fill="url(#wood-espresso)" stroke="#1a120b"/>
+        <g fill="url(#upholstery-cream)" stroke="#8c805f">
+            <rect class="shape" x="-86" y="-6" width="64" height="34" rx="12"/>
+            <rect class="shape" x="-18" y="-6" width="86" height="34" rx="14"/>
+            <rect class="shape" x="-84" y="30" width="60" height="34" rx="12"/>
+        </g>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="5" stroke-linecap="round">
+            <path d="M-92 32 L-92 48"/>
+            <path d="M-6 32 L-6 48"/>
+            <path d="M44 72 L44 90"/>
+        </g>
     </g>` },
-    'reception': { label: 'Стойка-ресепшн', svg: () => `<g class="core"><rect x="-110" y="-40" class="shape" width="220" height="80" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/><rect x="-110" y="-20" width="220" height="60" rx="6" fill="#f8f9fa" stroke="#ced4da"/></g>` },
+    'stool': { label: 'Табурет', svg: () => `<g class="core">
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round">
+            <path d="M-10 -6 L-12 16"/>
+            <path d="M10 -6 L12 16"/>
+            <path d="M-6 8 L-4 24"/>
+            <path d="M6 8 L4 24"/>
+        </g>
+        <circle class="shape" r="20" fill="url(#wood-honey)" stroke="#704622"/>
+        <circle r="12" fill="url(#table-round-sheen)"/>
+        <circle r="5" fill="url(#metal-brass)" stroke="#7f601f" stroke-width="0.6"/>
+    </g>` },
+    'barstool': { label: 'Барный стул', svg: () => `<g class="core">
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.2" stroke-linecap="round">
+            <path d="M-8 -20 L-12 28"/>
+            <path d="M8 -20 L12 28"/>
+            <ellipse cy="10" rx="16" ry="3" stroke="url(#metal-brass)"/>
+        </g>
+        <circle class="shape" cy="-24" r="20" fill="url(#leather-caramel)" stroke="#4d2d17"/>
+        <circle cy="-24" r="12" fill="url(#table-round-sheen)"/>
+        <rect x="-8" y="28" width="16" height="6" rx="3" fill="url(#metal-steel)" stroke="#7c858f"/>
+    </g>` },
+    'coffee-round': { label: 'Стол журнальный', svg: () => `<g class="core">
+        <circle class="shape" r="40" fill="url(#wood-honey)" stroke="#835127"/>
+        <circle r="30" fill="url(#table-round-sheen)"/>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.2" stroke-linecap="round">
+            <path d="M-18 38 L-6 20"/>
+            <path d="M18 38 L6 20"/>
+            <path d="M-6 20 L6 20"/>
+        </g>
+    </g>` },
+    'coffee-rect': { label: 'Стол журнальный', svg: () => `<g class="core">
+        <rect class="shape" x="-48" y="-28" width="96" height="56" rx="10" fill="url(#wood-honey)" stroke="#835127"/>
+        <rect x="-32" y="-14" width="64" height="28" rx="8" fill="url(#table-round-sheen)"/>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round">
+            <path d="M-32 26 L-18 10"/>
+            <path d="M32 26 L18 10"/>
+            <path d="M-18 10 H18"/>
+        </g>
+    </g>` },
+    'dining-4': { label: 'Стол обеденный', svg: () => `<g class="core">
+        <rect class="shape" x="-68" y="-44" width="136" height="88" rx="12" fill="url(#wood-oak)" stroke="#7a4c22"/>
+        <rect x="-48" y="-16" width="96" height="32" rx="8" fill="url(#table-round-sheen)"/>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <path d="M-44 40 L-30 10"/>
+            <path d="M44 40 L30 10"/>
+            <path d="M-30 10 H30"/>
+        </g>
+    </g>` },
+    'dining-6': { label: 'Стол обеденный', svg: () => `<g class="core">
+        <rect class="shape" x="-88" y="-48" width="176" height="96" rx="14" fill="url(#wood-oak)" stroke="#7a4c22"/>
+        <rect x="-60" y="-18" width="120" height="36" rx="10" fill="url(#table-round-sheen)"/>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <path d="M-60 44 L-40 12"/>
+            <path d="M60 44 L40 12"/>
+            <path d="M-40 12 H40"/>
+        </g>
+    </g>` },
+    'dining-8': { label: 'Стол обеденный', svg: () => `<g class="core">
+        <rect class="shape" x="-108" y="-48" width="216" height="96" rx="18" fill="url(#wood-oak)" stroke="#7a4c22"/>
+        <rect x="-72" y="-18" width="144" height="36" rx="12" fill="url(#table-round-sheen)"/>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
+            <path d="M-74 44 L-50 10"/>
+            <path d="M74 44 L50 10"/>
+            <path d="M-50 10 H50"/>
+        </g>
+    </g>` },
+    'desk': { label: 'Стол письменный', svg: () => `<g class="core">
+        <rect class="shape" x="-76" y="-38" width="152" height="76" rx="10" fill="url(#wood-espresso)" stroke="#50311b"/>
+        <rect x="-70" y="-30" width="64" height="20" rx="6" fill="#ede0d2" stroke="#d0bca2"/>
+        <rect x="14" y="-30" width="62" height="60" rx="8" fill="#62442a" stroke="#3b2415" fill-opacity="0.25"/>
+        <path d="M-12 -30 V38" stroke="#22150c" stroke-opacity="0.3"/>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.4" stroke-linecap="round">
+            <path d="M-52 36 L-40 10"/>
+            <path d="M52 36 L40 10"/>
+        </g>
+    </g>` },
+    'workstation-l': { label: 'Рабочая станция L', svg: () => `<g class="core">
+        <path class="shape" transform="translate(-84, -70)" d="M0 10 C0 4.477 4.477 0 10 0 H168 C173.523 0 178 4.477 178 10 V60 H110 V140 C110 145.523 105.523 150 100 150 H60 V80 H10 C4.477 80 0 75.523 0 70 V10 Z" fill="url(#wood-espresso)" stroke="#50311b"/>
+        <path d="M-10 -6 H70" stroke="#2b1a0f" stroke-opacity="0.2" stroke-width="6" stroke-linecap="round"/>
+        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.6" stroke-linecap="round">
+            <path d="M-64 58 L-52 18"/>
+            <path d="M24 60 L12 18"/>
+            <path d="M74 60 L62 18"/>
+        </g>
+    </g>` },
+    'office-chair': { label: 'Кресло офисное', svg: () => `<g class="core" transform="translate(-22, -26)">
+        <path d="M11,50 L14,50 Q12,48 11,46 L11,50 M33,50 L30,50 Q32,48 33,46 L33,50 M18,50 L20,50 Q19,48 18,46 L18,50 M26,50 L24,50 Q25,48 26,46 L26,50" fill="#1f1f1f"/>
+        <path class="shape" d="M22,0 L22,6 L12,6 Q8,6 8,10 L8,38 Q8,42 12,42 L32,42 Q36,42 36,38 L36,10 Q36,6 32,6 L22,6 Z" fill="url(#upholstery-slate)" stroke="#1c2127"/>
+        <rect x="6" y="12" width="4" height="22" rx="2" fill="url(#metal-steel)" stroke="#1c2127"/>
+        <rect x="38" y="12" width="4" height="22" rx="2" fill="url(#metal-steel)" stroke="#1c2127"/>
+        <path d="M11,46 L33,46 M22,42 V50 M14,42 L11,46 L14,50 M30,42 L33,46 L30,50 M18,42 L18,50 M26,42 L26,50" fill="none" stroke="#1c2127" stroke-width="2" stroke-linecap="round"/>
+    </g>` },
+    'reception': { label: 'Стойка-ресепшн', svg: () => `<g class="core">
+        <rect class="shape" x="-116" y="-44" width="232" height="88" rx="12" fill="url(#wood-espresso)" stroke="#4a2d17"/>
+        <rect x="-112" y="-36" width="224" height="44" rx="10" fill="url(#counter-marble)" stroke="#c4c0bb"/>
+        <path d="M-112 4 H112" stroke="#2f1d10" stroke-opacity="0.25"/>
+        <g fill="none" stroke="#ffffff" stroke-opacity="0.4">
+            <path d="M-80 -12 H-30"/>
+            <path d="M30 -12 H80"/>
+        </g>
+    </g>` },
     'whiteboard': { label: 'Доска', svg: () => `<g class="core"><rect x="-90" y="-50" class="shape" width="180" height="100" rx="4" fill="#B0C4DE" stroke="#708090"/><rect x="-85" y="-45" width="170" height="90" fill="#FFFFFF" stroke="#E6E6FA"/><path d="M-75 -25 H60 M-75 -5 H30 M-75 15 H0" stroke="#ADD8E6" stroke-width="2"/></g>` },
     'printer': { label: 'Принтер', svg: () => `<g class="core"><rect x="-30" y="-22.5" class="shape" width="60" height="45" rx="6" fill="#DCDCDC" stroke="#A9A9A9"/><rect x="-25" y="-17.5" width="50" height="10" rx="2" fill="#FFFFFF"/><rect x="-22" y="5.5" width="44" height="12" rx="2" fill="#F5F5F5"/></g>` },
     'copier': { label: 'Ксерокс', svg: () => `<g class="core"><rect x="-35" y="-45" class="shape" width="70" height="90" rx="6" fill="#DCDCDC" stroke="#A9A9A9"/><rect x="-30" y="-40" width="60" height="20" rx="3" fill="#696969" stroke="#2F4F4F"/><rect x="-27" y="-10" width="54" height="5" rx="2" fill="#FFFFFF"/><rect x="-27" y="5" width="54" height="10" rx="2" fill="#F5F5F5"/><rect x="-27" y="20" width="54" height="10" rx="2" fill="#F5F5F5"/></g>` },
@@ -166,23 +297,24 @@ const ITEM_TEMPLATES = {
     'wardrobe-2d': { label: 'Шкаф', svg: () => `<g class="core"><rect x="-60" y="-30" class="shape" width="120" height="60" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/><path d="M0 -25 V25" stroke="#855a3c" stroke-width="1"/><rect x="-8" y="-2" width="4" height="12" rx="2" fill="#855a3c"/><rect x="4" y="-2" width="4" height="12" rx="2" fill="#855a3c"/></g>` },
     'wardrobe-3d': { label: 'Шкаф', svg: () => `<g class="core"><rect x="-90" y="-30" class="shape" width="180" height="60" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/><path d="M-30 -25 V25 M30 -25 V25" stroke="#855a3c" stroke-width="1"/><rect x="-38" y="-2" width="4" height="12" rx="2" fill="#855a3c"/><rect x="-2" y="-2" width="4" height="12" rx="2" fill="#855a3c"/><rect x="34" y="-2" width="4" height="12" rx="2" fill="#855a3c"/></g>` },
     'shelving': { label: 'Стеллаж', svg: () => `<g class="core"><rect x="-70" y="-20" class="shape" width="140" height="40" rx="6" fill="none" stroke="#6c757d"/>${[-10,0,10].map(y=>`<path d="M-62 ${y} H62" stroke="#bbb"/>`).join('')}</g>` },
-    'kitchen-line': { label: 'Кухонный модуль', svg: () => `<g class="core"><rect x="-90" y="-30" class="shape" width="180" height="60" rx="6" fill="#f8f9fa" stroke="#ced4da"/>${[-85,-25,35].map(x=>`<rect x="${x}" y="-25" width="50" height="50" rx="4" fill="#e9ecef" stroke="#ced4da"/>`).join('')}</g>` },
-    'sink': { label: 'Мойка', svg: () => `<g class="core" transform="translate(-35, -25)">
-        <rect class="shape" width="70" height="50" rx="6" fill="#E0E0E0" stroke="#A0A0A0"/>
-        <rect x="8" y="8" width="54" height="34" rx="4" fill="#FFFFFF" stroke="#C0C0C0"/>
-        <rect x="48" y="10" width="12" height="6" fill="#C0C0C0" stroke="#808080"/>
-        <rect x="52" y="16" width="4" height="10" fill="#C0C0C0" stroke="#808080"/>
-        <circle cx="35" cy="25" r="3" fill="#6c757d" opacity="0.5"/>
+    'kitchen-line': { label: 'Кухонный модуль', svg: () => `<g class="core"><rect class="shape" x="-96" y="-34" width="192" height="68" rx="10" fill="url(#wood-espresso)" stroke="#3f2a17"/><rect x="-92" y="-30" width="184" height="20" rx="6" fill="url(#counter-marble)" stroke="#c9c4bf"/>${[-84,-28,28].map(x=>`<rect x="${x}" y="-8" width="52" height="36" rx="6" fill="#f3f4f6" stroke="#b7bec7"/>`).join('')}${[-84,-28,28].map(x=>`<rect x="${x+10}" y="12" width="32" height="12" rx="3" fill="#d1d6de" stroke="#a2aab6"/>`).join('')}</g>` },
+    'sink': { label: 'Мойка', svg: () => `<g class="core" transform="translate(-36, -26)">
+        <rect class="shape" width="72" height="52" rx="8" fill="url(#metal-chrome)" stroke="#919aa4"/>
+        <rect x="6" y="8" width="60" height="36" rx="6" fill="url(#glass-soft)" stroke="#7f9bb0"/>
+        <circle cx="36" cy="26" r="4" fill="#5d6a73"/>
+        <path d="M54 6 Q60 -6 52 -10" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M54 6 V18" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round"/>
     </g>` },
     'cooktop-4': { label: 'Варочная панель', svg: () => `<g class="core" transform="translate(-30, -27.5)">
-        <rect class="shape" width="60" height="55" rx="6" fill="#101010" stroke="#303030"/>
-        ${[18,42].map(x=>[15,38].map(y=>`<circle cx="${x}" cy="${y}" r="8" fill="#202020" stroke="#404040"/>`).join('')).join('')}
+        <rect class="shape" width="60" height="55" rx="8" fill="#10151a" stroke="#30363c"/>
+        ${[18,42].map(x=>[15,38].map(y=>`<circle cx="${x}" cy="${y}" r="9" fill="#1c232a" stroke="#4a545d"/><circle cx="${x}" cy="${y}" r="4" fill="#0d1114" stroke="#5b676f"/>`).join('')).join('')}
+        <rect x="-4" y="-4" width="68" height="63" rx="10" fill="none" stroke="#4a545d" stroke-dasharray="6 8" stroke-opacity="0.5"/>
     </g>` },
-    'fridge': { label: 'Холодильник', svg: () => `<g class="core"><rect x="-35" y="-32.5" class="shape" width="70" height="65" rx="6" fill="#F5F5F5" stroke="#A9A9A9"/><path d="M-30 0 H30" stroke="#A9A9A9"/><rect x="25" y="-24.5" width="3" height="15" rx="1.5" fill="#D3D3D3"/><rect x="25" y="7.5" width="3" height="15" rx="1.5" fill="#D3D3D3"/></g>` },
-    'oven': { label: 'Духовка', svg: () => `<g class="core"><rect x="-30" y="-30" class="shape" width="60" height="60" rx="6" fill="#C0C0C0" stroke="#808080"/><rect x="-20" y="-18" width="40" height="24" rx="3" fill="#212529" stroke="#495057"/><path d="M-20 -22 H20" stroke="#A9A9A9" stroke-width="2.5"/></g>` },
-    'microwave': { label: 'Микроволновка', svg: () => `<g class="core"><rect x="-27.5" y="-17.5" class="shape" width="55" height="35" rx="4" fill="#F5F5F5" stroke="#A9A9A9"/><rect x="-19.5" y="-9.5" width="28" height="19" rx="2" fill="#212529"/><rect x="12.5" y="-7.5" width="8" height="15" rx="2" fill="#DCDCDC"/></g>` },
-    'dishwasher': { label: 'Посудомойка', svg: () => `<g class="core"><rect x="-30" y="-30" class="shape" width="60" height="60" rx="6" fill="#E8E8E8" stroke="#A8A8A8"/><path d="M-20 -22 H20" stroke="#C8C8C8" stroke-width="2.5"/></g>` },
-    'island': { label: 'Кухонный остров', svg: () => `<g class="core"><rect x="-75" y="-45" class="shape" width="150" height="90" rx="8" fill="url(#wood-grain)" stroke="#855a3c"/><rect x="-65" y="-35" width="130" height="70" fill="#F8F8FF" stroke="#DCDCDC" rx="4"/></g>` },
+    'fridge': { label: 'Холодильник', svg: () => `<g class="core"><rect x="-36" y="-34" class="shape" width="72" height="68" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><path d="M-30 0 H30" stroke="#b4bdc7"/><rect x="26" y="-26" width="4" height="16" rx="1.5" fill="#dde4ea" stroke="#93a0ad"/><rect x="26" y="10" width="4" height="16" rx="1.5" fill="#dde4ea" stroke="#93a0ad"/></g>` },
+    'oven': { label: 'Духовка', svg: () => `<g class="core"><rect x="-32" y="-32" class="shape" width="64" height="64" rx="8" fill="url(#metal-steel)" stroke="#656d76"/><rect x="-22" y="-18" width="44" height="28" rx="4" fill="#1f2429" stroke="#495057"/><path d="M-20 -24 H20" stroke="#d6dae0" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="18" r="4" fill="#d6dae0"/></g>` },
+    'microwave': { label: 'Микроволновка', svg: () => `<g class="core"><rect x="-30" y="-20" class="shape" width="60" height="40" rx="6" fill="url(#metal-chrome)" stroke="#8f99a5"/><rect x="-20" y="-10" width="32" height="20" rx="3" fill="#0f1418" stroke="#3e464f"/><rect x="15" y="-8" width="10" height="16" rx="3" fill="#d9dee3" stroke="#9da6b1"/><circle cx="20" cy="0" r="2" fill="#6c7682"/></g>` },
+    'dishwasher': { label: 'Посудомойка', svg: () => `<g class="core"><rect x="-32" y="-32" class="shape" width="64" height="64" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><path d="M-20 -22 H20" stroke="#c7d0d8" stroke-width="3" stroke-linecap="round"/><rect x="-24" y="10" width="48" height="14" rx="4" fill="#edf1f5" stroke="#b8c1cc"/></g>` },
+    'island': { label: 'Кухонный остров', svg: () => `<g class="core"><rect class="shape" x="-80" y="-48" width="160" height="96" rx="12" fill="url(#wood-espresso)" stroke="#4a2d17"/><rect x="-74" y="-42" width="148" height="32" rx="8" fill="url(#counter-marble)" stroke="#c4c0bb"/><rect x="-68" y="0" width="136" height="40" rx="10" fill="#f1f3f5" stroke="#b7bec7"/></g>` },
     'toilet': { label: 'Туалет', svg: () => `<g class="core" transform="translate(-20, -30)">
         <path class="shape" d="M5 10 H35 C37.761 10 40 12.239 40 15 V55 C40 57.761 37.761 60 35 60 H5 C2.239 60 0 57.761 0 55 V15 C0 12.239 2.239 10 5 10 Z" fill="#F8F8FF" stroke="#DCDCDC"/>
         <rect x="5" y="0" width="30" height="15" rx="4" fill="#E6E6FA" stroke="#D8BFD8"/>
@@ -191,9 +323,9 @@ const ITEM_TEMPLATES = {
     'bath-sink': { label: 'Раковина', svg: () => `<g class="core"><rect x="-30" y="-22.5" class="shape" width="60" height="45" rx="8" fill="#F8F8FF" stroke="#DCDCDC"/><ellipse cx="0" cy="0" rx="18" ry="12" fill="#FFFFFF" stroke="#E0E0E0"/><circle r="3" fill="#6c757d"/></g>` },
     'shower': { label: 'Душ', svg: () => `<g class="core"><rect x="-45" y="-45" class="shape" width="90" height="90" rx="2" fill="#F0FFFF" stroke="#B0E0E6"/><path d="M-45 45 L45 -45" stroke="#E0FFFF"/><circle cx="-30" cy="-30" r="5" fill="#C0C0C0"/></g>` },
     'bathtub': { label: 'Ванна', svg: () => `<g class="core"><rect x="-75" y="-35" class="shape" width="150" height="70" rx="35" fill="#F8F8FF" stroke="#DCDCDC"/><ellipse cx="0" cy="0" rx="68" ry="28" fill="#FFFFFF" stroke="#E0E0E0"/></g>` },
-    'washer': { label: 'Стиральная машина', svg: () => `<g class="core"><rect x="-30" y="-30" class="shape" width="60" height="60" rx="6" fill="#F8F8FF" stroke="#DCDCDC"/><circle cy="2" r="16" fill="#E0E0E0" stroke="#A0A0A0"/><circle cy="2" r="12" fill="rgba(0,0,0,0.1)"/></g>` },
-    'dryer': { label: 'Сушильная машина', svg: () => `<g class="core"><rect x="-30" y="-30" class="shape" width="60" height="60" rx="6" fill="#F8F8FF" stroke="#DCDCDC"/><circle cy="2" r="16" fill="#E0E0E0" stroke="#A0A0A0"/></g>` },
-    'water-cooler': { label: 'Кулер для воды', svg: () => `<g class="core"><rect x="-17.5" y="-50" class="shape" width="35" height="100" rx="6" fill="#F8F8FF" stroke="#DCDCDC"/><circle cy="-34" r="12" fill="#87CEEB" stroke="#4682B4"/><rect x="-7.5" y="-5" width="15" height="10" fill="#DCDCDC"/></g>` },
+    'washer': { label: 'Стиральная машина', svg: () => `<g class="core"><rect x="-32" y="-32" class="shape" width="64" height="64" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><circle cy="2" r="18" fill="#d7e1ea" stroke="#6d7a86"/><circle cy="2" r="12" fill="url(#glass-soft)" stroke="#6d7a86"/></g>` },
+    'dryer': { label: 'Сушильная машина', svg: () => `<g class="core"><rect x="-32" y="-32" class="shape" width="64" height="64" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><circle cy="2" r="18" fill="#d7e1ea" stroke="#6d7a86"/><path d="M-10 -8 L10 12 M-10 12 L10 -8" stroke="#6d7a86" stroke-width="2" stroke-linecap="round"/></g>` },
+    'water-cooler': { label: 'Кулер для воды', svg: () => `<g class="core"><rect x="-18" y="-52" class="shape" width="36" height="104" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><circle cy="-36" r="14" fill="url(#glass-soft)" stroke="#4a87b3"/><rect x="-8" y="-6" width="16" height="12" rx="3" fill="#dfe3e8" stroke="#9aa4af"/><path d="M-6 -2 H-2 M2 -2 H6" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></g>` },
     'tv-stand': { label: 'ТВ-тумба', svg: () => `<g class="core"><rect x="-70" y="-20" class="shape" width="140" height="40" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
     'tv-wall': { label: 'ТВ настенный', svg: () => `<g class="core"><rect x="-70" y="-40" class="shape" width="140" height="80" rx="6" fill="#202020" stroke="#000"/><rect x="-60" y="-30" width="120" height="60" rx="2" fill="#000" stroke="#303030"/></g>` },
     'projector': { label: 'Проектор', svg: () => `<g class="core"><rect x="-25" y="-15" class="shape" width="50" height="30" rx="6" fill="#F5F5F5" stroke="#DCDCDC"/><circle cx="10" r="8" fill="#212529" stroke="#495057"/></g>` },
@@ -201,14 +333,18 @@ const ITEM_TEMPLATES = {
     'ac-indoor': { label: 'Кондиционер', svg: () => `<g class="core"><rect x="-50" y="-15" class="shape" width="100" height="30" rx="6" fill="#FFFFFF" stroke="#DCDCDC"/><path d="M-40 7 H40" stroke="#E8E8E8"/></g>` },
     'radiator': { label: 'Радиатор', svg: () => `<g class="core"><rect x="-60" y="-12.5" class="shape" width="120" height="25" rx="4" fill="#F8F8FF" stroke="#DCDCDC"/>${[-50,-35,-20,-5,10,25,40].map(x=>`<path d="M${x} -8.5 V8.5" stroke="#DCDCDC" stroke-width="2"/>`).join('')}</g>` },
     'plant': { label: 'Растение', svg: () => `<g class="core">
-        <defs><linearGradient id="gradPlantPot" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#CD853F" /><stop offset="100%" stop-color="#8B4513" /></linearGradient></defs>
-        <path d="M-20,0 L20,0 L15,30 L-15,30 Z" fill="url(#gradPlantPot)" stroke="#5C3317" />
-        <path d="M0-30 C-20,-20 -10,-40 0,0 C10,-40 20,-20 0,-30 M-10,-25 C-30,-15 -20,-35 -10,-5 C0,-35 10,-15 -10,-25 M10,-25 C30,-15 20,-35 10,-5 C0,-35 -10,-15 10,-25" fill="#228B22" stroke="#006400" />
+        <path d="M-20,0 L20,0 L15,32 L-15,32 Z" fill="url(#ceramic-terracotta)" stroke="#5C3317"/>
+        <ellipse cy="0" rx="18" ry="4" fill="#3a2513" fill-opacity="0.6"/>
+        <path d="M0 -6 C-6 -16 -4 -28 0 -40 C4 -28 6 -16 0 -6 Z" fill="url(#foliage-rich)" stroke="#1f552a"/>
+        <path d="M-12 -10 C-26 -4 -22 -20 -12 -34 C-8 -22 -6 -12 -12 -10 Z" fill="url(#foliage-rich)" stroke="#1f552a"/>
+        <path d="M12 -12 C26 -6 22 -22 12 -36 C8 -24 6 -14 12 -12 Z" fill="url(#foliage-rich)" stroke="#1f552a"/>
+        <path d="M-6 -14 Q0 -20 6 -14" stroke="#d8f5c4" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
     </g>` },
     'floor-lamp': { label: 'Торшер', svg: () => `<g class="core" transform="translate(0, -25)">
-        <circle r="10" cy="20" fill="#DCDCDC" stroke="#A9A9A9"/>
-        <path d="M0 -13 V 15" stroke="#808080"/>
-        <path d="M-14,-13 L14,-13 L20,-40 L-20,-40 Z" fill="#FFFFE0" stroke="#F0E68C"/>
+        <circle r="11" cy="22" fill="url(#metal-steel)" stroke="#6f7882"/>
+        <path d="M0 -12 V 18" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M-16,-12 L16,-12 L24,-44 L-24,-44 Z" fill="#fff3c4" stroke="#d0b36d"/>
+        <path d="M-10,-24 L10,-24" stroke="#ffffff" stroke-opacity="0.5" stroke-linecap="round"/>
     </g>` },
     'rug': { label: 'Ковёр', svg: () => `<g class="core">
         <rect x="-90" y="-60" class="shape" width="180" height="120" rx="8" fill="#F5F5DC" stroke="#DEB887"/>
@@ -236,17 +372,17 @@ Object.assign(ITEM_TEMPLATES['office-chair'] || {}, { seats: 1 });
 ITEM_TEMPLATES['bar-counter-straight'] = {
     label: 'Барная стойка',
     seats: 4,
-    svg: () => `<g class="core"><rect x="-100" y="-25" class="shape" width="200" height="50" rx="8" fill="url(#wood-grain)" stroke="#855a3c"/></g>`
+    svg: () => `<g class="core"><rect class="shape" x="-110" y="-36" width="220" height="72" rx="12" fill="url(#wood-espresso)" stroke="#4a2d17"/><rect x="-104" y="-32" width="208" height="22" rx="8" fill="url(#counter-marble)" stroke="#c4c0bb"/><rect x="-110" y="8" width="220" height="16" rx="6" fill="#322218" opacity="0.4"/><path d="M-110 18 H110" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round"/></g>`
 };
 ITEM_TEMPLATES['bar-counter-l'] = {
     label: 'Барная стойка Г',
     seats: 5,
-    svg: () => `<g class="core"><path transform="translate(-80, -50)" class="shape" d="M0 6 C0 2.686 2.686 0 6 0 H160 C162.314 0 165 2.686 165 6 V40 H100 V110 C100 112.314 97.314 115 94 115 H60 V50 H6 C2.686 50 0 47.314 0 44 V6 Z" fill="url(#wood-grain)" stroke="#855a3c"/></g>`
+    svg: () => `<g class="core"><path class="shape" transform="translate(-84, -54)" d="M0 12 C0 5.373 5.373 0 12 0 H168 C174.627 0 180 5.373 180 12 V44 H108 V126 C108 132.627 102.627 138 96 138 H60 V76 H12 C5.373 76 0 70.627 0 64 Z" fill="url(#wood-espresso)" stroke="#4a2d17"/><path transform="translate(-78, -48)" d="M0 18 C0 13.582 3.582 10 8 10 H160 C164.418 10 168 13.582 168 18 V34 H108 V116 C108 120.418 104.418 124 100 124 H68 V66 H8 C3.582 66 0 62.418 0 58 Z" fill="url(#counter-marble)" stroke="#c4c0bb"/><path d="M-84 22 H78" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round"/><path d="M-20 70 H60" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round"/></g>`
 };
 ITEM_TEMPLATES['bar-counter-island'] = {
     label: 'Барный остров',
     seats: 6,
-    svg: () => `<g class="core"><rect x="-90" y="-35" class="shape" width="180" height="70" rx="8" fill="url(#wood-grain)" stroke="#855a3c"/></g>`
+    svg: () => `<g class="core"><rect class="shape" x="-96" y="-40" width="192" height="80" rx="14" fill="url(#wood-espresso)" stroke="#4a2d17"/><rect x="-90" y="-34" width="180" height="24" rx="10" fill="url(#counter-marble)" stroke="#c4c0bb"/><rect x="-82" y="6" width="164" height="20" rx="8" fill="#322218" opacity="0.35"/><path d="M-78 18 H78" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round"/></g>`
 };
 
 // Расширяем список категорий добавлением секции для барных стоек
