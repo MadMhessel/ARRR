@@ -112,6 +112,78 @@
                 <label class="prop-label">Высота:</label><input type="number" id="prop-h" step="10" min="1">
                 <label class="prop-label">Поворот:</label><input type="number" id="prop-a" step="15" min="-360" max="360">
             </div>
+
+            <section id="measurement-panel" class="panel" aria-label="Список измерений">
+                <div class="panel-header">
+                    <h3>Измерения</h3>
+                    <div class="panel-actions">
+                        <button id="measure-clear" type="button" title="Удалить все измерения">Очистить</button>
+                    </div>
+                </div>
+                <table id="measure-table">
+                    <thead>
+                        <tr><th>#</th><th>Длина</th><th>Угол</th><th></th></tr>
+                    </thead>
+                    <tbody id="measure-table-body"></tbody>
+                </table>
+            </section>
+
+            <section id="normatives-panel" class="panel" aria-label="Настройки нормативов">
+                <div class="panel-header">
+                    <h3>Нормативы</h3>
+                </div>
+                <label class="panel-row">Коридор (гости)
+                    <input type="number" id="normative-corridor-guest" step="0.1" min="0" aria-label="Минимальная ширина коридора для гостей, м"> м
+                </label>
+                <label class="panel-row">Коридор (персонал)
+                    <input type="number" id="normative-corridor-staff" step="0.1" min="0" aria-label="Минимальная ширина коридора для персонала, м"> м
+                </label>
+                <label class="panel-row">Радиус разворота
+                    <input type="number" id="normative-radius" step="0.1" min="0" aria-label="Минимальный свободный диаметр"> м
+                </label>
+            </section>
+
+            <section id="pricing-panel" class="panel" aria-label="Настройки сметы">
+                <div class="panel-header">
+                    <h3>Смета</h3>
+                    <div class="panel-actions">
+                        <label class="panel-row">
+                            <span class="visually-hidden">Пресет сметы</span>
+                            <select id="pricing-preset" aria-label="Пресет ставок сметы">
+                                <option value="standard">Стандарт</option>
+                                <option value="economy">Эконом</option>
+                                <option value="premium">Премиум</option>
+                                <option value="custom">Свои</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <label class="panel-row">Отделка, ₽/м²
+                    <input type="number" id="rate-finish" min="0" step="10" aria-label="Стоимость отделки">
+                </label>
+                <label class="panel-row">Плинтус, ₽/м
+                    <input type="number" id="rate-perimeter" min="0" step="5" aria-label="Стоимость отделки периметра">
+                </label>
+                <label class="panel-row">Инженерия, ₽/м²
+                    <input type="number" id="rate-engineering" min="0" step="10" aria-label="Стоимость инженерных систем">
+                </label>
+            </section>
+
+            <section id="analysis-panel" class="panel" aria-label="Результаты анализа">
+                <div class="panel-header">
+                    <h3>Анализ</h3>
+                    <div class="panel-actions">
+                        <button id="analysis-refresh" type="button" title="Пересчитать анализ">↻</button>
+                    </div>
+                </div>
+                <div id="analysis-summary"></div>
+                <table id="analysis-rooms-table">
+                    <thead>
+                        <tr><th>#</th><th>Зона</th><th>Площадь</th><th>Периметр</th><th>Места</th><th>Мин. габарит</th><th>Коридор</th><th>Радиус</th></tr>
+                    </thead>
+                    <tbody id="analysis-rooms-body"></tbody>
+                </table>
+            </section>
         </aside>
     </div>
 
