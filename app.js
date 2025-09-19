@@ -132,6 +132,12 @@
         { id: 'glass', label: 'Стеклянная', description: 'Витраж или стеклянная перегородка' },
         { id: 'half', label: 'Полустена', description: 'Парапет, барная стойка или ограждение' }
     ];
+    const WALL_STYLE_MAP = {
+        structural: { stroke: '#343a40', width: 16, dasharray: null, linecap: 'round' },
+        partition: { stroke: '#868e96', width: 10, dasharray: '28 12', linecap: 'butt' },
+        glass: { stroke: 'rgba(77,171,247,.9)', width: 8, dasharray: '12 8', linecap: 'butt' },
+        half: { stroke: '#adb5bd', width: 8, dasharray: '6 8', linecap: 'butt' },
+    };
     const ESTIMATE_PRESETS = {
         standard: { finish: 50, perimeter: 12, engineering: 35 },
         economy: { finish: 35, perimeter: 8, engineering: 20 },
@@ -742,6 +748,22 @@
         }
     }
 
+    function applyWallStrokeStyle(path, type) {
+        if (!path) return;
+        const style = WALL_STYLE_MAP[type] || WALL_STYLE_MAP.structural;
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', style.stroke);
+        path.setAttribute('stroke-width', String(style.width));
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('stroke-linecap', style.linecap || 'round');
+        if (style.dasharray) {
+            path.setAttribute('stroke-dasharray', style.dasharray);
+        } else {
+            path.removeAttribute('stroke-dasharray');
+        }
+        path.setAttribute('vector-effect', 'non-scaling-stroke');
+    }
+
     function updateWallElementGeometry(wallEl) {
         const model = getWallModel(wallEl);
         if (!model) return;
@@ -750,6 +772,7 @@
         wallEl.dataset.type = resolvedType;
         const path = wallEl.querySelector('path') || document.createElementNS('http://www.w3.org/2000/svg', 'path');
         if (!path.parentNode) wallEl.appendChild(path);
+        applyWallStrokeStyle(path, resolvedType);
         const pts = model.points;
         if (!pts || pts.length === 0) {
             path.removeAttribute('d');
