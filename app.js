@@ -30,6 +30,8 @@
         toast: document.getElementById('toast'),
         ctx: document.getElementById('ctx'),
         gridPattern: document.getElementById('grid'),
+        gridRect: document.getElementById('grid-surface'),
+        gridLinesGroup: document.getElementById('grid-lines'),
         layersPanel: document.getElementById('layers-panel'),
         layersList: document.getElementById('layers-list'),
         main: document.getElementById('main'),
@@ -130,6 +132,12 @@
         { id: 'glass', label: 'Стеклянная', description: 'Витраж или стеклянная перегородка' },
         { id: 'half', label: 'Полустена', description: 'Парапет, барная стойка или ограждение' }
     ];
+    const WALL_STYLE_MAP = {
+        structural: { stroke: '#343a40', width: 16, dasharray: null, linecap: 'round' },
+        partition: { stroke: '#868e96', width: 10, dasharray: '28 12', linecap: 'butt' },
+        glass: { stroke: 'rgba(77,171,247,.9)', width: 8, dasharray: '12 8', linecap: 'butt' },
+        half: { stroke: '#adb5bd', width: 8, dasharray: '6 8', linecap: 'butt' },
+    };
     const ESTIMATE_PRESETS = {
         standard: { finish: 50, perimeter: 12, engineering: 35 },
         economy: { finish: 35, perimeter: 8, engineering: 20 },
@@ -144,6 +152,31 @@
         clamp: (v, min, max) => Math.max(min, Math.min(max, v)),
         rafThrottle(fn) { let r = null, lastArgs = null; return function (...args) { lastArgs = args; if (r) return; r = requestAnimationFrame(() => { fn(...lastArgs); r = null; }); } }
     };
+
+    // === ИКОНКИ ДЛЯ КНОПОК ПАНЕЛЕЙ ===
+    function attachPanelIcons(root = document) {
+        const nodes = root.querySelectorAll('[data-icon]');
+        nodes.forEach(btn => {
+            if (btn.dataset.iconMounted === '1') return;
+
+            const iconId = btn.getAttribute('data-icon');
+            const labelText = btn.textContent.trim();
+
+            btn.textContent = '';
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'icon';
+            iconSpan.setAttribute('aria-hidden', 'true');
+            iconSpan.innerHTML = `<svg viewBox="0 0 24 24" focusable="false"><use href="#${iconId}"></use></svg>`;
+
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'label';
+            labelSpan.textContent = labelText;
+
+            btn.prepend(iconSpan);
+            btn.appendChild(labelSpan);
+            btn.dataset.iconMounted = '1';
+        });
+    }
 
     // --- GEOMETRY HELPERS ---
     function getClosestPointOnSegment(p, a, b) {
@@ -203,6 +236,12 @@
 
     const snapState = {
         markerPool: [],
+    };
+
+    const gridRenderState = {
+        majorStrideBase: Math.max(1, Math.round(1 / CONST.GRID)),
+        minorPath: null,
+        majorPath: null,
     };
 
     function getSnapRadiusSvg() {
@@ -734,6 +773,59 @@
         }
     }
 
+    function getSvgDisplayScale() {
+        if (!dom.svg) return null;
+        const view = state.viewBox || dom.svg.viewBox?.baseVal;
+        if (!view) return null;
+        const rect = dom.svg.getBoundingClientRect();
+        const scaleX = rect.width ? rect.width / view.width : null;
+        const scaleY = rect.height ? rect.height / view.height : null;
+        const candidates = [scaleX, scaleY].filter(v => Number.isFinite(v) && v > 0);
+        if (!candidates.length) return null;
+        return Math.min(...candidates);
+    }
+
+    function updateWallStrokeWidth(path, basePx, scale) {
+        if (!path) return;
+        const resolvedBase = Number(basePx);
+        if (Number.isFinite(resolvedBase) && resolvedBase > 0) {
+            path.dataset.strokeBasePx = String(resolvedBase);
+        }
+        const base = Number(path.dataset.strokeBasePx);
+        if (!Number.isFinite(base) || base <= 0) return;
+        const effectiveScale = Number.isFinite(scale) && scale > 0 ? scale : getSvgDisplayScale();
+        if (!Number.isFinite(effectiveScale) || effectiveScale <= 0) return;
+        const unitsWidth = base / effectiveScale;
+        if (Number.isFinite(unitsWidth) && unitsWidth > 0) {
+            path.setAttribute('stroke-width', `${unitsWidth}`);
+            path.style.strokeWidth = '';
+        }
+    }
+
+    function refreshWallStrokeWidths() {
+        const scale = getSvgDisplayScale();
+        if (!Number.isFinite(scale) || scale <= 0) return;
+        dom.wallsContainer?.querySelectorAll('.wall path').forEach(path => {
+            updateWallStrokeWidth(path, Number(path.dataset.strokeBasePx), scale);
+        });
+    }
+
+    function applyWallStrokeStyle(path, type) {
+        if (!path) return;
+        const style = WALL_STYLE_MAP[type] || WALL_STYLE_MAP.structural;
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', style.stroke);
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('stroke-linecap', style.linecap || 'round');
+        if (style.dasharray) {
+            path.setAttribute('stroke-dasharray', style.dasharray);
+        } else {
+            path.removeAttribute('stroke-dasharray');
+        }
+        path.removeAttribute('vector-effect');
+        updateWallStrokeWidth(path, style.width);
+    }
+
     function updateWallElementGeometry(wallEl) {
         const model = getWallModel(wallEl);
         if (!model) return;
@@ -742,6 +834,7 @@
         wallEl.dataset.type = resolvedType;
         const path = wallEl.querySelector('path') || document.createElementNS('http://www.w3.org/2000/svg', 'path');
         if (!path.parentNode) wallEl.appendChild(path);
+        applyWallStrokeStyle(path, resolvedType);
         const pts = model.points;
         if (!pts || pts.length === 0) {
             path.removeAttribute('d');
@@ -1019,6 +1112,217 @@
         setModel(el, m);
     }
     function formatGridMeters(value) { return (Math.round(value * 1000) / 1000).toString(); }
+    function ensureGridRect() {
+        if (dom.gridRect && dom.gridRect.ownerSVGElement) {
+            return dom.gridRect;
+        }
+        const rect = document.getElementById('grid-surface');
+        dom.gridRect = rect;
+        return rect;
+    }
+    function ensureGridLines() {
+        if (!dom.gridLinesGroup || !dom.gridLinesGroup.ownerSVGElement) {
+            const layer = document.getElementById('grid-layer');
+            if (!layer) return null;
+            const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            group.id = 'grid-lines';
+            group.setAttribute('pointer-events', 'none');
+            layer.appendChild(group);
+            dom.gridLinesGroup = group;
+            gridRenderState.minorPath = null;
+            gridRenderState.majorPath = null;
+        }
+        const group = dom.gridLinesGroup;
+        if (!gridRenderState.minorPath || gridRenderState.minorPath.parentNode !== group) {
+            const minor = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            minor.dataset.role = 'grid-minor';
+            minor.setAttribute('fill', 'none');
+            minor.setAttribute('stroke', '#e7ebf2');
+            minor.setAttribute('stroke-width', '0.6');
+            minor.setAttribute('vector-effect', 'non-scaling-stroke');
+            minor.setAttribute('shape-rendering', 'crispEdges');
+            group.appendChild(minor);
+            gridRenderState.minorPath = minor;
+        }
+        if (!gridRenderState.majorPath || gridRenderState.majorPath.parentNode !== group) {
+            const major = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            major.dataset.role = 'grid-major';
+            major.setAttribute('fill', 'none');
+            major.setAttribute('stroke', '#c7d0dd');
+            major.setAttribute('stroke-width', '1.1');
+            major.setAttribute('vector-effect', 'non-scaling-stroke');
+            major.setAttribute('shape-rendering', 'crispEdges');
+            group.appendChild(major);
+            gridRenderState.majorPath = major;
+        }
+        return group;
+    }
+    function roundTo(value, digits = 3) {
+        const factor = 10 ** digits;
+        return Math.round(value * factor) / factor;
+    }
+    function renderGridLines() {
+        const view = state.viewBox;
+        const step = state.gridSize;
+        if (!view || !Number.isFinite(step) || step <= 0) return;
+        const group = ensureGridLines();
+        if (!group || !gridRenderState.minorPath || !gridRenderState.majorPath) return;
+
+        const margin = Math.max(step * 4, Math.min(view.width, view.height) * 0.25);
+        const startCol = Math.floor((view.x - margin) / step);
+        const endCol = Math.ceil((view.x + view.width + margin) / step);
+        const startRow = Math.floor((view.y - margin) / step);
+        const endRow = Math.ceil((view.y + view.height + margin) / step);
+
+        const x0 = roundTo(view.x - margin, 3);
+        const x1 = roundTo(view.x + view.width + margin, 3);
+        const y0 = roundTo(view.y - margin, 3);
+        const y1 = roundTo(view.y + view.height + margin, 3);
+
+        let minorSegments = '';
+        let majorSegments = '';
+
+        const baseMajorStride = Math.max(1, Math.round(gridRenderState.majorStrideBase || 1));
+        const displayScale = getSvgDisplayScale();
+        const stepPx = Number.isFinite(displayScale) ? step * displayScale : null;
+        const MIN_MAJOR_PX = 60;
+        const MAX_MAJOR_PX = 220;
+        const TARGET_MAJOR_PX = (MIN_MAJOR_PX + MAX_MAJOR_PX) / 2;
+        const MIN_MINOR_PX = 14;
+        const MAX_MINOR_PX = 80;
+        const TARGET_MINOR_PX = 28;
+
+        let majorStride = baseMajorStride;
+        let minorEvery = 1;
+
+        if (Number.isFinite(stepPx) && stepPx > 0) {
+            const candidateSet = new Set([baseMajorStride]);
+            const multipliers = [2, 3, 4, 5, 10, 20, 50, 100];
+            multipliers.forEach(mult => candidateSet.add(baseMajorStride * mult));
+            const divisors = [2, 4, 5, 10];
+            divisors.forEach(div => {
+                if (baseMajorStride % div === 0) {
+                    candidateSet.add(Math.max(1, Math.round(baseMajorStride / div)));
+                }
+            });
+
+            const candidates = Array.from(candidateSet)
+                .filter(v => Number.isFinite(v) && v >= 1 && v <= 5000)
+                .sort((a, b) => a - b);
+
+            let bestMajorScore = Number.POSITIVE_INFINITY;
+            let fallbackMajor = majorStride;
+            let fallbackDelta = Number.POSITIVE_INFINITY;
+
+            candidates.forEach(candidate => {
+                const spacing = stepPx * candidate;
+                if (!Number.isFinite(spacing)) return;
+                const delta = Math.abs(spacing - TARGET_MAJOR_PX);
+                if (spacing >= MIN_MAJOR_PX && spacing <= MAX_MAJOR_PX) {
+                    if (delta < bestMajorScore) {
+                        bestMajorScore = delta;
+                        majorStride = candidate;
+                    }
+                }
+                const rangeDelta = spacing < MIN_MAJOR_PX
+                    ? MIN_MAJOR_PX - spacing
+                    : spacing > MAX_MAJOR_PX
+                        ? spacing - MAX_MAJOR_PX
+                        : 0;
+                if (rangeDelta < fallbackDelta) {
+                    fallbackDelta = rangeDelta;
+                    fallbackMajor = candidate;
+                }
+            });
+
+            if (bestMajorScore === Number.POSITIVE_INFINITY) {
+                majorStride = fallbackMajor;
+            }
+
+            const minorCandidates = [];
+            for (let d = 1; d <= majorStride; d++) {
+                if (majorStride % d === 0) {
+                    minorCandidates.push(d);
+                }
+            }
+            let bestMinorScore = Number.POSITIVE_INFINITY;
+            let fallbackMinor = minorEvery;
+            let fallbackMinorDelta = Number.POSITIVE_INFINITY;
+
+            minorCandidates.forEach(candidate => {
+                const spacing = stepPx * candidate;
+                if (!Number.isFinite(spacing)) return;
+                const delta = Math.abs(spacing - TARGET_MINOR_PX);
+                if (spacing >= MIN_MINOR_PX && spacing <= MAX_MINOR_PX) {
+                    if (delta < bestMinorScore) {
+                        bestMinorScore = delta;
+                        minorEvery = candidate;
+                    }
+                }
+                const rangeDelta = spacing < MIN_MINOR_PX
+                    ? MIN_MINOR_PX - spacing
+                    : spacing > MAX_MINOR_PX
+                        ? spacing - MAX_MINOR_PX
+                        : 0;
+                if (rangeDelta < fallbackMinorDelta) {
+                    fallbackMinorDelta = rangeDelta;
+                    fallbackMinor = candidate;
+                }
+            });
+
+            if (bestMinorScore === Number.POSITIVE_INFINITY) {
+                minorEvery = fallbackMinor;
+            }
+        }
+
+        for (let col = startCol; col <= endCol; col++) {
+            const x = roundTo(col * step, 3);
+            const majorHit = ((col % majorStride) + majorStride) % majorStride === 0;
+            const minorHit = !majorHit && ((col % minorEvery) + minorEvery) % minorEvery === 0;
+            if (!majorHit && !minorHit) continue;
+            const segment = `M ${x} ${y0} V ${y1}`;
+            if (majorHit) {
+                majorSegments += segment;
+            } else {
+                minorSegments += segment;
+            }
+        }
+        for (let row = startRow; row <= endRow; row++) {
+            const y = roundTo(row * step, 3);
+            const majorHit = ((row % majorStride) + majorStride) % majorStride === 0;
+            const minorHit = !majorHit && ((row % minorEvery) + minorEvery) % minorEvery === 0;
+            if (!majorHit && !minorHit) continue;
+            const segment = `M ${x0} ${y} H ${x1}`;
+            if (majorHit) {
+                majorSegments += segment;
+            } else {
+                minorSegments += segment;
+            }
+        }
+
+        gridRenderState.minorPath.setAttribute('d', minorSegments || 'M 0 0');
+        gridRenderState.majorPath.setAttribute('d', majorSegments || 'M 0 0');
+    }
+    function updateGridMajorStride() {
+        const meters = Number.isFinite(state.gridStepMeters) && state.gridStepMeters > 0
+            ? state.gridStepMeters
+            : CONST.GRID;
+        const stride = Math.max(1, Math.round(1 / meters));
+        gridRenderState.majorStrideBase = Math.min(500, stride);
+    }
+    function updateGridViewport() {
+        if (!state.viewBox) return;
+        const rect = ensureGridRect();
+        if (rect) {
+            const { x, y, width, height } = state.viewBox;
+            const padding = Math.max(state.gridSize || 0, Math.min(width, height) * 0.1);
+            rect.setAttribute('x', roundTo(x - padding, 3).toString());
+            rect.setAttribute('y', roundTo(y - padding, 3).toString());
+            rect.setAttribute('width', roundTo(width + padding * 2, 3).toString());
+            rect.setAttribute('height', roundTo(height + padding * 2, 3).toString());
+        }
+        renderGridLines();
+    }
     function applyGridPatternSize(sizePx) {
         if (!Number.isFinite(sizePx) || sizePx <= 0) return;
         const normalized = Math.round(sizePx * 1000) / 1000;
@@ -1029,6 +1333,7 @@
         dom.gridPattern.setAttribute('height', w);
         const path = dom.gridPattern.querySelector('path');
         path?.setAttribute('d', `M ${w} 0 L 0 0 0 ${w}`);
+        updateGridViewport();
     }
     function updateGridSize({ silent = false, deferInvalid = false } = {}) {
         if (!dom.gridSelect) return;
@@ -1095,6 +1400,8 @@
             state.gridStepMeters = commitMeters;
         }
 
+        updateGridMajorStride();
+
         if (!silent && !deferInvalid) {
             const messageMeters = state.gridStepMeters;
             const formatted = messageMeters.toLocaleString('ru-RU', {
@@ -1113,6 +1420,8 @@
     function updateViewBox() {
         if (!state.viewBox) return;
         dom.svg.setAttribute('viewBox', `${state.viewBox.x} ${state.viewBox.y} ${state.viewBox.width} ${state.viewBox.height}`);
+        updateGridViewport();
+        refreshWallStrokeWidths();
     }
     function startPan(e) {
         if (!state.viewBox) {
@@ -1984,6 +2293,7 @@
         clearSelections();
         state.history.lock = false;
         updateLayersList();
+        refreshWallStrokeWidths();
         analysisLayout({ silent: true });
     }
     function commit(reason) { if (state.history.lock) return; const snap = snapshot(); state.history.stack = state.history.stack.slice(0, state.history.idx + 1); state.history.stack.push(snap); state.history.idx++; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(snap)); if (reason !== 'add_wall') { updateLayersList(); } }
@@ -2329,6 +2639,7 @@
         rateInputs.forEach(input => input?.addEventListener('change', () => { updateRatesFromInputs(); analysisLayout({ silent: true }); }));
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('resize', utils.rafThrottle(refreshWallStrokeWidths));
         window.addEventListener('blur', () => {
             state.isSpaceDown = false;
             state.isShiftHeld = false;
@@ -2423,6 +2734,8 @@
         // Bind all event listeners
         bindEventListeners();
 
+        attachPanelIcons(document);
+
         // Final setup
         toggleTool('pointer');
         updateGridSize({ silent: true });
@@ -2438,7 +2751,10 @@
             width: dom.svg.viewBox.baseVal.width,
             height: dom.svg.viewBox.baseVal.height
         };
-        
+
+        updateGridViewport();
+        refreshWallStrokeWidths();
+
         // Load saved data robustly
         try {
             const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
