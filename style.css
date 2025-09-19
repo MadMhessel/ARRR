@@ -108,6 +108,21 @@ svg.tool-active { cursor: crosshair; }
   pointer-events: none;
 }
 
+#snap-markers {
+  pointer-events: none;
+}
+
+#snap-markers circle {
+  fill: var(--accent);
+  opacity: 0.25;
+  stroke: none;
+  vector-effect: non-scaling-stroke;
+}
+
+#snap-markers circle[data-primary="true"] {
+  opacity: 0.45;
+}
+
 /* --- Collision highlighting (для анализа коллизий) --- */
 .layout-object.collision .shape {
   stroke: var(--danger) !important;

@@ -59,8 +59,9 @@
                 
                 <div id="grid-controls-bar" class="ui-bar">
                     <label class="grid-step-control">Сетка:
-                        <input id="gridStep" type="number" value="1" min="0.05" step="0.05" list="gridStepPresets" inputmode="decimal" aria-label="Шаг сетки, метры">
+                        <input id="gridStep" type="number" value="0.1" min="0.05" step="0.05" list="gridStepPresets" inputmode="decimal" aria-label="Шаг сетки, метры">
                         <datalist id="gridStepPresets">
+                            <option value="0.1" label="0.1 м"></option>
                             <option value="0.25" label="0.25 м"></option>
                             <option value="0.5" label="0.5 м"></option>
                             <option value="0.75" label="0.75 м"></option>
@@ -186,6 +187,7 @@
                         <polyline id="wall-preview" fill="none" stroke="var(--accent)" stroke-width="5" stroke-dasharray="10 5" pointer-events="none" />
                         <g id="previews"></g>
                         <text id="wall-length-label" class="wall-length-label" text-anchor="middle" dominant-baseline="middle" visibility="hidden">0.00 м</text>
+                        <g id="snap-markers" pointer-events="none"></g>
                     </g>
                     <!-- Слой для отображения результатов анализа (помещения, зоны, коллизии) -->
                     <g id="analysis-layer" pointer-events="none"></g>

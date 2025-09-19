@@ -1,6 +1,22 @@
 "use strict";
 (() => {
     // --- CONSTANTS & STATE ---
+    const CONST = {
+        GRID: 0.1,                 // базовый шаг сетки в метрах
+        SNAP_EPS_PX: 8,            // радиус привязки в экранных пикселях
+        WALL: { THICK_DEFAULT: 0.2 },
+        OPENING: { EDGE_MIN: 0.2 },
+        NORMS: {
+            PASSAGE_GUEST_MIN: 1.0,
+            PASSAGE_STAFF_MIN: 0.9,
+            TURN_RADIUS_MIN: 1.5,
+        },
+        COST: {
+            FLOOR_PER_M2: 40,
+            BASEBOARD_PER_M: 5,
+            OPENING_UNIT: 50,
+        },
+    };
     const LOCAL_STORAGE_KEY = 'layout-v10-pro'; // Incremented version to avoid loading old potentially corrupt data
     const dom = {
         svg: document.getElementById('svg'),
@@ -41,6 +57,7 @@
         toolDoor: document.getElementById('tool-door'),
         toolWindow: document.getElementById('tool-window'),
         toolMeasure: document.getElementById('tool-measure'),
+        snapMarkers: document.getElementById('snap-markers'),
         wallPreview: document.getElementById('wall-preview'),
         toggleSidebar: document.getElementById('toggle-sidebar'),
         toggleProperties: document.getElementById('toggle-properties'),
@@ -69,9 +86,9 @@
         selectedComponent: null,
         objectCounter: 0,
         isShiftHeld: false,
-        gridSize: 50,
         pixelsPerMeter: 50,
-        gridStepMeters: 1,
+        gridStepMeters: CONST.GRID,
+        gridSize: 50 * CONST.GRID,
         history: { stack: [], idx: -1, lock: false },
         activeTool: 'pointer',
         currentWallPoints: [],
@@ -86,12 +103,13 @@
         panStart: null,
         panViewBox: null,
         isSpaceDown: false,
+        isAltDown: false,
         // Хранилище для наложений анализа (для будущих расширений)
         analysisOverlays: [],
         // Нормативы. Все значения в метрах.
-        normativeCorridorGuest: 1.0,
-        normativeCorridorStaff: 1.0,
-        normativeRadius: 3.0,
+        normativeCorridorGuest: CONST.NORMS.PASSAGE_GUEST_MIN,
+        normativeCorridorStaff: CONST.NORMS.PASSAGE_STAFF_MIN,
+        normativeRadius: CONST.NORMS.TURN_RADIUS_MIN,
         // Хранилище результатов последнего анализа (для экспорта CSV)
         lastAnalysis: null,
         // Хранилище выбранного узла стены для редактирования
@@ -181,6 +199,185 @@
         }
         const factor = 1 / (6 * area);
         return { x: cx * factor, y: cy * factor };
+    }
+
+    const snapState = {
+        markerPool: [],
+    };
+
+    function getSnapRadiusSvg() {
+        const delta = utils.screenDeltaToSVG(CONST.SNAP_EPS_PX, 0);
+        const radius = Math.hypot(delta.dx, delta.dy);
+        return Number.isFinite(radius) && radius > 0 ? radius : CONST.SNAP_EPS_PX;
+    }
+
+    function addSnapCandidate(list, seen, pt) {
+        if (!pt || !Number.isFinite(pt.x) || !Number.isFinite(pt.y)) return;
+        const key = `${Math.round(pt.x * 1000) / 1000}_${Math.round(pt.y * 1000) / 1000}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        list.push({ x: pt.x, y: pt.y });
+    }
+
+    function segmentIntersection(a1, a2, b1, b2) {
+        const d = (a2.x - a1.x) * (b2.y - b1.y) - (a2.y - a1.y) * (b2.x - b1.x);
+        if (Math.abs(d) < 1e-9) return null;
+        const ua = ((b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x)) / d;
+        const ub = ((a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x)) / d;
+        if (ua < 0 || ua > 1 || ub < 0 || ub > 1) return null;
+        return {
+            x: a1.x + ua * (a2.x - a1.x),
+            y: a1.y + ua * (a2.y - a1.y),
+        };
+    }
+
+    function gatherSnapCandidates(point) {
+        const candidates = [];
+        const seen = new Set();
+        if (!point) return candidates;
+
+        const step = state.gridSize;
+        if (Number.isFinite(step) && step > 0) {
+            const gx = point.x / step;
+            const gy = point.y / step;
+            const ix = Math.floor(gx);
+            const iy = Math.floor(gy);
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    addSnapCandidate(candidates, seen, {
+                        x: (ix + dx) * step,
+                        y: (iy + dy) * step,
+                    });
+                }
+            }
+        }
+
+        const segments = [];
+        wallStore.forEach(model => {
+            const pts = Array.isArray(model.points) ? model.points : [];
+            pts.forEach(pt => addSnapCandidate(candidates, seen, pt));
+            const { segments: segs } = getWallSegments(model);
+            segs.forEach(seg => {
+                segments.push(seg);
+                addSnapCandidate(candidates, seen, {
+                    x: (seg.a.x + seg.b.x) / 2,
+                    y: (seg.a.y + seg.b.y) / 2,
+                });
+            });
+        });
+
+        if (Array.isArray(state.currentWallPoints)) {
+            state.currentWallPoints.forEach(pt => addSnapCandidate(candidates, seen, pt));
+        }
+
+        for (let i = 0; i < segments.length; i++) {
+            for (let j = i + 1; j < segments.length; j++) {
+                const inter = segmentIntersection(segments[i].a, segments[i].b, segments[j].a, segments[j].b);
+                if (inter) addSnapCandidate(candidates, seen, inter);
+            }
+        }
+
+        if (dom.itemsContainer) {
+            const items = Array.from(dom.itemsContainer.querySelectorAll('.layout-object'));
+            items.forEach(el => {
+                if (el.dataset.visible === 'false' || el.style.display === 'none') return;
+                const model = getModel(el);
+                if (!model) return;
+                const halfW = Math.abs(model.ow || 0) * Math.abs(model.sx || 0) / 2;
+                const halfH = Math.abs(model.oh || 0) * Math.abs(model.sy || 0) / 2;
+                const rad = (model.a || 0) * Math.PI / 180;
+                const cos = Math.cos(rad);
+                const sin = Math.sin(rad);
+                const corners = [
+                    { x: -halfW, y: -halfH },
+                    { x: halfW, y: -halfH },
+                    { x: halfW, y: halfH },
+                    { x: -halfW, y: halfH },
+                ];
+                corners.forEach(c => {
+                    const rx = c.x * cos - c.y * sin + model.x;
+                    const ry = c.x * sin + c.y * cos + model.y;
+                    addSnapCandidate(candidates, seen, { x: rx, y: ry });
+                });
+                addSnapCandidate(candidates, seen, { x: model.x, y: model.y });
+            });
+        }
+
+        return candidates;
+    }
+
+    function setSnapMarkers(points, primaryPoint) {
+        const group = dom.snapMarkers;
+        if (!group) return;
+        const snapRadius = Math.max(2, getSnapRadiusSvg() * 0.45);
+        for (let i = snapState.markerPool.length; i < points.length; i++) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('r', snapRadius);
+            group.appendChild(circle);
+            snapState.markerPool.push(circle);
+        }
+        snapState.markerPool.forEach((marker, idx) => {
+            if (idx < points.length) {
+                const pt = points[idx];
+                marker.setAttribute('display', '');
+                marker.setAttribute('cx', pt.x);
+                marker.setAttribute('cy', pt.y);
+                marker.setAttribute('r', snapRadius);
+                if (primaryPoint && Math.abs(primaryPoint.x - pt.x) < 1e-6 && Math.abs(primaryPoint.y - pt.y) < 1e-6) {
+                    marker.setAttribute('data-primary', 'true');
+                } else {
+                    marker.removeAttribute('data-primary');
+                }
+                marker.removeAttribute('opacity');
+            } else {
+                marker.setAttribute('display', 'none');
+                marker.removeAttribute('data-primary');
+            }
+        });
+    }
+
+    function clearSnapMarkers() {
+        snapState.markerPool.forEach(marker => {
+            marker.setAttribute('display', 'none');
+            marker.removeAttribute('data-primary');
+        });
+    }
+
+    function snapSvgPoint(point, { preview = true, altKey = false } = {}) {
+        if (!point) return { point: point ?? { x: 0, y: 0 }, snapped: false };
+        if (altKey || state.isAltDown) {
+            if (preview) clearSnapMarkers();
+            return { point: { x: point.x, y: point.y }, snapped: false };
+        }
+        const candidates = gatherSnapCandidates(point);
+        const radius = getSnapRadiusSvg();
+        let best = null;
+        const nearby = [];
+        candidates.forEach(pt => {
+            const d = distance(point, pt);
+            if (d <= radius) {
+                nearby.push({ pt, dist: d });
+                if (!best || d < best.dist) best = { pt, dist: d };
+            }
+        });
+        if (preview) {
+            if (nearby.length) {
+                nearby.sort((a, b) => a.dist - b.dist);
+                setSnapMarkers(nearby.map(n => n.pt), best?.pt);
+            } else {
+                clearSnapMarkers();
+            }
+        }
+        if (best) {
+            return { point: { x: best.pt.x, y: best.pt.y }, snapped: true };
+        }
+        return { point: { x: point.x, y: point.y }, snapped: false };
+    }
+
+    function snapValueToGrid(value) {
+        const step = state.gridSize;
+        if (!Number.isFinite(step) || step <= 0) return value;
+        return Math.round(value / step) * step;
     }
 
     // --- WALL TYPE HELPERS & UI ---
@@ -627,12 +824,6 @@
         const index = parseInt(target.dataset.index, 10);
         state.selectedWallHandle = { wall: wallEl, index };
         updateWallHandles(wallEl);
-        if (e.altKey) {
-            if (removeWallVertex(wallEl, index)) {
-                commit('wall_vertex_remove');
-            }
-            return;
-        }
         wallHandleDrag = { wall: wallEl, index };
         window.addEventListener('pointermove', onWallHandlePointerMove);
         window.addEventListener('pointerup', onWallHandlePointerUp, { once: true });
@@ -644,7 +835,7 @@
         const model = getWallModel(wallEl);
         if (!model) return;
         const p = utils.toSVGPoint(e.clientX, e.clientY);
-        const snapped = { x: snap(p.x), y: snap(p.y) };
+        const { point: snapped } = snapSvgPoint(p, { altKey: e.altKey });
         model.points[wallHandleDrag.index] = snapped;
         updateWallElementGeometry(wallEl);
     }
@@ -654,6 +845,7 @@
         updateWallElementGeometry(wallHandleDrag.wall);
         commit('wall_vertex_move');
         wallHandleDrag = null;
+        clearSnapMarkers();
     }
 
     function onWallHandleDoubleClick(e) {
@@ -676,11 +868,12 @@
         if (!model) return;
         const index = parseInt(target.dataset.index, 10);
         const p = utils.toSVGPoint(e.clientX, e.clientY);
-        const snapped = { x: snap(p.x), y: snap(p.y) };
+        const { point: snapped } = snapSvgPoint(p, { altKey: e.altKey });
         insertWallVertex(wallEl, index, snapped);
         state.selectedWallHandle = { wall: wallEl, index };
         updateWallHandles(wallEl);
         commit('wall_vertex_add');
+        clearSnapMarkers();
     }
 
     function makeWallInteractive(wallEl) {
@@ -693,7 +886,7 @@
                 const model = getWallModel(wallEl);
                 if (!model) return;
                 const p = utils.toSVGPoint(e.clientX, e.clientY);
-                const snapped = { x: snap(p.x), y: snap(p.y) };
+                const { point: snapped } = snapSvgPoint(p, { altKey: e.altKey });
                 // Найдём ближайший сегмент для вставки
                 const pts = model.points;
                 const count = pts.length;
@@ -714,6 +907,7 @@
                 state.selectedWallHandle = { wall: wallEl, index: bestIdx };
                 updateWallHandles(wallEl);
                 commit('wall_vertex_add');
+                clearSnapMarkers();
             });
         }
         updateWallHandles(wallEl);
@@ -739,6 +933,7 @@
         dom.previewsContainer.innerHTML = '';
         state.pendingComponentPlacement = null;
         hideWallLengthPreview();
+        clearSnapMarkers();
         // Покидая режим измерения — сохраняем линии, но убираем предпросмотр
         if (state.activeTool !== 'measure') {
             resetMeasurementPreview();
@@ -766,6 +961,7 @@
         state.currentWallPoints = [];
         dom.wallPreview.setAttribute('points', '');
         hideWallLengthPreview();
+        clearSnapMarkers();
     }
     function placeWallComponent(type, placement) {
         const wallEl = ensureWallElement(placement?.wallEl || (state.pendingComponentPlacement?.wallEl));
@@ -805,8 +1001,23 @@
     }
     
     // --- GRID & GUIDES ---
-    function snap(v) { return Math.round(v / state.gridSize) * state.gridSize; }
-    function snapSelectedToGrid(el, sizeToo = false) { const m = getModel(el); m.x = snap(m.x); m.y = snap(m.y); if (sizeToo) { m.sx = Math.max(0.1, (snap(m.ow * m.sx)) / m.ow); m.sy = Math.max(0.1, (snap(m.oh * m.sy)) / m.oh); } setModel(el, m); }
+    function snapSelectedToGrid(el, sizeToo = false) {
+        const m = getModel(el);
+        const { point } = snapSvgPoint({ x: m.x, y: m.y }, { preview: false });
+        m.x = point.x;
+        m.y = point.y;
+        if (sizeToo) {
+            const snappedW = snapValueToGrid(m.ow * m.sx);
+            const snappedH = snapValueToGrid(m.oh * m.sy);
+            if (Number.isFinite(snappedW) && m.ow) {
+                m.sx = Math.max(0.1, snappedW / m.ow);
+            }
+            if (Number.isFinite(snappedH) && m.oh) {
+                m.sy = Math.max(0.1, snappedH / m.oh);
+            }
+        }
+        setModel(el, m);
+    }
     function formatGridMeters(value) { return (Math.round(value * 1000) / 1000).toString(); }
     function applyGridPatternSize(sizePx) {
         if (!Number.isFinite(sizePx) || sizePx <= 0) return;
@@ -831,7 +1042,7 @@
         let fallbackMeters = state.gridStepMeters;
         if (!Number.isFinite(fallbackMeters) || fallbackMeters <= 0) {
             const derived = pxPerMeter ? state.gridSize / pxPerMeter : 0;
-            fallbackMeters = Number.isFinite(derived) && derived > 0 ? derived : 1;
+            fallbackMeters = Number.isFinite(derived) && derived > 0 ? derived : CONST.GRID;
         }
         fallbackMeters = Math.round(fallbackMeters * 1000) / 1000;
 
@@ -942,50 +1153,129 @@
     }
 
     // --- MEASUREMENT TOOL ---
+    const measurementRenderState = {
+        staticGroup: null,
+        previewGroup: null,
+        previewLine: null,
+        previewText: null,
+        entries: new Map(),
+    };
+
     function resetMeasurementPreview() {
         state.measurePoints = [];
         renderMeasurementOverlay();
+        clearSnapMarkers();
     }
-    function renderMeasurementOverlay(preview) {
+    function ensureMeasurementGroups() {
         const layer = dom.measurementLayer;
+        if (!layer) return null;
+        if (!measurementRenderState.staticGroup || measurementRenderState.staticGroup.parentNode !== layer) {
+            measurementRenderState.staticGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            measurementRenderState.staticGroup.dataset.role = 'measurement-static';
+            layer.appendChild(measurementRenderState.staticGroup);
+        }
+        if (!measurementRenderState.previewGroup || measurementRenderState.previewGroup.parentNode !== layer) {
+            measurementRenderState.previewGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            measurementRenderState.previewGroup.dataset.role = 'measurement-preview';
+            layer.appendChild(measurementRenderState.previewGroup);
+            measurementRenderState.previewLine = null;
+            measurementRenderState.previewText = null;
+        }
+        if (!measurementRenderState.previewLine) {
+            measurementRenderState.previewLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            measurementRenderState.previewLine.setAttribute('stroke-dasharray', '6 4');
+            measurementRenderState.previewLine.setAttribute('opacity', '0');
+            measurementRenderState.previewLine.setAttribute('marker-start', 'url(#dim-arrow)');
+            measurementRenderState.previewLine.setAttribute('marker-end', 'url(#dim-arrow)');
+            measurementRenderState.previewGroup.appendChild(measurementRenderState.previewLine);
+        }
+        if (!measurementRenderState.previewText) {
+            measurementRenderState.previewText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            measurementRenderState.previewText.setAttribute('opacity', '0');
+            measurementRenderState.previewText.setAttribute('paint-order', 'stroke');
+            measurementRenderState.previewText.setAttribute('stroke', 'white');
+            measurementRenderState.previewText.setAttribute('stroke-width', '0.5');
+            measurementRenderState.previewText.setAttribute('font-size', '14');
+            measurementRenderState.previewText.setAttribute('font-weight', 'bold');
+            measurementRenderState.previewGroup.appendChild(measurementRenderState.previewText);
+        }
+        return layer;
+    }
+
+    function updateMeasurementGraphics(line, text, measurement, pixelsPerMeter, isPreview = false) {
+        const p0 = measurement.p0;
+        const p1 = measurement.p1;
+        line.setAttribute('x1', p0.x);
+        line.setAttribute('y1', p0.y);
+        line.setAttribute('x2', p1.x);
+        line.setAttribute('y2', p1.y);
+        if (isPreview) {
+            line.setAttribute('stroke-dasharray', '6 4');
+            line.setAttribute('opacity', '0.7');
+        } else {
+            line.removeAttribute('stroke-dasharray');
+            line.setAttribute('opacity', '1');
+        }
+        const dist = distance(p0, p1);
+        const meters = measurement.meters ?? (dist / pixelsPerMeter);
+        const angleDeg = Math.round((measurement.angle ?? ((Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI) + 360)) % 360);
+        const midx = (p0.x + p1.x) / 2;
+        const midy = (p0.y + p1.y) / 2;
+        text.setAttribute('x', midx + 4);
+        text.setAttribute('y', midy - 4);
+        text.textContent = `${meters.toFixed(2)} м • ${angleDeg}°`;
+        if (isPreview) {
+            text.setAttribute('opacity', '0.6');
+        } else {
+            text.removeAttribute('opacity');
+        }
+    }
+
+    function renderMeasurementOverlay(preview) {
+        const layer = ensureMeasurementGroups();
         if (!layer) return;
-        layer.innerHTML = '';
         const pixelsPerMeter = state.pixelsPerMeter || state.gridSize || 1;
-        const draw = (measurement, isPreview = false) => {
-            if (!measurement) return;
-            const p0 = measurement.p0;
-            const p1 = measurement.p1;
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', p0.x);
-            line.setAttribute('y1', p0.y);
-            line.setAttribute('x2', p1.x);
-            line.setAttribute('y2', p1.y);
-            line.setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#0d6efd');
-            line.setAttribute('stroke-width', 3);
-            line.setAttribute('marker-start', 'url(#dim-arrow)');
-            line.setAttribute('marker-end', 'url(#dim-arrow)');
-            if (isPreview) line.setAttribute('stroke-dasharray', '6 4');
-            layer.appendChild(line);
-            const dist = distance(p0, p1);
-            const meters = (measurement.meters ?? (dist / pixelsPerMeter)).toFixed(2);
-            const angleDeg = Math.round((measurement.angle ?? ((Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI) + 360)) % 360);
-            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            const midx = (p0.x + p1.x) / 2;
-            const midy = (p0.y + p1.y) / 2;
-            text.setAttribute('x', midx + 4);
-            text.setAttribute('y', midy - 4);
-            text.setAttribute('fill', getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#0d6efd');
-            text.setAttribute('font-size', '14');
-            text.setAttribute('font-weight', 'bold');
-            text.setAttribute('stroke', 'white');
-            text.setAttribute('stroke-width', '0.5');
-            text.setAttribute('paint-order', 'stroke');
-            text.textContent = `${meters} м • ${angleDeg}°`;
-            if (isPreview) text.setAttribute('opacity', '0.6');
-            layer.appendChild(text);
-        };
-        state.measurements.forEach(m => draw(m, false));
-        if (preview) draw(preview, true);
+        const active = new Set();
+
+        state.measurements.forEach(measurement => {
+            let entry = measurementRenderState.entries.get(measurement.id);
+            if (!entry) {
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('marker-start', 'url(#dim-arrow)');
+                line.setAttribute('marker-end', 'url(#dim-arrow)');
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('paint-order', 'stroke');
+                text.setAttribute('stroke', 'white');
+                text.setAttribute('stroke-width', '0.5');
+                text.setAttribute('font-size', '14');
+                text.setAttribute('font-weight', 'bold');
+                group.appendChild(line);
+                group.appendChild(text);
+                measurementRenderState.staticGroup.appendChild(group);
+                entry = { group, line, text };
+                measurementRenderState.entries.set(measurement.id, entry);
+            }
+            updateMeasurementGraphics(entry.line, entry.text, measurement, pixelsPerMeter, false);
+            active.add(measurement.id);
+        });
+
+        Array.from(measurementRenderState.entries.keys()).forEach(id => {
+            if (!active.has(id)) {
+                const entry = measurementRenderState.entries.get(id);
+                entry?.group.remove();
+                measurementRenderState.entries.delete(id);
+            }
+        });
+
+        if (preview && preview.p0 && preview.p1) {
+            updateMeasurementGraphics(measurementRenderState.previewLine, measurementRenderState.previewText, preview, pixelsPerMeter, true);
+            measurementRenderState.previewLine.setAttribute('display', '');
+            measurementRenderState.previewText.setAttribute('display', '');
+        } else {
+            if (measurementRenderState.previewLine) measurementRenderState.previewLine.setAttribute('display', 'none');
+            if (measurementRenderState.previewText) measurementRenderState.previewText.setAttribute('display', 'none');
+        }
     }
     function addMeasurement(p0, p1) {
         const pixels = distance(p0, p1);
@@ -1004,6 +1294,7 @@
         state.measurements.push(measurement);
         renderMeasurementOverlay();
         renderMeasurementTable();
+        clearSnapMarkers();
         commit('measure_add');
     }
     function removeMeasurement(id) {
@@ -1012,6 +1303,7 @@
             state.measurements.splice(idx, 1);
             renderMeasurementOverlay();
             renderMeasurementTable();
+            clearSnapMarkers();
             commit('measure_remove');
         }
     }
@@ -1032,6 +1324,7 @@
         state.measureCounter = 0;
         renderMeasurementTable();
         renderMeasurementOverlay();
+        clearSnapMarkers();
         commit('measure_clear');
     }
 
@@ -1536,7 +1829,7 @@
             state.pixelsPerMeter = 50;
         }
         if (!Number.isFinite(state.gridStepMeters) || state.gridStepMeters <= 0) {
-            state.gridStepMeters = 1;
+            state.gridStepMeters = CONST.GRID;
         }
         if (dom.gridSelect) {
             dom.gridSelect.value = formatGridMeters(state.gridStepMeters);
@@ -1700,6 +1993,11 @@
     // --- EVENT HANDLERS ---
     function onLayersClick(e) { const li = e.target.closest('li'); if (!li) return; const id = li.dataset.id; const el = dom.itemsContainer.querySelector(`[data-id="${id}"]`); if (!el) return; const model = getModel(el); if (e.target.classList.contains('layer-vis')) { model.visible = !model.visible; el.style.display = model.visible ? '' : 'none'; setModel(el, model); commit('visibility'); } else if (e.target.classList.contains('layer-lock')) { model.locked = !model.locked; setModel(el, model); commit('lock'); } else { if (model.locked) { utils.showToast('Объект заблокирован'); return; } selectObject(el); } }
     function handleKeyDown(e) {
+        if (e.key === 'Alt') {
+            state.isAltDown = true;
+            clearSnapMarkers();
+        }
+
         // не реагировать на ввод в полях
         if (e.target.matches('input,select')) return;
 
@@ -1858,6 +2156,10 @@
         if (e.key === 'Shift') state.isShiftHeld = false;
         // отпускание пробела отключает панорамирование
         if (e.code === 'Space') state.isSpaceDown = false;
+        if (e.key === 'Alt') {
+            state.isAltDown = false;
+            clearSnapMarkers();
+        }
         if (state.selectedObject && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
             snapSelectedToGrid(state.selectedObject);
             commit('nudge');
@@ -1875,6 +2177,7 @@
 
             // Панорамирование средней кнопкой или пробелом
             if ((e.button === 1 || state.isSpaceDown) && state.activeTool === 'pointer') {
+                clearSnapMarkers();
                 startPan(e);
                 return;
             }
@@ -1882,12 +2185,13 @@
             // Измерительный инструмент
             if (state.activeTool === 'measure') {
                 const p = utils.toSVGPoint(e.clientX, e.clientY);
+                const { point: snapped } = snapSvgPoint(p, { altKey: e.altKey });
                 if (state.measurePoints.length === 0) {
-                    state.measurePoints.push({ x: p.x, y: p.y });
+                    state.measurePoints.push(snapped);
                     renderMeasurementOverlay();
                 } else if (state.measurePoints.length === 1) {
                     const start = state.measurePoints[0];
-                    addMeasurement(start, { x: p.x, y: p.y });
+                    addMeasurement(start, snapped);
                     state.measurePoints = [];
                 }
                 return;
@@ -1896,7 +2200,7 @@
             // Рисование стены
             if (state.activeTool === 'wall') {
                 const p = utils.toSVGPoint(e.clientX, e.clientY);
-                const snappedP = { x: snap(p.x), y: snap(p.y) };
+                const { point: snappedP } = snapSvgPoint(p, { altKey: e.altKey });
                 state.currentWallPoints.push(snappedP);
                 const pointsAttr = state.currentWallPoints.map(pt => `${pt.x},${pt.y}`).join(' ');
                 dom.wallPreview.setAttribute('points', pointsAttr);
@@ -1917,6 +2221,7 @@
                     const interactive = e.target.closest('.layout-object, .wall-component, .wall');
                     if (!interactive) {
                         e.preventDefault();
+                        clearSnapMarkers();
                         startPan(e);
                         return;
                     }
@@ -1937,7 +2242,7 @@
             // Обновление превью стены и длины сегмента
             if (tool === 'wall') {
                 if (state.currentWallPoints.length > 0) {
-                    const snappedP = { x: snap(p.x), y: snap(p.y) };
+                    const { point: snappedP } = snapSvgPoint(p, { altKey: e.altKey });
                     const pointsAttr = [...state.currentWallPoints, snappedP].map(pt => `${pt.x},${pt.y}`).join(' ');
                     dom.wallPreview.setAttribute('points', pointsAttr);
                     const lastPoint = state.currentWallPoints[state.currentWallPoints.length - 1];
@@ -1967,18 +2272,23 @@
             else if (tool === 'measure' && state.measurePoints.length === 1) {
                 hideWallLengthPreview();
                 const p0 = state.measurePoints[0];
+                const { point: snappedP } = snapSvgPoint(p, { altKey: e.altKey });
                 const preview = {
                     p0,
-                    p1: { x: p.x, y: p.y },
-                    meters: distance(p0, p) / (state.pixelsPerMeter || state.gridSize || 1),
-                    angle: (Math.atan2(p.y - p0.y, p.x - p0.x) * 180 / Math.PI + 360) % 360
+                    p1: snappedP,
+                    meters: distance(p0, snappedP) / (state.pixelsPerMeter || state.gridSize || 1),
+                    angle: (Math.atan2(snappedP.y - p0.y, snappedP.x - p0.x) * 180 / Math.PI + 360) % 360
                 };
                 renderMeasurementOverlay(preview);
             } else {
                 hideWallLengthPreview();
+                clearSnapMarkers();
             }
         }));
-        dom.svg.addEventListener('mouseleave', hideWallLengthPreview);
+        dom.svg.addEventListener('mouseleave', () => {
+            hideWallLengthPreview();
+            clearSnapMarkers();
+        });
         // Контекстное меню открывается только в режиме указателя. По ПКМ выбираем объект и отображаем меню.
         dom.svg.addEventListener('contextmenu', e => {
             e.preventDefault();
@@ -2019,6 +2329,13 @@
         rateInputs.forEach(input => input?.addEventListener('change', () => { updateRatesFromInputs(); analysisLayout({ silent: true }); }));
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('blur', () => {
+            state.isSpaceDown = false;
+            state.isShiftHeld = false;
+            state.isAltDown = false;
+            clearSnapMarkers();
+            endPan();
+        });
         dom.toggleSidebar?.addEventListener('click', () => dom.sidebar.classList.toggle('visible'));
         dom.toggleProperties?.addEventListener('click', () => dom.properties.classList.toggle('visible'));
         dom.main.addEventListener('click', e => { if (window.innerWidth <= 1024 && !e.target.closest('.ui-bar')) { dom.sidebar.classList.remove('visible'); dom.properties.classList.remove('visible'); }});
