@@ -41,16 +41,51 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
 }
 svg{width:100%;height:100%}
 svg.tool-active { cursor: crosshair; }
-.wall,.inner-wall,.win,.col,.door-arc,.dim-line, #walls path {vector-effect:non-scaling-stroke}
-#walls path { fill:none;stroke:#343a40;stroke-width:11;stroke-linejoin:round;stroke-linecap:round; cursor: pointer; }
-#walls path.selected { stroke: var(--accent); }
+.wall,.inner-wall,.win,.col,.door-arc,.dim-line, #walls-layer path {vector-effect:non-scaling-stroke}
+#walls-layer .wall path {
+  fill: none;
+  cursor: pointer;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  transition: stroke .2s ease, stroke-width .2s ease, stroke-dasharray .2s ease;
+}
+#walls-layer .wall[data-type="structural"] path {
+  stroke: #343a40;
+  stroke-width: 16;
+}
+#walls-layer .wall[data-type="partition"] path {
+  stroke: #868e96;
+  stroke-width: 10;
+  stroke-dasharray: 28 12;
+  stroke-linecap: butt;
+}
+#walls-layer .wall[data-type="glass"] path {
+  stroke: rgba(77,171,247,.9);
+  stroke-width: 8;
+  stroke-dasharray: 12 8;
+  stroke-linecap: butt;
+}
+#walls-layer .wall[data-type="half"] path {
+  stroke: #adb5bd;
+  stroke-width: 8;
+  stroke-dasharray: 6 8;
+  stroke-linecap: butt;
+}
+#walls-layer .wall.selected path {
+  filter: drop-shadow(0 0 6px rgba(0,102,204,.6));
+}
 .wall-component { cursor: pointer; }
 .wall-component.selected > * { stroke: var(--accent) !important; stroke-width: 3; vector-effect: non-scaling-stroke; }
 .floor{fill:#fdfdfd;}
-#gridRect{pointer-events:none}
+#grid-layer{pointer-events:none}
+
+#preview-layer,
+#analysis-layer,
+#measurement-layer,
+#ui-layer{pointer-events:none}
 
 /* --- Measurement Layer --- */
-#measurement line {
+#measurement-layer line {
   vector-effect: non-scaling-stroke;
   stroke: var(--accent);
   /* Толще, чтобы линия была лучше видна */
@@ -58,7 +93,7 @@ svg.tool-active { cursor: crosshair; }
   marker-start: url(#dim-arrow);
   marker-end: url(#dim-arrow);
 }
-#measurement text {
+#measurement-layer text {
   font-size: 14px;
   font-weight: bold;
   fill: var(--accent);
@@ -69,7 +104,7 @@ svg.tool-active { cursor: crosshair; }
 }
 
 /* Слой измерений не должен перехватывать события мыши, иначе клики перестанут работать */
-#measurement {
+#measurement-layer {
   pointer-events: none;
 }
 
@@ -84,8 +119,28 @@ svg.tool-active { cursor: crosshair; }
 }
 
 /* --- Layout Objects --- */
-.layout-object{cursor:move; filter: url(#shadow);}
-.layout-object:hover { filter: url(#shadow) brightness(1.05); }
+.layout-object{cursor:move;}
+.layout-object .core{
+  filter:url(#shadow);
+  transition:filter .2s ease;
+}
+.layout-object:hover .core{filter:url(#shadow) brightness(1.08);}
+.layout-object.selected .core{filter:url(#shadow) brightness(1.12);}
+#items-layer .layout-object .core path,
+#items-layer .layout-object .core rect,
+#items-layer .layout-object .core circle,
+#items-layer .layout-object .core ellipse,
+#items-layer .layout-object .core polygon,
+#items-layer .layout-object .core polyline {
+  vector-effect:non-scaling-stroke;
+  stroke-linejoin:round;
+  stroke-linecap:round;
+}
+#items-layer .layout-object .core .shape {
+  paint-order:stroke fill;
+  stroke-width:1.2;
+  stroke:rgba(33,37,41,.18);
+}
 .layout-object.selected .selection-box{display:block}
 .selection-box{
   display:none;
@@ -167,6 +222,56 @@ svg.tool-active { cursor: crosshair; }
 
 #properties{gap:14px;}
 
+#wall-properties .panel-header h3{letter-spacing:.12em;}
+.wall-type-caption{
+  margin:0 0 6px;
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.wall-type-options{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:8px;
+}
+.wall-type-option{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 12px;
+  background:#fff;
+  cursor:pointer;
+  transition:border .2s ease, box-shadow .2s ease, background .2s ease;
+  font-size:13px;
+  color:var(--text);
+}
+.wall-type-option svg{width:48px;height:18px;overflow:visible;}
+.wall-type-option line{stroke-linecap:round;stroke-linejoin:round;}
+.wall-type-option[data-type="structural"] line{stroke:#343a40;stroke-width:12;}
+.wall-type-option[data-type="partition"] line{stroke:#868e96;stroke-width:9;stroke-dasharray:22 10;stroke-linecap:butt;}
+.wall-type-option[data-type="glass"] line{stroke:rgba(77,171,247,.9);stroke-width:7;stroke-dasharray:10 6;stroke-linecap:butt;}
+.wall-type-option[data-type="half"] line{stroke:#adb5bd;stroke-width:7;stroke-dasharray:5 7;stroke-linecap:butt;}
+.wall-type-option.active{
+  border-color:var(--accent);
+  box-shadow:0 0 0 2px rgba(0,102,204,.2);
+  background:rgba(0,102,204,.06);
+  color:var(--accent);
+}
+.wall-type-option:focus-visible{outline:2px solid var(--accent);}
+
+.wall-length-label{
+  font-size:18px;
+  font-weight:600;
+  fill:var(--text);
+  stroke:rgba(255,255,255,.92);
+  stroke-width:5;
+  paint-order:stroke fill;
+  pointer-events:none;
+}
+
 .panel{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--paper);display:flex;flex-direction:column;gap:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 .panel-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .panel-header h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
@@ -192,8 +297,8 @@ svg.tool-active { cursor: crosshair; }
 .wall-handles circle{fill:var(--accent);stroke:#fff;stroke-width:2;pointer-events:all;cursor:pointer}
 .wall-handles circle.active{fill:var(--danger)}
 .wall-segment-insert{fill:#fff;stroke:var(--accent);stroke-dasharray:2 2;pointer-events:all;cursor:crosshair;opacity:.7}
-#walls .wall.selected .wall-handles,#walls .wall.selected .wall-segment-insert{display:block}
-#walls .wall .wall-handles,#walls .wall .wall-segment-insert{display:none}
+#walls-layer .wall.selected .wall-handles,#walls-layer .wall.selected .wall-segment-insert{display:block}
+#walls-layer .wall .wall-handles,#walls-layer .wall .wall-segment-insert{display:none}
 .status-ok{color:#2b8a3e;font-weight:600}
 .status-warn{color:var(--danger);font-weight:600}
 
