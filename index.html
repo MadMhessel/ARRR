@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru" class="no-js">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Редактор планировки — Pro</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* Safe toolbar overrides to ensure clicks are delivered */
+    .toolbar { z-index: 9999; pointer-events: auto; }
+    .toolbar * { pointer-events: auto; }
+  </style>
+
+</head>
+<body class="theme-premium">
+    <div class="app" role="application" aria-label="Редактор планировки">
+        <aside id="sidebar" aria-label="Библиотека объектов">
+            <h2>Инструменты</h2>
+
+            <h3>Конструкции</h3>
+            <div id="tool-pointer" class="tool-button"> указатель</div>
+            <div id="tool-wall" class="tool-button"> Стена</div>
+            <div id="tool-door" class="tool-button"> Дверь</div>
+            <div id="tool-window" class="tool-button"> Окно</div>
+            <!-- Новая кнопка для измерений -->
+            <div id="tool-measure" class="tool-button"> Измерение</div>
+
+            <div id="layers-panel">
+                <h3>Слои</h3>
+                <ul id="layers-list">
+                    <!-- Слои будут сгенерированы здесь -->
+                </ul>
+            </div>
+
+            <div id="trash" aria-label="Корзина">🗑️ Перетащите сюда для удаления</div>
+        </aside>
+
+        <main id="main">
+            <div id="mobile-toggles">
+                <button id="toggle-sidebar" title="Инструменты и слои">☰</button>
+                <button id="toggle-properties" title="Свойства">≡</button>
+            </div>
+
+            <div id="wrap">
+                <div class="ui-bar" style="left:12px;top:auto;bottom:12px;right:auto">
+                    <button id="btnExport" title="Экспорт JSON">Экспорт</button>
+                    <input id="fileImport" type="file" accept="application/json" hidden>
+                    <button id="btnImport" title="Импорт JSON">Импорт</button>
+                    <button id="btnShare" title="Скопировать ссылку">Поделиться</button>
+                    <!-- Кнопка для запуска анализа планировки -->
+                    <button id="btnAnalysis" title="Анализ планировки">Анализ</button>
+                <!-- Кнопка для экспорта сметы и данных в CSV -->
+                <button id="btnCsv" title="Экспорт сметы CSV">Смета CSV</button>
+                    <!-- Кнопка для загрузки шаблонного проекта -->
+                    <button id="btnTemplate" title="Загрузить мастер-проект">Шаблон</button>
+                </div>
+                
+                <div id="grid-controls-bar" class="ui-bar">
+                    <label>Сетка:
+                        <select id="gridStep">
+                            <option value="25">0.5 м</option>
+                            <option value="50" selected>1 м</option>
+                            <option value="100">2 м</option>
+                        </select>
+                    </label>
+                    <label><input type="checkbox" id="snapGuides" checked> Направляющие</label>
+                </div>
+
+                <svg id="svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" aria-label="План помещения" tabindex="0">
+                    <defs>
+                        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.1"/>
+                        </filter>
+                        <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e9ecef" stroke-width="1"/>
+                        </pattern>
+                        <marker id="dim-arrow" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M0 0L10 5L0 10z" fill="#aaa" />
+                        </marker>
+                        <pattern id="wood-grain" patternUnits="userSpaceOnUse" width="80" height="80" patternTransform="rotate(45)">
+                            <rect width="80" height="80" fill="#e3c6a4"/>
+                            <path d="M 0,20 Q 20,0 40,20 T 80,20 M 0,60 Q 20,40 40,60 T 80,60" stroke="#c7a783" stroke-width="2" fill="none"/>
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" class="floor"/>
+                    <rect id="gridRect" width="100%" height="100%" fill="url(#grid)" opacity="0.7"/>
+                    
+                    <g id="walls"></g>
+                    <g id="wall-components"></g>
+                    <polyline id="wall-preview" fill="none" stroke="var(--accent)" stroke-width="5" stroke-dasharray="10 5" pointer-events="none" />
+                    
+                    <g id="items"></g>
+                    <g id="previews"></g>
+                    <!-- Слой для отображения результатов анализа (помещения, зоны, коллизии) -->
+                    <g id="analysis-layer"></g>
+                    <!-- Слой для отображения измерительных линий и аннотаций. Размещаем ПОСЛЕ слоя анализа, чтобы линии и подписи были видны поверх зон. -->
+                    <g id="measurement"></g>
+                </svg>
+                <div id="toast" aria-live="polite"></div>
+            </div>
+        </main>
+
+        <aside id="properties" aria-label="Свойства объекта">
+            <h2>Свойства</h2>
+            <div id="prop-placeholder">Выделите объект</div>
+            <div id="prop-controls" class="hidden">
+                <label class="prop-label">X:</label><input type="number" id="prop-x" step="10">
+                <label class="prop-label">Y:</label><input type="number" id="prop-y" step="10">
+                <label class="prop-label">Ширина:</label><input type="number" id="prop-w" step="10" min="1">
+                <label class="prop-label">Высота:</label><input type="number" id="prop-h" step="10" min="1">
+                <label class="prop-label">Поворот:</label><input type="number" id="prop-a" step="15" min="-360" max="360">
+            </div>
+        </aside>
+    </div>
+
+    <div id="ctx" role="menu" aria-label="Контекстное меню">
+      <button id="ctx-front">⬆️ На передний план <span class="kbd">F</span></button>
+      <button id="ctx-back">⬇️ На задний план <span class="kbd">B</span></button>
+      <button id="ctx-dup">🧬 Дублировать <span class="kbd">Ctrl+D</span></button>
+      <button id="ctx-rot">⤵️ Повернуть на 90° <span class="kbd">R</span></button>
+      <button id="ctx-focus">🔎 Фокусировать <span class="kbd">F</span></button>
+      <hr>
+      <button id="ctx-del" class="danger">🗑️ Удалить <span class="kbd">Del</span></button>
+    </div>
+    
+    <script src="templates.js"></script>
+    <!-- Шим для библиотеки interact.js. Настоящая interact не доступна,
+         поэтому используется заглушка для корректной работы drag/drop
+         и преобразований. Помещаем перед app.js. -->
+    <script src="interact-stub.js"></script>
+    <script src="app.js" defer></script>
+
+  <script src="editor_wrapper.js" defer></script>
+</body>
+</html>
+

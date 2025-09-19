@@ -1,0 +1,270 @@
+:root{
+  --sidebar-width:280px;
+  --bg:#f8f9fa;
+  --paper:#ffffff;
+  --border:#dee2e6;
+  --text:#212529;
+  --muted:#6c757d;
+  --accent:#0066cc;
+  --danger:#dc3545;
+  --handle:var(--accent);
+  --select:rgba(0,102,204,0.85);
+  --radius:12px;
+  --padding:10px;
+}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;overflow:hidden}
+.app{display:flex;height:100%}
+
+/* --- Left Sidebar --- */
+#sidebar{width:var(--sidebar-width);background:var(--paper);border-right:1px solid var(--border);padding:18px;display:flex;flex-direction:column;gap:10px;overflow:auto;box-shadow:0 0 15px rgba(0,0,0,.05)}
+#sidebar h2{font-size:18px;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+#sidebar h3{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px}
+.draggable-item, .tool-button {display:flex;align-items:center;padding:9px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;background:#fafafa;cursor:pointer;user-select:none;transition:.2s}
+.draggable-item:hover, .tool-button:hover {background:#e9ecef;box-shadow:0 2px 4px rgba(0,0,0,.08);transform:translateY(-1px)}
+.tool-button.active { background-color: var(--accent); color: white; border-color: var(--accent); }
+#trash{margin-top:auto;padding:14px;border:2px dashed var(--border);border-radius:8px;text-align:center;color:var(--muted);transition:.3s}
+#trash.drag-enter{background:rgba(220,53,69,.08);border-color:var(--danger);color:var(--danger)}
+
+/* --- Main Content --- */
+#main{flex:1;display:flex;justify-content:center;align-items:center;padding:12px;overflow:hidden;position:relative;background:#fff;}
+#wrap{
+  position:relative;
+  width:100%;
+  height:100%;
+  max-width:1000px;
+  max-height:1000px;
+  background:var(--paper);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:0 8px 30px rgba(0,0,0,.12);
+  overflow:hidden;
+}
+svg{width:100%;height:100%}
+svg.tool-active { cursor: crosshair; }
+.wall,.inner-wall,.win,.col,.door-arc,.dim-line, #walls path {vector-effect:non-scaling-stroke}
+#walls path { fill:none;stroke:#343a40;stroke-width:11;stroke-linejoin:round;stroke-linecap:round; cursor: pointer; }
+#walls path.selected { stroke: var(--accent); }
+.wall-component { cursor: pointer; }
+.wall-component.selected > * { stroke: var(--accent) !important; stroke-width: 3; vector-effect: non-scaling-stroke; }
+.floor{fill:#fdfdfd;}
+#gridRect{pointer-events:none}
+
+/* --- Measurement Layer --- */
+#measurement line {
+  vector-effect: non-scaling-stroke;
+  stroke: var(--accent);
+  /* Толще, чтобы линия была лучше видна */
+  stroke-width: 3;
+  marker-start: url(#dim-arrow);
+  marker-end: url(#dim-arrow);
+}
+#measurement text {
+  font-size: 14px;
+  font-weight: bold;
+  fill: var(--accent);
+  stroke: white;
+  stroke-width: 0.5;
+  paint-order: stroke;
+  pointer-events: none;
+}
+
+/* Слой измерений не должен перехватывать события мыши, иначе клики перестанут работать */
+#measurement {
+  pointer-events: none;
+}
+
+/* --- Collision highlighting (для анализа коллизий) --- */
+.layout-object.collision .shape {
+  stroke: var(--danger) !important;
+  stroke-width: 3 !important;
+}
+.wall-component.collision > * {
+  stroke: var(--danger) !important;
+  stroke-width: 3 !important;
+}
+
+/* --- Layout Objects --- */
+.layout-object{cursor:move; filter: url(#shadow);}
+.layout-object:hover { filter: url(#shadow) brightness(1.05); }
+.layout-object.selected .selection-box{display:block}
+.selection-box{
+  display:none;
+  fill:none;
+  stroke:var(--select);
+  stroke-width:4;
+  stroke-dasharray:10 5;
+  pointer-events:none;
+  vector-effect:non-scaling-stroke;
+}
+.resize-handle,
+.rotate-handle{
+  display:none;
+  fill:var(--handle);
+  stroke:#fff;
+  stroke-width:2;
+}
+.layout-object.selected .resize-handle,.layout-object.selected .rotate-handle{display:block}
+.resize-handle{
+  cursor:nwse-resize;
+  width:16px;
+  height:16px;
+  pointer-events:auto;
+}
+.rotate-handle{
+  cursor:grab;
+  r:10;
+  pointer-events:auto;
+}
+
+/* --- UI Elements --- */
+.ui-bar{
+  position:absolute;
+  z-index:1001;
+  background:var(--paper);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:0 8px 24px rgba(0,0,0,.08);
+  padding:8px 12px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  font-size:13px;
+}
+.ui-bar button{
+  border:1px solid var(--border);
+  background:var(--paper);
+  border-radius:var(--radius);
+  padding:6px 10px;
+  cursor:pointer;
+  transition:background .15s;
+}
+.ui-bar button:hover{
+  background:#f6f7f8;
+}
+#grid-controls-bar{right:12px;top:12px;}
+#grid-controls-bar select{border:1px solid var(--border);background:#fff;border-radius:10px;padding:6px 10px;cursor:pointer}
+#grid-controls-bar label{display:flex;gap:6px;align-items:center}
+#toast{position:absolute;left:50%;top:20px;transform:translateX(-50%);background:#212529;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;z-index:9999;}
+#toast.show{opacity:0.95}
+
+/* --- Context Menu --- */
+#ctx{position:absolute;display:none;background:#fff;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.15);padding:8px 0;z-index:1002;min-width:220px;border:1px solid var(--border)}
+#ctx button{display:block;width:100%;padding:10px 16px;border:0;background:none;text-align:left;font-size:14px;cursor:pointer}
+#ctx button:hover{background:#f1f3f5}
+#ctx hr{border:none;border-top:1px solid var(--border);margin:6px 0}
+#ctx .kbd{float:right;color:var(--muted)}
+#ctx .danger{color:var(--danger)}
+
+/* --- Right Properties Panel --- */
+#properties{width:var(--sidebar-width);background:var(--paper);border-left:1px solid var(--border);padding:18px;display:flex;flex-direction:column;gap:10px;overflow:auto;box-shadow:0 0 15px rgba(0,0,0,.05)}
+#properties h2{font-size:18px;margin:0 0 10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+#prop-placeholder{color:var(--muted);font-size:14px;text-align:center;margin-top:20px}
+#prop-controls.hidden{display:none}
+#prop-controls{display:grid;grid-template-columns:auto 1fr;gap:12px 8px;align-items:center}
+#prop-controls label{font-size:14px;white-space:nowrap}
+#prop-controls input{width:100%;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:14px}
+#prop-controls .prop-label {justify-self: end;}
+
+
+/* --- Layers Panel --- */
+#layers-panel{margin-top:20px;border-top:1px solid var(--border);padding-top:10px}
+#layers-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
+#layers-list li{display:flex;align-items:center;gap:8px;padding:6px;border-radius:6px;cursor:pointer;transition:.15s;font-size:13px}
+#layers-list li:hover{background:#f1f3f5}
+#layers-list li.selected{background:var(--accent);color:#fff}
+#layers-list .layer-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#layers-list .layer-vis,#layers-list .layer-lock{border:none;background:none;cursor:pointer;padding:2px 4px;opacity:.6}
+#layers-list li.selected .layer-vis,#layers-list li.selected .layer-lock{opacity:1}
+#layers-list .layer-vis:hover,#layers-list .layer-lock:hover{opacity:1}
+#layers-list .locked .layer-name{text-decoration:line-through;opacity:.7}
+
+/* --- Mobile / Responsive --- */
+#mobile-toggles {
+    display: none;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1002;
+    gap: 8px;
+}
+#mobile-toggles button {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#toggle-properties {
+    position: fixed;
+    right: 10px;
+    left: auto;
+}
+
+/* Курсор при панорамировании */
+body.panning, svg.panning {
+  cursor: grabbing !important;
+}
+
+@media (max-width: 1024px) {
+    #sidebar, #properties {
+        position: fixed;
+        top: 0;
+        height: 100%;
+        z-index: 2000;
+        transform: translateX(-105%);
+        transition: transform 0.3s ease-in-out;
+        box-shadow: 0 0 20px rgba(0,0,0,.2);
+        width: 300px;
+    }
+    #properties {
+        right: 0;
+        left: auto;
+        transform: translateX(105%);
+    }
+    #sidebar.visible, #properties.visible {
+        transform: translateX(0);
+    }
+    #mobile-toggles {
+        display: flex;
+    }
+    #main {
+        padding: 0;
+    }
+    #wrap {
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        height: 100%;
+        max-height: none;
+    }
+}
+
+
+
+
+/* Safe appended overrides to ensure toolbar receives pointer events and sits above canvas */
+.toolbar { z-index: 9999 !important; pointer-events: auto !important; }
+.toolbar .tool-button, .toolbar button { pointer-events: auto !important; }
+#sidebar { z-index: 9998 !important; pointer-events: auto !important; }
+
+
+
+/* FIX: гарантируем, что боковая панель и кнопки инструментов находятся над рабочей областью
+   и получают pointer-events (неперекрываемые). */
+#sidebar {
+  position: relative !important;
+  z-index: 10010 !important;
+  pointer-events: auto !important;
+}
+.tool-button, #tool-pointer, #tool-wall, #tool-door, #tool-window {
+  position: relative !important;
+  z-index: 10011 !important;
+  pointer-events: auto !important;
+  user-select: none;
+}
