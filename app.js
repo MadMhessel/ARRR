@@ -239,7 +239,7 @@
     };
 
     const gridRenderState = {
-        majorStride: 5,
+        majorStrideBase: Math.max(1, Math.round(1 / CONST.GRID)),
         minorPath: null,
         majorPath: null,
     };
@@ -797,7 +797,8 @@
         if (!Number.isFinite(effectiveScale) || effectiveScale <= 0) return;
         const unitsWidth = base / effectiveScale;
         if (Number.isFinite(unitsWidth) && unitsWidth > 0) {
-            path.style.strokeWidth = `${unitsWidth}`;
+            path.setAttribute('stroke-width', `${unitsWidth}`);
+            path.style.strokeWidth = '';
         }
     }
 
@@ -821,7 +822,7 @@
         } else {
             path.removeAttribute('stroke-dasharray');
         }
-        path.setAttribute('vector-effect', 'non-scaling-stroke');
+        path.removeAttribute('vector-effect');
         updateWallStrokeWidth(path, style.width);
     }
 
@@ -1180,13 +1181,107 @@
 
         let minorSegments = '';
         let majorSegments = '';
-        const stride = Math.max(1, Math.round(gridRenderState.majorStride));
+
+        const baseMajorStride = Math.max(1, Math.round(gridRenderState.majorStrideBase || 1));
+        const displayScale = getSvgDisplayScale();
+        const stepPx = Number.isFinite(displayScale) ? step * displayScale : null;
+        const MIN_MAJOR_PX = 60;
+        const MAX_MAJOR_PX = 220;
+        const TARGET_MAJOR_PX = (MIN_MAJOR_PX + MAX_MAJOR_PX) / 2;
+        const MIN_MINOR_PX = 14;
+        const MAX_MINOR_PX = 80;
+        const TARGET_MINOR_PX = 28;
+
+        let majorStride = baseMajorStride;
+        let minorEvery = 1;
+
+        if (Number.isFinite(stepPx) && stepPx > 0) {
+            const candidateSet = new Set([baseMajorStride]);
+            const multipliers = [2, 3, 4, 5, 10, 20, 50, 100];
+            multipliers.forEach(mult => candidateSet.add(baseMajorStride * mult));
+            const divisors = [2, 4, 5, 10];
+            divisors.forEach(div => {
+                if (baseMajorStride % div === 0) {
+                    candidateSet.add(Math.max(1, Math.round(baseMajorStride / div)));
+                }
+            });
+
+            const candidates = Array.from(candidateSet)
+                .filter(v => Number.isFinite(v) && v >= 1 && v <= 5000)
+                .sort((a, b) => a - b);
+
+            let bestMajorScore = Number.POSITIVE_INFINITY;
+            let fallbackMajor = majorStride;
+            let fallbackDelta = Number.POSITIVE_INFINITY;
+
+            candidates.forEach(candidate => {
+                const spacing = stepPx * candidate;
+                if (!Number.isFinite(spacing)) return;
+                const delta = Math.abs(spacing - TARGET_MAJOR_PX);
+                if (spacing >= MIN_MAJOR_PX && spacing <= MAX_MAJOR_PX) {
+                    if (delta < bestMajorScore) {
+                        bestMajorScore = delta;
+                        majorStride = candidate;
+                    }
+                }
+                const rangeDelta = spacing < MIN_MAJOR_PX
+                    ? MIN_MAJOR_PX - spacing
+                    : spacing > MAX_MAJOR_PX
+                        ? spacing - MAX_MAJOR_PX
+                        : 0;
+                if (rangeDelta < fallbackDelta) {
+                    fallbackDelta = rangeDelta;
+                    fallbackMajor = candidate;
+                }
+            });
+
+            if (bestMajorScore === Number.POSITIVE_INFINITY) {
+                majorStride = fallbackMajor;
+            }
+
+            const minorCandidates = [];
+            for (let d = 1; d <= majorStride; d++) {
+                if (majorStride % d === 0) {
+                    minorCandidates.push(d);
+                }
+            }
+            let bestMinorScore = Number.POSITIVE_INFINITY;
+            let fallbackMinor = minorEvery;
+            let fallbackMinorDelta = Number.POSITIVE_INFINITY;
+
+            minorCandidates.forEach(candidate => {
+                const spacing = stepPx * candidate;
+                if (!Number.isFinite(spacing)) return;
+                const delta = Math.abs(spacing - TARGET_MINOR_PX);
+                if (spacing >= MIN_MINOR_PX && spacing <= MAX_MINOR_PX) {
+                    if (delta < bestMinorScore) {
+                        bestMinorScore = delta;
+                        minorEvery = candidate;
+                    }
+                }
+                const rangeDelta = spacing < MIN_MINOR_PX
+                    ? MIN_MINOR_PX - spacing
+                    : spacing > MAX_MINOR_PX
+                        ? spacing - MAX_MINOR_PX
+                        : 0;
+                if (rangeDelta < fallbackMinorDelta) {
+                    fallbackMinorDelta = rangeDelta;
+                    fallbackMinor = candidate;
+                }
+            });
+
+            if (bestMinorScore === Number.POSITIVE_INFINITY) {
+                minorEvery = fallbackMinor;
+            }
+        }
 
         for (let col = startCol; col <= endCol; col++) {
             const x = roundTo(col * step, 3);
-            const isMajor = ((col % stride) + stride) % stride === 0;
+            const majorHit = ((col % majorStride) + majorStride) % majorStride === 0;
+            const minorHit = !majorHit && ((col % minorEvery) + minorEvery) % minorEvery === 0;
+            if (!majorHit && !minorHit) continue;
             const segment = `M ${x} ${y0} V ${y1}`;
-            if (isMajor) {
+            if (majorHit) {
                 majorSegments += segment;
             } else {
                 minorSegments += segment;
@@ -1194,9 +1289,11 @@
         }
         for (let row = startRow; row <= endRow; row++) {
             const y = roundTo(row * step, 3);
-            const isMajor = ((row % stride) + stride) % stride === 0;
+            const majorHit = ((row % majorStride) + majorStride) % majorStride === 0;
+            const minorHit = !majorHit && ((row % minorEvery) + minorEvery) % minorEvery === 0;
+            if (!majorHit && !minorHit) continue;
             const segment = `M ${x0} ${y} H ${x1}`;
-            if (isMajor) {
+            if (majorHit) {
                 majorSegments += segment;
             } else {
                 minorSegments += segment;
@@ -1211,7 +1308,7 @@
             ? state.gridStepMeters
             : CONST.GRID;
         const stride = Math.max(1, Math.round(1 / meters));
-        gridRenderState.majorStride = Math.min(50, stride);
+        gridRenderState.majorStrideBase = Math.min(500, stride);
     }
     function updateGridViewport() {
         if (!state.viewBox) return;
