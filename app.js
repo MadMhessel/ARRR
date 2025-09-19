@@ -211,6 +211,11 @@
         dom.svg.setAttribute('viewBox', `${state.viewBox.x} ${state.viewBox.y} ${state.viewBox.width} ${state.viewBox.height}`);
     }
     function startPan(e) {
+        if (!state.viewBox) {
+            const vb = dom.svg.viewBox?.baseVal;
+            if (!vb) return;
+            state.viewBox = { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
+        }
         state.isPanning = true;
         state.panStart = { x: e.clientX, y: e.clientY };
         state.panViewBox = { ...state.viewBox };
@@ -880,6 +885,14 @@
             }
             // Выбор объектов (указатель)
             else {
+                if (e.button === 0) {
+                    const interactive = e.target.closest('.layout-object, .wall-component, #walls path');
+                    if (!interactive) {
+                        e.preventDefault();
+                        startPan(e);
+                        return;
+                    }
+                }
                 const t = e.target.closest('.layout-object');
                 if (t) { selectObject(t); return; }
                 const w = e.target.closest('#walls path');
