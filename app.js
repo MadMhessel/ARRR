@@ -189,6 +189,26 @@
         clamp: (v, min, max) => Math.max(min, Math.min(max, v)),
         rafThrottle(fn) { let r = null, lastArgs = null; return function (...args) { lastArgs = args; if (r) return; r = requestAnimationFrame(() => { fn(...lastArgs); r = null; }); } }
     };
+    const KEY_CODE_MAP = {
+        v: 'KeyV',
+        w: 'KeyW',
+        d: 'KeyD',
+        o: 'KeyO',
+        m: 'KeyM',
+        z: 'KeyZ',
+        y: 'KeyY',
+        c: 'KeyC',
+        r: 'KeyR',
+        f: 'KeyF',
+        b: 'KeyB'
+    };
+    function matchesKey(e, letter) {
+        if (!letter) return false;
+        const lower = typeof e.key === 'string' ? e.key.toLowerCase() : '';
+        if (lower === letter) return true;
+        const expected = KEY_CODE_MAP[letter];
+        return expected ? e.code === expected : false;
+    }
 
     // === ИКОНКИ ДЛЯ КНОПОК ПАНЕЛЕЙ ===
     function attachPanelIcons(root = document) {
@@ -2630,56 +2650,56 @@
 
         // Горячие клавиши для переключения инструмента (без модификаторов)
         if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-            switch (e.key.toLowerCase()) {
-                case 'v': toggleTool('pointer'); e.preventDefault(); return;
-                case 'w': toggleTool('wall'); e.preventDefault(); return;
-                case 'd': toggleTool('door'); e.preventDefault(); return;
-                case 'o': toggleTool('window'); e.preventDefault(); return;
-                case 'm': toggleTool('measure'); e.preventDefault(); return;
-            }
+            if (matchesKey(e, 'v')) { toggleTool('pointer'); e.preventDefault(); return; }
+            if (matchesKey(e, 'w')) { toggleTool('wall'); e.preventDefault(); return; }
+            if (matchesKey(e, 'd')) { toggleTool('door'); e.preventDefault(); return; }
+            if (matchesKey(e, 'o')) { toggleTool('window'); e.preventDefault(); return; }
+            if (matchesKey(e, 'm')) { toggleTool('measure'); e.preventDefault(); return; }
         }
 
         // Обработка сочетаний с Ctrl/Meta
         if (e.ctrlKey || e.metaKey) {
-            switch (e.key.toLowerCase()) {
-                case 'z':
-                    e.preventDefault();
-                    undo();
-                    return;
-                case 'y':
-                    e.preventDefault();
-                    redo();
-                    return;
-                case 'd':
-                    e.preventDefault();
-                    if (state.selectedObject) duplicateObject(state.selectedObject);
-                    return;
-                case 'c':
-                    if (state.selectedObject) {
-                        sessionStorage.setItem('clipboard-layout', JSON.stringify(getModel(state.selectedObject)));
-                        utils.showToast('Скопировано');
-                    }
-                    return;
-                case 'v': {
-                    const raw = sessionStorage.getItem('clipboard-layout');
-                    if (!raw) return;
-                    try {
-                        const m2 = JSON.parse(raw);
-                        m2.x += 12;
-                        m2.y += 12;
-                        const el = createLayoutObject(m2.tpl, m2.x, m2.y);
-                        setModel(el, m2);
-                        selectObject(el);
-                        commit('paste');
-                    } catch (err) {}
-                    return;
+            if (matchesKey(e, 'z')) {
+                e.preventDefault();
+                undo();
+                return;
+            }
+            if (matchesKey(e, 'y')) {
+                e.preventDefault();
+                redo();
+                return;
+            }
+            if (matchesKey(e, 'd')) {
+                e.preventDefault();
+                if (state.selectedObject) duplicateObject(state.selectedObject);
+                return;
+            }
+            if (matchesKey(e, 'c')) {
+                if (state.selectedObject) {
+                    sessionStorage.setItem('clipboard-layout', JSON.stringify(getModel(state.selectedObject)));
+                    utils.showToast('Скопировано');
                 }
+                return;
+            }
+            if (matchesKey(e, 'v')) {
+                const raw = sessionStorage.getItem('clipboard-layout');
+                if (!raw) return;
+                try {
+                    const m2 = JSON.parse(raw);
+                    m2.x += 12;
+                    m2.y += 12;
+                    const el = createLayoutObject(m2.tpl, m2.x, m2.y);
+                    setModel(el, m2);
+                    selectObject(el);
+                    commit('paste');
+                } catch (err) {}
+                return;
             }
         }
 
         // Фокусировка на выбранном объекте по клавише F
         if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-            if (e.key.toLowerCase() === 'f') {
+            if (matchesKey(e, 'f')) {
                 e.preventDefault();
                 focusSelected();
                 return;
@@ -2732,20 +2752,16 @@
         }
 
         // Дополнительные операции с выделенным
-        switch (e.key.toLowerCase()) {
-            case 'r':
-                model.a = (model.a + 90) % 360;
-                setModel(state.selectedObject, model);
-                commit('rotate90');
-                break;
-            case 'f':
-                dom.itemsContainer.appendChild(state.selectedObject);
-                commit('front');
-                break;
-            case 'b':
-                dom.itemsContainer.prepend(state.selectedObject);
-                commit('back');
-                break;
+        if (matchesKey(e, 'r')) {
+            model.a = (model.a + 90) % 360;
+            setModel(state.selectedObject, model);
+            commit('rotate90');
+        } else if (matchesKey(e, 'f')) {
+            dom.itemsContainer.appendChild(state.selectedObject);
+            commit('front');
+        } else if (matchesKey(e, 'b')) {
+            dom.itemsContainer.prepend(state.selectedObject);
+            commit('back');
         }
     }
     function deleteObject(el) { if (!el) return; if (getModel(el).locked) { utils.showToast('Объект заблокирован'); return; } interact(el).unset(); el.remove(); selectObject(null); commit('delete'); }
