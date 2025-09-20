@@ -100,6 +100,7 @@
         gridStepMeters: CONST.GRID,
         gridSize: 50 * CONST.GRID,
         history: { stack: [], idx: -1, lock: false },
+        renderMode: 'schematic',
         activeTool: 'pointer',
         currentWallPoints: [],
         defaultWallType: 'structural',
@@ -1238,7 +1239,153 @@
     }
 
     // --- OBJECT & WALL CREATION / MANIPULATION ---
-    function createLayoutObject(tpl, x, y) { const el = document.createElementNS('http://www.w3.org/2000/svg', 'g'); el.classList.add('layout-object'); el.dataset.id = `el-${state.objectCounter++}`; const safeTpl = ITEM_TEMPLATES[tpl] ? tpl : 'zone'; el.dataset.template = safeTpl; el.innerHTML = (ITEM_TEMPLATES[safeTpl].svg() + `<rect class="selection-box"></rect><rect class="resize-handle" width="12" height="12"></rect><circle class="rotate-handle" r="8"></circle>`); dom.itemsContainer.appendChild(el); const core = el.querySelector('.core'); const b = core.getBBox(); const model = { x, y, a: 0, sx: 1, sy: 1, cx: b.x + b.width / 2, cy: b.y + b.height / 2, ow: b.width, oh: b.height, locked: false, visible: true }; setModel(el, model); makeInteractive(el); commit('add'); return el; }
+    function buildAttributeString(attrs, extraClasses = []) {
+        const attrMap = new Map();
+        (attrs || []).forEach(attr => {
+            if (!attr || !attr.name) return;
+            attrMap.set(attr.name, attr.value ?? '');
+        });
+        const classNames = new Set((attrMap.get('class') || '').split(/\s+/).filter(Boolean));
+        extraClasses.forEach(cls => classNames.add(cls));
+        if (classNames.size) {
+            attrMap.set('class', Array.from(classNames).join(' '));
+        } else if (extraClasses.length) {
+            attrMap.set('class', extraClasses.join(' '));
+        }
+        return Array.from(attrMap.entries()).map(([name, value]) => `${name}="${value}"`).join(' ');
+    }
+
+    function renderItemTemplate(id, mode = state.renderMode || 'schematic') {
+        const tpl = ITEM_TEMPLATES?.[id];
+        if (!tpl) return '';
+        const variant = mode === 'rich' ? 'rich' : 'schematic';
+        if (variant === 'schematic' && typeof tpl.schematicSvg === 'function') {
+            if (tpl.__schematicSymbolId && tpl.__schematicAttrs) {
+                const attrString = buildAttributeString(tpl.__schematicAttrs, ['core', 'schematic-only']);
+                const symbolId = tpl.__schematicSymbolId;
+                return `<g ${attrString}><use href="#${symbolId}" xlink:href="#${symbolId}"></use></g>`;
+            }
+            const markup = tpl.schematicSvg();
+            if (markup) return markup;
+        }
+        return typeof tpl.svg === 'function' ? tpl.svg() : '';
+    }
+
+    function rerenderLayoutObject(el) {
+        if (!el) return;
+        const tplId = el.dataset?.template;
+        if (!tplId) return;
+        const markup = renderItemTemplate(tplId, state.renderMode);
+        if (!markup) return;
+        const currentCore = el.querySelector('.core');
+        if (currentCore) {
+            currentCore.outerHTML = markup;
+        } else {
+            el.insertAdjacentHTML('afterbegin', markup);
+        }
+        const newCore = el.querySelector('.core');
+        if (!newCore) return;
+        const bbox = newCore.getBBox();
+        const model = getModel(el);
+        model.cx = bbox.x + bbox.width / 2;
+        model.cy = bbox.y + bbox.height / 2;
+        model.ow = bbox.width;
+        model.oh = bbox.height;
+        setModel(el, model);
+    }
+
+    function rerenderAllLayoutObjects() {
+        if (!dom.itemsContainer) return;
+        dom.itemsContainer.querySelectorAll('.layout-object').forEach(rerenderLayoutObject);
+    }
+
+    function updateSvgModeClass(mode) {
+        if (!dom.svg) return;
+        dom.svg.classList.remove('svg-mode--schematic', 'svg-mode--rich');
+        dom.svg.classList.add(mode === 'rich' ? 'svg-mode--rich' : 'svg-mode--schematic');
+    }
+
+    function setRenderMode(mode, { rerender = true } = {}) {
+        const next = mode === 'rich' ? 'rich' : 'schematic';
+        const prev = state.renderMode;
+        state.renderMode = next;
+        updateSvgModeClass(next);
+        if (rerender && prev !== next) {
+            rerenderAllLayoutObjects();
+            commit('render_mode_change');
+        }
+        return next;
+    }
+
+    function buildSymbolsFromSchematic() {
+        if (!dom.svg || typeof ITEM_TEMPLATES !== 'object') return;
+        let defsHost = dom.svg.querySelector('defs[data-generated="schematic-symbols"]');
+        if (!defsHost) {
+            defsHost = document.createElementNS(SVG_NS, 'defs');
+            defsHost.dataset.generated = 'schematic-symbols';
+            dom.svg.prepend(defsHost);
+        } else {
+            while (defsHost.firstChild) defsHost.removeChild(defsHost.firstChild);
+        }
+        Object.entries(ITEM_TEMPLATES).forEach(([id, tpl]) => {
+            if (!tpl) return;
+            delete tpl.__schematicSymbolId;
+            delete tpl.__schematicAttrs;
+            if (typeof tpl.schematicSvg !== 'function') return;
+            const raw = tpl.schematicSvg();
+            if (typeof raw !== 'string' || !raw.trim()) return;
+            const temp = document.createElementNS(SVG_NS, 'svg');
+            temp.innerHTML = raw.trim();
+            const coreEl = temp.querySelector('.core');
+            if (!coreEl) return;
+            const attrs = Array.from(coreEl.attributes).map(attr => ({ name: attr.name, value: attr.value }));
+            const symbol = document.createElementNS(SVG_NS, 'symbol');
+            const symbolId = `sym-${id}`;
+            symbol.setAttribute('id', symbolId);
+            Array.from(coreEl.childNodes).forEach(node => {
+                symbol.appendChild(node.cloneNode(true));
+            });
+            defsHost.appendChild(symbol);
+            tpl.__schematicSymbolId = symbolId;
+            tpl.__schematicAttrs = attrs;
+        });
+    }
+
+    function createLayoutObject(tpl, x, y) {
+        const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        el.classList.add('layout-object');
+        el.dataset.id = `el-${state.objectCounter++}`;
+        const safeTpl = ITEM_TEMPLATES[tpl] ? tpl : 'zone';
+        el.dataset.template = safeTpl;
+        let coreMarkup = renderItemTemplate(safeTpl, state.renderMode);
+        if (!coreMarkup && typeof ITEM_TEMPLATES[safeTpl]?.svg === 'function') {
+            coreMarkup = ITEM_TEMPLATES[safeTpl].svg();
+        }
+        if (!coreMarkup) {
+            coreMarkup = `<g class="core" data-id="${safeTpl}"></g>`;
+        }
+        el.innerHTML = `${coreMarkup}<rect class="selection-box"></rect><rect class="resize-handle" width="12" height="12"></rect><circle class="rotate-handle" r="8"></circle>`;
+        dom.itemsContainer.appendChild(el);
+        const core = el.querySelector('.core');
+        const bbox = core ? core.getBBox() : { x: 0, y: 0, width: 0, height: 0 };
+        const model = {
+            x,
+            y,
+            a: 0,
+            sx: 1,
+            sy: 1,
+            cx: bbox.x + bbox.width / 2,
+            cy: bbox.y + bbox.height / 2,
+            ow: bbox.width,
+            oh: bbox.height,
+            locked: false,
+            visible: true
+        };
+        setModel(el, model);
+        makeInteractive(el);
+        commit('add');
+        return el;
+    }
     function makeInteractive(el) { interact(el).draggable({ onstart: () => { if (getModel(el).locked || state.activeTool !== 'pointer') return false; }, listeners: { move: utils.rafThrottle(e => { const m = getModel(el); const d = utils.screenDeltaToSVG(e.dx, e.dy); m.x += d.dx; m.y += d.dy; setModel(el, m); showGuidesIfNeeded(m); }), end: () => { snapSelectedToGrid(el); clearGuides(); commit('move'); } } }).resizable({ edges: { left: true, right: true, top: true, bottom: true }, onstart: () => { if (getModel(el).locked || state.activeTool !== 'pointer') return false; }, listeners: { move: utils.rafThrottle(e => { const m = getModel(el); const bw = Math.max(1, m.ow * m.sx), bh = Math.max(1, m.oh * m.sy); const dScr = utils.screenDeltaToSVG(e.delta.x || 0, e.delta.y || 0); const rad = m.a * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad); const dLoc = { lx: dScr.dx * cos + dScr.dy * sin, ly: -dScr.dx * sin + dScr.dy * cos }; let sx = m.sx, sy = m.sy; if (e.edges.left) sx = utils.clamp((bw - dLoc.lx) / m.ow, 0.1, 100); if (e.edges.right) sx = utils.clamp((bw + dLoc.lx) / m.ow, 0.1, 100); if (e.edges.top) sy = utils.clamp((bh - dLoc.ly) / m.oh, 0.1, 100); if (e.edges.bottom) sy = utils.clamp((bh + dLoc.ly) / m.oh, 0.1, 100); const ox = (e.edges.left ? m.ow / 2 : e.edges.right ? -m.ow / 2 : 0); const oy = (e.edges.top ? m.oh / 2 : e.edges.bottom ? -m.oh / 2 : 0); const dx = (m.sx - sx) * ox, dy = (m.sy - sy) * oy; m.x += dx * cos - dy * sin; m.y += dx * sin + dy * cos; m.sx = sx; m.sy = sy; setModel(el, m); }), end: () => { snapSelectedToGrid(el, true); commit('resize'); } } }); interact(el.querySelector('.rotate-handle')).draggable({ onstart: e => { if (getModel(el).locked || state.activeTool !== 'pointer') return false; e.interaction.el = el; }, listeners: { move: utils.rafThrottle(e => { const m = getModel(e.interaction.el); const p = utils.toSVGPoint(e.clientX, e.clientY); const ang = Math.atan2(p.y - m.y, p.x - m.x) * 180 / Math.PI + 90; m.a = state.isShiftHeld ? Math.round(ang / 15) * 15 : ang; setModel(e.interaction.el, m); }), end: () => { snapSelectedToGrid(el); commit('rotate'); } } }); }
     function updateFromProperties() { if (!state.selectedObject) return; const model = getModel(state.selectedObject); let changed = false; const props = { x: parseFloat(dom.propX.value), y: parseFloat(dom.propY.value), w: parseFloat(dom.propW.value), h: parseFloat(dom.propH.value), a: parseFloat(dom.propA.value) }; if (!isNaN(props.x) && model.x !== props.x) { model.x = props.x; changed = true; } if (!isNaN(props.y) && model.y !== props.y) { model.y = props.y; changed = true; } if (!isNaN(props.a)) { const newA = props.a % 360; if (model.a !== newA) { model.a = newA; changed = true; } } if (!isNaN(props.w) && props.w > 0) { const newSx = props.w / model.ow; if (model.sx !== newSx) { model.sx = newSx; changed = true; } } if (!isNaN(props.h) && props.h > 0) { const newSy = props.h / model.oh; if (model.sy !== newSy) { model.sy = newSy; changed = true; } } if (changed) { setModel(state.selectedObject, model); commit('props_update'); } updatePropertiesPanel(model); }
     function toggleTool(tool) {
@@ -2384,6 +2531,7 @@
     // --- HISTORY (UNDO/REDO) ---
     function snapshot() {
         return {
+            view: { mode: state.renderMode },
             items: Array.from(dom.itemsContainer.children).filter(n => n.classList.contains('layout-object')).map(getModel),
             walls: Array.from(wallStore.values()).map(model => ({
                 id: model.id,
@@ -2418,6 +2566,8 @@
     }
     function restore(data) {
         state.history.lock = true;
+
+        setRenderMode(data?.view?.mode, { rerender: false });
 
         Array.from(dom.itemsContainer.children).slice().forEach(n => {
             if (n.classList.contains('layout-object')) {
@@ -3050,6 +3200,9 @@
     }
     
     function init() {
+        buildSymbolsFromSchematic();
+        setRenderMode(state.renderMode, { rerender: false });
+
         // Populate sidebar
         const fragment = document.createDocumentFragment();
         FURNITURE_CATEGORIES.forEach(cat => {
@@ -3067,7 +3220,7 @@
 
         // Setup interact.js
         interact('.draggable-item').draggable({ inertia: true, autoScroll: true, listeners: { start(e) { const g = e.target.cloneNode(true); Object.assign(g.style, { position: 'absolute', opacity: .7, pointerEvents: 'none', zIndex: 1000 }); document.body.appendChild(g); e.interaction.ghost = g; }, move(e) { const g = e.interaction.ghost; if (!g) return; g.style.left = `${e.clientX - e.rect.width / 2}px`; g.style.top = `${e.clientY - e.rect.height / 2}px`; }, end(e) { e.interaction.ghost?.remove(); } } });
-        interact(dom.svg).dropzone({ accept: '.draggable-item', listeners: { drop(e) { const tpl = e.relatedTarget.dataset.template; const viewBox = dom.svg.viewBox.baseVal; const centerX = viewBox.x + viewBox.width / 2; const centerY = viewBox.y + viewBox.height / 2; const obj = createLayoutObject(tpl, centerX, centerY); selectObject(obj); }, dragenter: e => e.target.style.outline = '2px dashed var(--accent)', dragleave: e => e.target.style.outline = 'none', dropdeactivate: e => e.target.style.outline = 'none' } });
+        interact(dom.svg).dropzone({ accept: '.draggable-item', listeners: { drop(e) { const tpl = e.relatedTarget.dataset.template; const viewBox = dom.svg.viewBox.baseVal; const centerX = viewBox.x + viewBox.width / 2; const centerY = viewBox.y + viewBox.height / 2; const obj = createLayoutObject(tpl, centerX, centerY); selectObject(obj); }, dragenter: e => e.target.style.outline = '2px dashed var(--ui-accent)', dragleave: e => e.target.style.outline = 'none', dropdeactivate: e => e.target.style.outline = 'none' } });
         interact(dom.trash).dropzone({ accept: '.layout-object', ondragenter: e => e.target.classList.add('drag-enter'), ondragleave: e => e.target.classList.remove('drag-enter'), ondrop: e => { deleteObject(e.relatedTarget); e.target.classList.remove('drag-enter'); } });
         
         // Bind all event listeners
