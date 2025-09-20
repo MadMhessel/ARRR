@@ -18,6 +18,11 @@
         },
     };
     const LOCAL_STORAGE_KEY = 'layout-v10-pro'; // Incremented version to avoid loading old potentially corrupt data
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const PLAN_SCALE = 50; // 1:50 чертёжный масштаб
+    const EDGE_WIDTH_MM = 0.6; // толщина верхнего штриха в мм на листе
+    const MM_PER_METER = 1000;
+    const SHEET_MM_PER_METER = MM_PER_METER / PLAN_SCALE; // 20 мм на листе на каждый метр в реальности
     const dom = {
         svg: document.getElementById('svg'),
         itemsContainer: document.getElementById('items-layer'),
@@ -52,6 +57,7 @@
         btnAnalysis: document.getElementById('btnAnalysis'),
         btnCsv: document.getElementById('btnCsv'),
         btnTemplate: document.getElementById('btnTemplate'),
+        btnClearHost: document.getElementById('btnClearHost'),
         gridSelect: document.getElementById('gridStep'),
         snapGuidesEl: document.getElementById('snapGuides'),
         toolPointer: document.getElementById('tool-pointer'),
@@ -81,6 +87,8 @@
         rateFinish: document.getElementById('rate-finish'),
         ratePerimeter: document.getElementById('rate-perimeter'),
         rateEngineering: document.getElementById('rate-engineering'),
+        defs: document.querySelector('#svg defs'),
+        wallMaskTemplate: document.getElementById('wallOpeningsMask'),
     };
     const state = {
         selectedObject: null,
@@ -126,17 +134,46 @@
     const wallIdMap = new Map();
     const componentStore = new Map();
     const componentIdMap = new Map();
+    const wallMaskMap = new Map();
     const WALL_TYPES = [
         { id: 'structural', label: 'Капитальная', description: 'Несущая стена, толщина ~250 мм' },
         { id: 'partition', label: 'Перегородка', description: 'Лёгкая перегородка, толщина ~100 мм' },
         { id: 'glass', label: 'Стеклянная', description: 'Витраж или стеклянная перегородка' },
         { id: 'half', label: 'Полустена', description: 'Парапет, барная стойка или ограждение' }
     ];
-    const WALL_STYLE_MAP = {
-        structural: { stroke: '#343a40', width: 16, dasharray: null, linecap: 'round' },
-        partition: { stroke: '#868e96', width: 10, dasharray: '28 12', linecap: 'butt' },
-        glass: { stroke: 'rgba(77,171,247,.9)', width: 8, dasharray: '12 8', linecap: 'butt' },
-        half: { stroke: '#adb5bd', width: 8, dasharray: '6 8', linecap: 'butt' },
+    const WALL_RENDER_PRESETS = {
+        structural: {
+            thickness: 0.25,
+            bodyStroke: 'rgba(15,46,43,0.35)',
+            edgeStroke: '#0F2E2B',
+            bodyDashMm: null,
+            edgeDashMm: null,
+        },
+        partition: {
+            thickness: 0.15,
+            bodyStroke: 'rgba(15,46,43,0.25)',
+            edgeStroke: '#0F2E2B',
+            bodyDashMm: null,
+            edgeDashMm: [6, 3.2],
+        },
+        glass: {
+            thickness: 0.1,
+            bodyStroke: 'rgba(77,171,247,0.32)',
+            edgeStroke: '#2F7EBB',
+            bodyDashMm: null,
+            edgeDashMm: [5, 3],
+        },
+        half: {
+            thickness: 0.1,
+            bodyStroke: 'rgba(15,46,43,0.18)',
+            edgeStroke: '#0F2E2B',
+            bodyDashMm: [4, 3],
+            edgeDashMm: [4, 4],
+        },
+    };
+    const OPENING_SPECS = {
+        door: { widthMeters: 0.9, stroke: '#8B4513' },
+        window: { widthMeters: 1.2, stroke: '#2F7EBB', fill: 'rgba(163,213,255,0.55)' },
     };
     const ESTIMATE_PRESETS = {
         standard: { finish: 50, perimeter: 12, engineering: 35 },
@@ -160,7 +197,9 @@
             if (btn.dataset.iconMounted === '1') return;
 
             const iconId = btn.getAttribute('data-icon');
-            const labelText = btn.textContent.trim();
+            const iconOnly = btn.hasAttribute('data-icon-only');
+            const labelAttr = btn.getAttribute('data-icon-label');
+            const labelText = labelAttr != null ? labelAttr : btn.textContent.trim();
 
             btn.textContent = '';
             const iconSpan = document.createElement('span');
@@ -168,12 +207,20 @@
             iconSpan.setAttribute('aria-hidden', 'true');
             iconSpan.innerHTML = `<svg viewBox="0 0 24 24" focusable="false"><use href="#${iconId}"></use></svg>`;
 
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'label';
-            labelSpan.textContent = labelText;
+            if (iconOnly) {
+                btn.classList.add('icon-only');
+                btn.appendChild(iconSpan);
+                if (!btn.hasAttribute('aria-label') && labelText) {
+                    btn.setAttribute('aria-label', labelText);
+                }
+            } else {
+                btn.prepend(iconSpan);
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'label';
+                labelSpan.textContent = labelText;
+                btn.appendChild(labelSpan);
+            }
 
-            btn.prepend(iconSpan);
-            btn.appendChild(labelSpan);
             btn.dataset.iconMounted = '1';
         });
     }
@@ -718,10 +765,12 @@
         model.components.forEach(comp => {
             const compEl = componentIdMap.get(comp.id);
             if (!compEl) return;
+            compEl.innerHTML = renderWallComponentMarkup(comp, model);
             const { point, angle } = pointAtWallDistance(model, comp.distance);
             const transform = `translate(${point.x}, ${point.y}) rotate(${angle})`;
             compEl.setAttribute('transform', transform);
         });
+        updateWallMaskOpenings(wallEl);
     }
 
     function updateWallHandles(wallEl) {
@@ -785,45 +834,191 @@
         return Math.min(...candidates);
     }
 
-    function updateWallStrokeWidth(path, basePx, scale) {
-        if (!path) return;
-        const resolvedBase = Number(basePx);
-        if (Number.isFinite(resolvedBase) && resolvedBase > 0) {
-            path.dataset.strokeBasePx = String(resolvedBase);
+    function getPixelsPerMeter() {
+        const ppm = Number.isFinite(state.pixelsPerMeter) && state.pixelsPerMeter > 0 ? state.pixelsPerMeter : 50;
+        return ppm;
+    }
+
+    function sheetMmToUnits(mm) {
+        if (!Number.isFinite(mm)) return 0;
+        const ppm = getPixelsPerMeter();
+        return (mm * ppm) / SHEET_MM_PER_METER;
+    }
+
+    function getWallPreset(type) {
+        const resolved = ensureWallType(type);
+        return WALL_RENDER_PRESETS[resolved] || WALL_RENDER_PRESETS.structural;
+    }
+
+    function ensureWallMask(wallEl) {
+        if (!wallEl) return null;
+        const baseId = wallEl.dataset.id ? `wall-mask-${wallEl.dataset.id}` : `wall-mask-${wallMaskMap.size + 1}`;
+        let entry = wallMaskMap.get(wallEl);
+        if (entry) {
+            if (entry.id !== baseId) {
+                entry.id = baseId;
+                entry.mask.setAttribute('id', baseId);
+            }
+            return entry;
         }
-        const base = Number(path.dataset.strokeBasePx);
-        if (!Number.isFinite(base) || base <= 0) return;
-        const effectiveScale = Number.isFinite(scale) && scale > 0 ? scale : getSvgDisplayScale();
-        if (!Number.isFinite(effectiveScale) || effectiveScale <= 0) return;
-        const unitsWidth = base / effectiveScale;
-        if (Number.isFinite(unitsWidth) && unitsWidth > 0) {
-            path.setAttribute('stroke-width', `${unitsWidth}`);
-            path.style.strokeWidth = '';
+        let maskEl;
+        let openingsGroup;
+        if (dom.wallMaskTemplate) {
+            maskEl = dom.wallMaskTemplate.cloneNode(true);
+            maskEl.removeAttribute('id');
+            openingsGroup = maskEl.querySelector('[data-role="wall-mask-openings"]');
+            if (openingsGroup) {
+                openingsGroup.innerHTML = '';
+            }
+        }
+        if (!maskEl) {
+            maskEl = document.createElementNS(SVG_NS, 'mask');
+            const rect = document.createElementNS(SVG_NS, 'rect');
+            rect.setAttribute('x', '-10000');
+            rect.setAttribute('y', '-10000');
+            rect.setAttribute('width', '20000');
+            rect.setAttribute('height', '20000');
+            rect.setAttribute('fill', 'white');
+            maskEl.appendChild(rect);
+        }
+        if (!openingsGroup) {
+            openingsGroup = document.createElementNS(SVG_NS, 'g');
+            openingsGroup.dataset.role = 'wall-mask-openings';
+            maskEl.appendChild(openingsGroup);
+        }
+        maskEl.setAttribute('id', baseId);
+        maskEl.setAttribute('maskUnits', 'userSpaceOnUse');
+        maskEl.setAttribute('maskContentUnits', 'userSpaceOnUse');
+        dom.defs?.appendChild(maskEl);
+        entry = { id: baseId, mask: maskEl, openingsGroup };
+        wallMaskMap.set(wallEl, entry);
+        return entry;
+    }
+
+    function ensureWallPath(wallEl, className) {
+        if (!wallEl) return null;
+        let path = wallEl.querySelector(`.${className}`);
+        if (path) return path;
+        path = document.createElementNS(SVG_NS, 'path');
+        path.classList.add(className);
+        if (className === 'wall-body') {
+            wallEl.insertBefore(path, wallEl.firstChild || null);
+        } else if (className === 'wall-edge') {
+            const handles = wallEl.querySelector('.wall-handles');
+            if (handles) {
+                wallEl.insertBefore(path, handles);
+            } else {
+                const inserts = wallEl.querySelector('.wall-inserts');
+                if (inserts) {
+                    wallEl.insertBefore(path, inserts);
+                } else {
+                    wallEl.appendChild(path);
+                }
+            }
+        } else {
+            wallEl.appendChild(path);
+        }
+        return path;
+    }
+
+    function setStrokeDash(path, dashMm) {
+        if (!path) return;
+        if (Array.isArray(dashMm) && dashMm.length) {
+            const values = dashMm.map(v => sheetMmToUnits(v)).filter(v => Number.isFinite(v) && v > 0);
+            if (values.length) {
+                path.setAttribute('stroke-dasharray', values.map(v => v.toFixed(3)).join(' '));
+                return;
+            }
+        }
+        path.removeAttribute('stroke-dasharray');
+    }
+
+    function updateWallVisualStyle(wallEl, model = getWallModel(wallEl)) {
+        if (!wallEl || !model) return;
+        const preset = getWallPreset(model.type);
+        const ppm = getPixelsPerMeter();
+        const thicknessMeters = Number.isFinite(model.thickness) && model.thickness > 0 ? model.thickness : preset.thickness;
+        model.thickness = thicknessMeters;
+        const thicknessUnits = thicknessMeters * ppm;
+        const body = wallEl.querySelector('.wall-body');
+        const edge = wallEl.querySelector('.wall-edge');
+        if (body) {
+            body.setAttribute('stroke', preset.bodyStroke);
+            if (thicknessUnits > 0) {
+                body.setAttribute('stroke-width', thicknessUnits.toFixed(3));
+            }
+            body.setAttribute('stroke-linecap', 'butt');
+            body.setAttribute('stroke-linejoin', 'round');
+            body.setAttribute('fill', 'none');
+            setStrokeDash(body, preset.bodyDashMm);
+        }
+        if (edge) {
+            edge.setAttribute('stroke', preset.edgeStroke || '#0F2E2B');
+            const edgeWidth = sheetMmToUnits(EDGE_WIDTH_MM);
+            if (edgeWidth > 0) {
+                edge.setAttribute('stroke-width', edgeWidth.toFixed(3));
+            }
+            edge.setAttribute('stroke-linecap', 'butt');
+            edge.setAttribute('stroke-linejoin', 'round');
+            edge.setAttribute('fill', 'none');
+            setStrokeDash(edge, preset.edgeDashMm);
         }
     }
 
-    function refreshWallStrokeWidths() {
-        const scale = getSvgDisplayScale();
-        if (!Number.isFinite(scale) || scale <= 0) return;
-        dom.wallsContainer?.querySelectorAll('.wall path').forEach(path => {
-            updateWallStrokeWidth(path, Number(path.dataset.strokeBasePx), scale);
+    function updateWallMaskOpenings(wallEl) {
+        if (!wallEl) return;
+        const model = getWallModel(wallEl);
+        if (!model) return;
+        const entry = ensureWallMask(wallEl);
+        if (!entry) return;
+        entry.openingsGroup.innerHTML = '';
+        const body = wallEl.querySelector('.wall-body');
+        if (body) {
+            body.setAttribute('mask', `url(#${entry.id})`);
+        }
+        if (!Array.isArray(model.components) || !model.components.length) return;
+        const ppm = getPixelsPerMeter();
+        const thicknessMeters = Number.isFinite(model.thickness) && model.thickness > 0 ? model.thickness : getWallPreset(model.type).thickness;
+        const thicknessUnits = thicknessMeters * ppm;
+        if (!(thicknessUnits > 0)) return;
+        const halfThickness = thicknessUnits / 2;
+        model.components.forEach(comp => {
+            const spec = OPENING_SPECS[comp.type] || OPENING_SPECS.door;
+            let widthMeters = Number.isFinite(comp.width) && comp.width > 0 ? comp.width : spec.widthMeters;
+            if (!Number.isFinite(widthMeters) || widthMeters <= 0) {
+                widthMeters = spec.widthMeters;
+            }
+            const widthUnits = widthMeters * ppm;
+            if (!(widthUnits > 0)) return;
+            const { point, angle } = pointAtWallDistance(model, comp.distance);
+            const openingRect = document.createElementNS(SVG_NS, 'rect');
+            openingRect.setAttribute('x', (-widthUnits / 2).toFixed(3));
+            openingRect.setAttribute('y', (-halfThickness).toFixed(3));
+            openingRect.setAttribute('width', widthUnits.toFixed(3));
+            openingRect.setAttribute('height', thicknessUnits.toFixed(3));
+            openingRect.setAttribute('fill', 'black');
+            openingRect.setAttribute('transform', `translate(${point.x}, ${point.y}) rotate(${angle})`);
+            entry.openingsGroup.appendChild(openingRect);
         });
     }
 
-    function applyWallStrokeStyle(path, type) {
-        if (!path) return;
-        const style = WALL_STYLE_MAP[type] || WALL_STYLE_MAP.structural;
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke', style.stroke);
-        path.setAttribute('stroke-linejoin', 'round');
-        path.setAttribute('stroke-linecap', style.linecap || 'round');
-        if (style.dasharray) {
-            path.setAttribute('stroke-dasharray', style.dasharray);
-        } else {
-            path.removeAttribute('stroke-dasharray');
-        }
-        path.removeAttribute('vector-effect');
-        updateWallStrokeWidth(path, style.width);
+    function refreshWallStrokeWidths() {
+        const walls = dom.wallsContainer?.querySelectorAll('.wall');
+        if (!walls) return;
+        walls.forEach(wall => {
+            const model = getWallModel(wall);
+            if (!model) return;
+            updateWallVisualStyle(wall, model);
+            if (Array.isArray(model.components)) {
+                model.components.forEach(comp => {
+                    const compEl = componentIdMap.get(comp.id);
+                    if (compEl) {
+                        compEl.innerHTML = renderWallComponentMarkup(comp, model);
+                    }
+                });
+            }
+            updateWallMaskOpenings(wall);
+        });
     }
 
     function updateWallElementGeometry(wallEl) {
@@ -832,12 +1027,16 @@
         const resolvedType = ensureWallType(model.type || state.defaultWallType);
         model.type = resolvedType;
         wallEl.dataset.type = resolvedType;
-        const path = wallEl.querySelector('path') || document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        if (!path.parentNode) wallEl.appendChild(path);
-        applyWallStrokeStyle(path, resolvedType);
+        const bodyPath = ensureWallPath(wallEl, 'wall-body');
+        const edgePath = ensureWallPath(wallEl, 'wall-edge');
+        const maskEntry = ensureWallMask(wallEl);
+        if (maskEntry && bodyPath) {
+            bodyPath.setAttribute('mask', `url(#${maskEntry.id})`);
+        }
         const pts = model.points;
         if (!pts || pts.length === 0) {
-            path.removeAttribute('d');
+            bodyPath?.removeAttribute('d');
+            edgePath?.removeAttribute('d');
             return;
         }
         let d = `M ${pts[0].x} ${pts[0].y}`;
@@ -845,23 +1044,30 @@
             d += ` L ${pts[i].x} ${pts[i].y}`;
         }
         if (model.closed && pts.length > 2) d += ' Z';
-        path.setAttribute('d', d);
+        if (bodyPath) bodyPath.setAttribute('d', d);
+        if (edgePath) edgePath.setAttribute('d', d);
+        updateWallVisualStyle(wallEl, model);
         updateWallHandles(wallEl);
         updateWallComponentsPosition(wallEl);
     }
 
     function createWall(points, closed = false) {
         if (!points || points.length < 2) return null;
-        const wallEl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const wallEl = document.createElementNS(SVG_NS, 'g');
         wallEl.classList.add('wall');
         const id = `wall-${++state.wallCounter}`;
         wallEl.dataset.id = id;
         const type = ensureWallType(state.defaultWallType);
         const model = { id, points: points.map(p => ({ x: p.x, y: p.y })), closed, components: [], type };
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        wallEl.appendChild(path);
+        const body = document.createElementNS(SVG_NS, 'path');
+        body.classList.add('wall-body');
+        const edge = document.createElementNS(SVG_NS, 'path');
+        edge.classList.add('wall-edge');
+        wallEl.appendChild(body);
+        wallEl.appendChild(edge);
         wallEl.dataset.type = type;
         dom.wallsContainer.appendChild(wallEl);
+        ensureWallMask(wallEl);
         registerWall(wallEl, model);
         return wallEl;
     }
@@ -901,6 +1107,11 @@
         }
         wallStore.delete(wallEl);
         wallIdMap.delete(model.id);
+        const maskEntry = wallMaskMap.get(wallEl);
+        if (maskEntry) {
+            maskEntry.mask.remove();
+            wallMaskMap.delete(wallEl);
+        }
         wallEl.remove();
         if (state.selectedWall === wallEl) {
             state.selectedWall = null;
@@ -972,7 +1183,7 @@
     function makeWallInteractive(wallEl) {
         if (wallEl.dataset.interactive === 'true') return;
         wallEl.dataset.interactive = 'true';
-        const path = wallEl.querySelector('path');
+        const path = wallEl.querySelector('.wall-edge') || wallEl.querySelector('.wall-body');
         if (path) {
             path.addEventListener('dblclick', e => {
                 if (state.activeTool !== 'pointer') return;
@@ -1056,6 +1267,42 @@
         hideWallLengthPreview();
         clearSnapMarkers();
     }
+    function renderWallComponentMarkup(compModel, wallModel) {
+        if (!compModel) return '';
+        const spec = OPENING_SPECS[compModel.type] || OPENING_SPECS.door;
+        const wallPreset = getWallPreset(wallModel?.type || state.defaultWallType);
+        const ppm = getPixelsPerMeter();
+        const thicknessMeters = Number.isFinite(wallModel?.thickness) && wallModel.thickness > 0 ? wallModel.thickness : wallPreset.thickness;
+        let thicknessUnits = thicknessMeters * ppm;
+        if (!(thicknessUnits > 0)) {
+            thicknessUnits = sheetMmToUnits(wallPreset.thickness * SHEET_MM_PER_METER);
+        }
+        const halfThickness = thicknessUnits / 2;
+        let widthMeters = Number.isFinite(compModel.width) && compModel.width > 0 ? compModel.width : spec.widthMeters;
+        if (!Number.isFinite(widthMeters) || widthMeters <= 0) {
+            widthMeters = spec.widthMeters;
+        }
+        const widthUnits = widthMeters * ppm;
+        const strokeWidth = Math.max(sheetMmToUnits(0.35), 0.8);
+        if (compModel.type === 'door') {
+            const radius = widthUnits / 2;
+            const stroke = spec.stroke || '#8B4513';
+            const safeHalfThickness = halfThickness || sheetMmToUnits(4) / 2;
+            const arcEndX = radius;
+            const arcEndY = safeHalfThickness - radius;
+            return `
+                <line x1="${(-radius).toFixed(3)}" y1="${safeHalfThickness.toFixed(3)}" x2="${(-radius).toFixed(3)}" y2="${(-safeHalfThickness).toFixed(3)}" stroke="${stroke}" stroke-width="${strokeWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+                <path d="M ${(-radius).toFixed(3)} ${safeHalfThickness.toFixed(3)} A ${radius.toFixed(3)} ${radius.toFixed(3)} 0 0 1 ${arcEndX.toFixed(3)} ${arcEndY.toFixed(3)}" fill="none" stroke="${stroke}" stroke-width="${strokeWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+            `;
+        }
+        const stroke = spec.stroke || '#2F7EBB';
+        const fill = spec.fill || 'rgba(163,213,255,0.55)';
+        const barHeight = Math.max(sheetMmToUnits(1.2), thicknessUnits * 0.6 || sheetMmToUnits(1.2));
+        return `
+            <rect x="${(-widthUnits / 2).toFixed(3)}" y="${(-barHeight / 2).toFixed(3)}" width="${widthUnits.toFixed(3)}" height="${barHeight.toFixed(3)}" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth.toFixed(3)}" vector-effect="non-scaling-stroke" rx="${sheetMmToUnits(0.5).toFixed(3)}" />
+            <line x1="${(-widthUnits / 2).toFixed(3)}" y1="0" x2="${(widthUnits / 2).toFixed(3)}" y2="0" stroke="${stroke}" stroke-width="${strokeWidth.toFixed(3)}" vector-effect="non-scaling-stroke" />
+        `;
+    }
     function placeWallComponent(type, placement) {
         const wallEl = ensureWallElement(placement?.wallEl || (state.pendingComponentPlacement?.wallEl));
         const wallModel = getWallModel(wallEl);
@@ -1063,18 +1310,24 @@
             utils.showToast('Не удалось определить стену для проёма');
             return null;
         }
-        const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const el = document.createElementNS(SVG_NS, 'g');
         el.classList.add('wall-component');
         const id = `comp-${++state.componentCounter}`;
         el.dataset.id = id;
         el.dataset.type = type;
         el.dataset.wallId = wallModel.id;
-        const width = type === 'door' ? 80 : 120;
-        const mask = `<rect x="-${width / 2}" y="-11" width="${width}" height="22" fill="#fdfdfd" />`;
-        const visual = type === 'door'
-            ? `<path d="M -40 0 A 40 40 0 0 1 0 -40" stroke="#8B4513" stroke-width="2" fill="none"/><line x1="-40" y1="0" x2="-40" y2="-5" stroke="#8B4513" stroke-width="2"/>`
-            : `<rect x="-60" y="-5.5" width="120" height="11" fill="#a3d5ff" stroke="#5b9ad4" stroke-width="2" />`;
-        el.innerHTML = mask + visual;
+        const spec = OPENING_SPECS[type] || OPENING_SPECS.door;
+        let widthMeters = placement?.width;
+        if (typeof widthMeters === 'string') {
+            widthMeters = parseFloat(widthMeters.replace(/,/g, '.'));
+        }
+        widthMeters = Number.isFinite(widthMeters) ? widthMeters : spec.widthMeters;
+        if (Number.isFinite(widthMeters) && widthMeters > 10) {
+            widthMeters = widthMeters / getPixelsPerMeter();
+        }
+        if (!Number.isFinite(widthMeters) || widthMeters <= 0) {
+            widthMeters = spec.widthMeters;
+        }
         dom.wallComponentsContainer.appendChild(el);
         const distanceAlong = placement?.distance ?? state.pendingComponentPlacement?.distance ?? 0;
         const initialPoint = placement?.point || state.pendingComponentPlacement?.point;
@@ -1083,7 +1336,11 @@
             const ang = initialAngle ?? 0;
             el.setAttribute('transform', `translate(${initialPoint.x}, ${initialPoint.y}) rotate(${ang})`);
         }
-        const compModel = { id, type, wallId: wallModel.id, distance: distanceAlong, offset: 0 };
+        const compModel = { id, type, wallId: wallModel.id, distance: distanceAlong, offset: 0, width: widthMeters };
+        el.innerHTML = renderWallComponentMarkup(compModel, wallModel);
+        if (Number.isFinite(widthMeters)) {
+            el.dataset.width = widthMeters.toFixed(3);
+        }
         componentStore.set(el, compModel);
         componentIdMap.set(id, el);
         if (!Array.isArray(wallModel.components)) wallModel.components = [];
@@ -1953,6 +2210,42 @@
             }
         }
     }
+    function hasLayoutContent() {
+        const hasObjects = !!dom.itemsContainer?.querySelector('.layout-object');
+        const hasWalls = (dom.wallsContainer?.childElementCount || 0) > 0;
+        const hasComponents = (dom.wallComponentsContainer?.childElementCount || 0) > 0;
+        const hasPreviews = (dom.previewsContainer?.childElementCount || 0) > 0;
+        const hasMeasurements = Array.isArray(state.measurements) && state.measurements.length > 0;
+        const hasMeasureDraft = Array.isArray(state.measurePoints) && state.measurePoints.length > 0;
+        return hasObjects || hasWalls || hasComponents || hasPreviews || hasMeasurements || hasMeasureDraft;
+    }
+    function clearHost(confirmPrompt = true) {
+        if (!hasLayoutContent()) {
+            return false;
+        }
+        const message = 'Очистить текущий план? Все стены, объекты, проёмы и измерения будут удалены.';
+        if (confirmPrompt && !window.confirm(message)) {
+            return false;
+        }
+
+        state.currentWallPoints = [];
+        if (dom.wallPreview) {
+            dom.wallPreview.setAttribute('points', '');
+        }
+        dom.previewsContainer.innerHTML = '';
+        hideWallLengthPreview();
+        state.measurePoints = [];
+
+        restore({ items: [], walls: [], components: [], measurements: [] });
+        resetMeasurementPreview();
+        if (dom.ctx) {
+            dom.ctx.style.display = 'none';
+        }
+        commit('clear_host');
+        utils.showToast('План очищен');
+        return true;
+    }
+
     function loadMasterProject() {
         try {
             // подтверждение для перезаписи текущего проекта
@@ -2083,7 +2376,8 @@
                 type: comp.type,
                 wallId: comp.wallId,
                 distance: comp.distance,
-                offset: comp.offset || 0
+                offset: comp.offset || 0,
+                width: comp.width
             })),
             wallDefaults: { type: state.defaultWallType },
             grid: {
@@ -2112,6 +2406,8 @@
             }
         });
 
+        wallMaskMap.forEach(entry => entry.mask.remove());
+        wallMaskMap.clear();
         dom.wallsContainer.innerHTML = '';
         wallStore.clear();
         wallIdMap.clear();
@@ -2241,7 +2537,7 @@
             }
             const wallEl = wallIdMap.get(c.wallId);
             if (!wallEl) return;
-            const compEl = placeWallComponent(c.type, { wallEl, distance: c.distance || 0 });
+            const compEl = placeWallComponent(c.type, { wallEl, distance: c.distance || 0, width: c.width });
             const compModel = componentStore.get(compEl);
             if (!compModel) return;
             const originalId = compModel.id;
@@ -2250,6 +2546,15 @@
                 compEl.dataset.id = c.id;
             }
             compModel.offset = c.offset || 0;
+            if (Number.isFinite(c.width) && c.width > 0) {
+                let widthMeters = c.width;
+                if (widthMeters > 10) {
+                    widthMeters = widthMeters / getPixelsPerMeter();
+                }
+                compModel.width = widthMeters;
+                compEl.dataset.width = widthMeters.toFixed(3);
+                compEl.innerHTML = renderWallComponentMarkup(compModel, wallModel);
+            }
             componentStore.set(compEl, compModel);
             if (originalId && originalId !== compModel.id) {
                 componentIdMap.delete(originalId);
@@ -2675,6 +2980,24 @@
         if (dom.btnTemplate) {
             dom.btnTemplate.addEventListener('click', () => {
                 loadMasterProject();
+            });
+        }
+
+        if (dom.btnClearHost) {
+            dom.btnClearHost.addEventListener('click', () => {
+                if (!hasLayoutContent()) {
+                    utils.showToast('План уже пуст');
+                    dom.btnClearHost.blur();
+                    return;
+                }
+                try {
+                    clearHost();
+                } catch (err) {
+                    console.error('Не удалось очистить план', err);
+                    utils.showToast('Не удалось очистить план');
+                } finally {
+                    dom.btnClearHost.blur();
+                }
             });
         }
 
