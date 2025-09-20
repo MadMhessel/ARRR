@@ -30,11 +30,22 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
   line-height: 1;
 }
 
+.ui-bar button[data-icon].icon-only {
+  padding: 6px;
+  gap: 0;
+  justify-content: center;
+}
+
 /* Иконки в кнопках панелей */
 .tool-button .icon, .ui-bar button[data-icon] .icon, #btnFocus .icon, #btn-focus .icon {
   width: 18px;
   height: 18px;
   display: inline-flex;
+}
+
+.ui-bar button[data-icon].icon-only .icon {
+  width: 20px;
+  height: 20px;
 }
 
 .tool-button .icon svg, .ui-bar button[data-icon] .icon svg, #btnFocus .icon svg, #btn-focus .icon svg {
@@ -43,6 +54,11 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-famil
   fill: currentColor;
   stroke: currentColor;
   opacity: 0.92;
+}
+
+.ui-bar button[data-icon].icon-only .icon svg {
+  width: 20px;
+  height: 20px;
 }
 
 .tool-button.active .icon svg {

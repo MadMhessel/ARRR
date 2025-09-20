@@ -197,7 +197,9 @@
             if (btn.dataset.iconMounted === '1') return;
 
             const iconId = btn.getAttribute('data-icon');
-            const labelText = btn.textContent.trim();
+            const iconOnly = btn.hasAttribute('data-icon-only');
+            const labelAttr = btn.getAttribute('data-icon-label');
+            const labelText = labelAttr != null ? labelAttr : btn.textContent.trim();
 
             btn.textContent = '';
             const iconSpan = document.createElement('span');
@@ -205,12 +207,20 @@
             iconSpan.setAttribute('aria-hidden', 'true');
             iconSpan.innerHTML = `<svg viewBox="0 0 24 24" focusable="false"><use href="#${iconId}"></use></svg>`;
 
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'label';
-            labelSpan.textContent = labelText;
+            if (iconOnly) {
+                btn.classList.add('icon-only');
+                btn.appendChild(iconSpan);
+                if (!btn.hasAttribute('aria-label') && labelText) {
+                    btn.setAttribute('aria-label', labelText);
+                }
+            } else {
+                btn.prepend(iconSpan);
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'label';
+                labelSpan.textContent = labelText;
+                btn.appendChild(labelSpan);
+            }
 
-            btn.prepend(iconSpan);
-            btn.appendChild(labelSpan);
             btn.dataset.iconMounted = '1';
         });
     }
