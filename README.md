@@ -24,3 +24,31 @@ The application currently relies on interactive workflows, so the following manu
 5. **Legacy import compatibility**
    - Import a pre-update JSON project (walls stored as SVG paths) and confirm walls convert to editable segments.
    - Import a project with old door/window markup and check that openings snap to the nearest wall segment and follow the wall when moved.
+
+## Плановый режим и откат изменений
+
+- Все шаблоны из `templates.js` дополнены функциями `schematicSvg()` и автоматически получают плановый вариант из `templates.schematic.patch.js`.
+- В `app.js` реализован безопасный `applyTransformFromDataset()` и переключатель между `schematic`/`rich` режимами (кнопка «Режим: План/Детально» в нижней панели).
+- Стиль `style.css` содержит набор переменных и классов (`shape`, `shape-fill`, `furn-center`, `schematic-only`, `rich-only`) для единообразного рендера.
+
+### Как проверить плановый вид
+1. Откройте `index.html` в браузере.
+2. Используйте кнопку «Режим: План/Детально» или вызовите `setRenderMode('schematic')`/`setRenderMode('rich')` в консоли DevTools.
+3. В режиме схемы убедитесь, что мебель упрощена, центрирована (`core.getBBox()` ≈ центр в (0,0)) и линии имеют единый стиль.
+4. Переключитесь обратно в детализированный режим и проверьте, что исходная графика не искажена.
+
+### Быстрый откат к исходным файлам
+
+```bash
+cp templates.js.bak templates.js
+cp app.js.bak app.js
+```
+
+При необходимости можно снова применить патчи:
+
+```bash
+cp app.patched.js app.js
+node templates.schematic.patch.js
+```
+
+После отката перезапустите страницу и очистите `localStorage`, чтобы убедиться, что все элементы и стены отображаются корректно.

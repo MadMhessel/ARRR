@@ -54,6 +54,7 @@
         btnImport: document.getElementById('btnImport'),
         fileImport: document.getElementById('fileImport'),
         btnShare: document.getElementById('btnShare'),
+        renderModeToggle: document.getElementById('toggle-render-mode'),
         btnAnalysis: document.getElementById('btnAnalysis'),
         btnCsv: document.getElementById('btnCsv'),
         btnTemplate: document.getElementById('btnTemplate'),
@@ -1398,11 +1399,26 @@
         dom.svg.classList.add(mode === 'rich' ? 'svg-mode--rich' : 'svg-mode--schematic');
     }
 
+    function updateRenderModeToggle(mode = state.renderMode) {
+        if (!dom.renderModeToggle) return;
+        const normalized = mode === 'rich' ? 'rich' : 'schematic';
+        const text = normalized === 'rich' ? 'Режим: Детально' : 'Режим: План';
+        const labelNode = dom.renderModeToggle.querySelector('.label');
+        if (labelNode) {
+            labelNode.textContent = text;
+        } else {
+            dom.renderModeToggle.textContent = text;
+        }
+        dom.renderModeToggle.setAttribute('aria-pressed', normalized === 'rich' ? 'true' : 'false');
+        dom.renderModeToggle.dataset.mode = normalized;
+    }
+
     function setRenderMode(mode, { rerender = true } = {}) {
         const next = mode === 'rich' ? 'rich' : 'schematic';
         const prev = state.renderMode;
         state.renderMode = next;
         updateSvgModeClass(next);
+        updateRenderModeToggle(next);
         if (rerender && prev !== next) {
             rerenderAllLayoutObjects();
             commit('render_mode_change');
@@ -3229,6 +3245,10 @@
         dom.btnExport.addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot(), null, 2)], { type: 'application/json' })); a.download = 'layout.json'; a.click(); URL.revokeObjectURL(a.href); });
         dom.btnImport.addEventListener('click', () => dom.fileImport.click());
         dom.fileImport.addEventListener('change', e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const data = JSON.parse(r.result); restore(data); commit('import'); utils.showToast('План импортирован'); } catch (err) { utils.showToast('Ошибка импорта'); } }; r.readAsText(f); });
+        dom.renderModeToggle?.addEventListener('click', () => {
+            const next = state.renderMode === 'schematic' ? 'rich' : 'schematic';
+            setRenderMode(next);
+        });
 
         // Запуск анализа планировки по нажатию кнопки "Анализ"
         if (dom.btnAnalysis) {
