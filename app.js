@@ -800,8 +800,9 @@
 
     function updateWallComponentsPosition(wallEl) {
         const model = getWallModel(wallEl);
-        if (!model || !model.components) return;
-        model.components.forEach(comp => {
+        if (!model) return;
+        const comps = Array.isArray(model.components) ? model.components : [];
+        comps.forEach(comp => {
             const compEl = componentIdMap.get(comp.id);
             if (!compEl) return;
             compEl.innerHTML = renderWallComponentMarkup(comp, model);
@@ -1032,8 +1033,12 @@
         if (!entry) return;
         entry.openingsGroup.innerHTML = '';
         const body = wallEl.querySelector('.wall-body');
+        const edge = wallEl.querySelector('.wall-edge');
         if (body) {
             body.setAttribute('mask', `url(#${entry.id})`);
+        }
+        if (edge) {
+            edge.setAttribute('mask', `url(#${entry.id})`);
         }
         if (!Array.isArray(model.components) || !model.components.length) return;
         const thickness = resolveWallThickness(model);
@@ -1089,8 +1094,13 @@
         const bodyPath = ensureWallPath(wallEl, 'wall-body');
         const edgePath = ensureWallPath(wallEl, 'wall-edge');
         const maskEntry = ensureWallMask(wallEl);
-        if (maskEntry && bodyPath) {
-            bodyPath.setAttribute('mask', `url(#${maskEntry.id})`);
+        if (maskEntry) {
+            if (bodyPath) {
+                bodyPath.setAttribute('mask', `url(#${maskEntry.id})`);
+            }
+            if (edgePath) {
+                edgePath.setAttribute('mask', `url(#${maskEntry.id})`);
+            }
         }
         const pts = model.points;
         if (!pts || pts.length === 0) {
