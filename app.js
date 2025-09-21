@@ -608,7 +608,7 @@
     function setModel(el, model) { for (const k in model) { if (model[k] !== undefined) el.dataset[k] = model[k]; } applyTransformFromDataset(el); updatePropertiesPanel(model); updateLayerItem(model); }
     function applyTransformFromDataset(el) {
         const m = getModel(el);
-        // позиция и поворот всего объекта
+        // позиция и поворот всего объекта (контейнер)
         el.setAttribute('transform', `translate(${m.x}, ${m.y}) rotate(${m.a})`);
 
         const core = el.querySelector('.core');
@@ -619,7 +619,7 @@
             }
             const base = core.dataset.baseTransform;
             const dyn = `translate(${-m.cx}, ${-m.cy}) scale(${m.sx}, ${m.sy})`.trim();
-            const combined = [base, dyn].filter(Boolean).join(' ');
+            const combined = [dyn, base].filter(Boolean).join(' ');
             core.setAttribute('transform', combined);
         }
 
@@ -889,6 +889,22 @@
         return WALL_RENDER_PRESETS[resolved] || WALL_RENDER_PRESETS.structural;
     }
 
+    function resolveWallThickness(model, preset) {
+        const resolvedPreset = preset || getWallPreset(model?.type);
+        const customThickness = model?.thickness;
+        const thicknessMeters = Number.isFinite(customThickness) && customThickness > 0
+            ? customThickness
+            : resolvedPreset.thickness;
+        const thicknessSheetMm = thicknessMeters * SHEET_MM_PER_METER;
+        const thicknessUnits = sheetMmToUnits(thicknessSheetMm);
+        return {
+            thicknessMeters,
+            thicknessSheetMm,
+            thicknessUnits,
+            preset: resolvedPreset,
+        };
+    }
+
     function ensureWallMask(wallEl) {
         if (!wallEl) return null;
         const baseId = wallEl.dataset.id ? `wall-mask-${wallEl.dataset.id}` : `wall-mask-${wallMaskMap.size + 1}`;
@@ -975,16 +991,18 @@
     function updateWallVisualStyle(wallEl, model = getWallModel(wallEl)) {
         if (!wallEl || !model) return;
         const preset = getWallPreset(model.type);
-        const ppm = getPixelsPerMeter();
-        const thicknessMeters = Number.isFinite(model.thickness) && model.thickness > 0 ? model.thickness : preset.thickness;
-        model.thickness = thicknessMeters;
-        const thicknessUnits = thicknessMeters * ppm;
+        const thickness = resolveWallThickness(model, preset);
+        model.thickness = thickness.thicknessMeters;
         const body = wallEl.querySelector('.wall-body');
         const edge = wallEl.querySelector('.wall-edge');
         if (body) {
             body.setAttribute('stroke', preset.bodyStroke);
-            if (thicknessUnits > 0) {
-                body.setAttribute('stroke-width', thicknessUnits.toFixed(3));
+            if (thickness.thicknessUnits > 0) {
+                body.setAttribute('stroke-width', thickness.thicknessUnits.toFixed(3));
+                body.dataset.sheetThicknessMm = thickness.thicknessSheetMm.toFixed(2);
+            } else {
+                body.removeAttribute('stroke-width');
+                delete body.dataset.sheetThicknessMm;
             }
             body.setAttribute('stroke-linecap', 'butt');
             body.setAttribute('stroke-linejoin', 'round');
@@ -996,6 +1014,8 @@
             const edgeWidth = sheetMmToUnits(EDGE_WIDTH_MM);
             if (edgeWidth > 0) {
                 edge.setAttribute('stroke-width', edgeWidth.toFixed(3));
+            } else {
+                edge.removeAttribute('stroke-width');
             }
             edge.setAttribute('stroke-linecap', 'butt');
             edge.setAttribute('stroke-linejoin', 'round');
@@ -1016,9 +1036,8 @@
             body.setAttribute('mask', `url(#${entry.id})`);
         }
         if (!Array.isArray(model.components) || !model.components.length) return;
-        const ppm = getPixelsPerMeter();
-        const thicknessMeters = Number.isFinite(model.thickness) && model.thickness > 0 ? model.thickness : getWallPreset(model.type).thickness;
-        const thicknessUnits = thicknessMeters * ppm;
+        const thickness = resolveWallThickness(model);
+        const thicknessUnits = thickness.thicknessUnits;
         if (!(thicknessUnits > 0)) return;
         const halfThickness = thicknessUnits / 2;
         model.components.forEach(comp => {
@@ -1027,7 +1046,8 @@
             if (!Number.isFinite(widthMeters) || widthMeters <= 0) {
                 widthMeters = spec.widthMeters;
             }
-            const widthUnits = widthMeters * ppm;
+            const widthSheetMm = widthMeters * SHEET_MM_PER_METER;
+            const widthUnits = sheetMmToUnits(widthSheetMm);
             if (!(widthUnits > 0)) return;
             const { point, angle } = pointAtWallDistance(model, comp.distance);
             const openingRect = document.createElementNS(SVG_NS, 'rect');
@@ -1456,9 +1476,8 @@
         if (!compModel) return '';
         const spec = OPENING_SPECS[compModel.type] || OPENING_SPECS.door;
         const wallPreset = getWallPreset(wallModel?.type || state.defaultWallType);
-        const ppm = getPixelsPerMeter();
-        const thicknessMeters = Number.isFinite(wallModel?.thickness) && wallModel.thickness > 0 ? wallModel.thickness : wallPreset.thickness;
-        let thicknessUnits = thicknessMeters * ppm;
+        const thickness = resolveWallThickness(wallModel, wallPreset);
+        let thicknessUnits = thickness.thicknessUnits;
         if (!(thicknessUnits > 0)) {
             thicknessUnits = sheetMmToUnits(wallPreset.thickness * SHEET_MM_PER_METER);
         }
@@ -1467,7 +1486,8 @@
         if (!Number.isFinite(widthMeters) || widthMeters <= 0) {
             widthMeters = spec.widthMeters;
         }
-        const widthUnits = widthMeters * ppm;
+        const widthSheetMm = widthMeters * SHEET_MM_PER_METER;
+        const widthUnits = sheetMmToUnits(widthSheetMm);
         const strokeWidth = Math.max(sheetMmToUnits(0.35), 0.8);
         if (compModel.type === 'door') {
             const radius = widthUnits / 2;
