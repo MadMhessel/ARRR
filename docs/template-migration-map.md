@@ -107,3 +107,13 @@ This document enumerates the legacy template identifiers that existed before the
 | whiteboard | fixture-whiteboard-180x10 | – |
 | workstation-l | counter-l-180x180 | Multiple legacy templates now reuse this canonical asset. |
 | zone | zone | Unchanged canonical identifier. |
+
+### Door component variants
+
+Legacy wall components stored only `{ type: 'door', width }`. During migration `normaliseDoorComponent` assigns canonical metadata:
+
+| Legacy component payload | Canonicalised payload |
+|--------------------------|-----------------------|
+| `{ type: 'door', width: 0.9 }` | `{ type: 'door', width: 0.9, variant: 'single', hinge: 'left', swing: 'in' }` |
+
+Sliding, double и стеклянные системы ранее создавались отдельными SVG-элементами. Теперь они представлены вариантами `variant: 'double' | 'sliding' | 'glass'` с собственными ограничениями ширины. При загрузке старых сцен без `variant` поле автоматически принимает значение `single`.

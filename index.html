@@ -81,9 +81,6 @@
 
                 <svg id="svg" class="plan svg-mode--schematic" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" aria-label="План помещения" tabindex="0">
                     <defs>
-                        <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.1"/>
-                        </filter>
                         <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
                             <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e9ecef" stroke-width="1" vector-effect="non-scaling-stroke" shape-rendering="crispEdges"/>
                         </pattern>
@@ -112,93 +109,6 @@
                         <marker id="dim-arrow" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                             <path d="M0 0L10 5L0 10z" fill="#aaa" />
                         </marker>
-                        <pattern id="wood-grain" patternUnits="userSpaceOnUse" width="80" height="80" patternTransform="rotate(45)">
-                            <rect width="80" height="80" fill="#e3c6a4"/>
-                            <path d="M 0,20 Q 20,0 40,20 T 80,20 M 0,60 Q 20,40 40,60 T 80,60" stroke="#c7a783" stroke-width="2" fill="none"/>
-                        </pattern>
-                        <linearGradient id="metal-steel" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#f2f4f7"/>
-                            <stop offset="45%" stop-color="#c6ccd3"/>
-                            <stop offset="100%" stop-color="#8a929c"/>
-                        </linearGradient>
-                        <linearGradient id="metal-chrome" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#f8fbff"/>
-                            <stop offset="55%" stop-color="#b9c4d0"/>
-                            <stop offset="100%" stop-color="#eef1f5"/>
-                        </linearGradient>
-                        <linearGradient id="metal-brass" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#f4d98b"/>
-                            <stop offset="50%" stop-color="#c4953d"/>
-                            <stop offset="100%" stop-color="#ffe8a6"/>
-                        </linearGradient>
-                        <linearGradient id="wood-espresso" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#3b2414"/>
-                            <stop offset="50%" stop-color="#6a4023"/>
-                            <stop offset="100%" stop-color="#29160c"/>
-                        </linearGradient>
-                        <linearGradient id="wood-honey" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#c8924b"/>
-                            <stop offset="50%" stop-color="#e6b972"/>
-                            <stop offset="100%" stop-color="#9b6b35"/>
-                        </linearGradient>
-                        <linearGradient id="wood-oak" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#deb887"/>
-                            <stop offset="55%" stop-color="#bb8748"/>
-                            <stop offset="100%" stop-color="#8c5a28"/>
-                        </linearGradient>
-                        <linearGradient id="upholstery-amber" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#ffe7c3"/>
-                            <stop offset="50%" stop-color="#d9a86b"/>
-                            <stop offset="100%" stop-color="#a06835"/>
-                        </linearGradient>
-                        <linearGradient id="upholstery-slate" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#aab2bd"/>
-                            <stop offset="60%" stop-color="#5e6672"/>
-                            <stop offset="100%" stop-color="#3a4048"/>
-                        </linearGradient>
-                        <linearGradient id="upholstery-forest" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#5f8359"/>
-                            <stop offset="60%" stop-color="#345235"/>
-                            <stop offset="100%" stop-color="#1f3120"/>
-                        </linearGradient>
-                        <linearGradient id="upholstery-cream" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#fff7e8"/>
-                            <stop offset="65%" stop-color="#e2d3b6"/>
-                            <stop offset="100%" stop-color="#c0ac8f"/>
-                        </linearGradient>
-                        <linearGradient id="leather-caramel" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="#87441d"/>
-                            <stop offset="45%" stop-color="#b97433"/>
-                            <stop offset="100%" stop-color="#5b2f14"/>
-                        </linearGradient>
-                        <linearGradient id="ceramic-terracotta" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#f2c6a3"/>
-                            <stop offset="100%" stop-color="#b36b3f"/>
-                        </linearGradient>
-                        <linearGradient id="foliage-rich" x1="0%" y1="0%" x2="0%" y2="100%">
-                            <stop offset="0%" stop-color="#a8e07a"/>
-                            <stop offset="50%" stop-color="#4c9d4a"/>
-                            <stop offset="100%" stop-color="#1f5b2c"/>
-                        </linearGradient>
-                        <linearGradient id="counter-marble" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#f7f4f1"/>
-                            <stop offset="55%" stop-color="#e0ddd8"/>
-                            <stop offset="100%" stop-color="#c7c2bb"/>
-                        </linearGradient>
-                        <radialGradient id="table-round-sheen" cx="50%" cy="40%" r="70%">
-                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
-                            <stop offset="45%" stop-color="#ffffff" stop-opacity="0.18"/>
-                            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
-                        </radialGradient>
-                        <radialGradient id="glass-soft" cx="50%" cy="50%" r="55%">
-                            <stop offset="0%" stop-color="#d9f0ff" stop-opacity="0.7"/>
-                            <stop offset="60%" stop-color="#98c9e8" stop-opacity="0.25"/>
-                            <stop offset="100%" stop-color="#5ea0cc" stop-opacity="0.05"/>
-                        </radialGradient>
-                        <pattern id="fabric-hatching" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                            <rect width="6" height="6" fill="#f1eae0"/>
-                            <path d="M0 0 L0 6" stroke="#c8b496" stroke-width="1" stroke-opacity="0.4"/>
-                        </pattern>
                     </defs>
                     <rect width="100%" height="100%" class="floor"/>
                     <g id="grid-layer" pointer-events="none">
@@ -298,6 +208,34 @@
                 <label class="prop-label">Высота:</label><input type="number" id="prop-h" step="10" min="1">
                 <label class="prop-label">Поворот:</label><input type="number" id="prop-a" step="15" min="-360" max="360">
             </div>
+
+            <section id="component-panel" class="panel hidden" aria-label="Свойства проёма">
+                <div class="panel-header">
+                    <h3>Проём</h3>
+                </div>
+                <label class="panel-row">Тип
+                    <select id="component-type" aria-label="Тип проёма">
+                        <option value="door-single">Дверь одинарная</option>
+                        <option value="door-double">Дверь двустворчатая</option>
+                        <option value="door-sliding">Дверь раздвижная</option>
+                        <option value="door-glass">Стеклянная перегородка</option>
+                        <option value="window">Окно</option>
+                    </select>
+                </label>
+                <label class="panel-row">Ширина, см
+                    <input type="number" id="component-width" step="5" min="40" aria-label="Ширина проёма">
+                </label>
+                <fieldset id="component-hinge-group" class="component-fieldset">
+                    <legend>Петля</legend>
+                    <label><input type="radio" id="component-hinge-left" name="component-hinge" value="left"> Левая</label>
+                    <label><input type="radio" id="component-hinge-right" name="component-hinge" value="right"> Правая</label>
+                </fieldset>
+                <fieldset id="component-swing-group" class="component-fieldset">
+                    <legend>Открывание</legend>
+                    <label><input type="radio" id="component-swing-in" name="component-swing" value="in"> Внутрь</label>
+                    <label><input type="radio" id="component-swing-out" name="component-swing" value="out"> Наружу</label>
+                </fieldset>
+            </section>
 
             <section id="wall-properties" class="panel" aria-label="Параметры стен">
                 <div class="panel-header">

@@ -188,11 +188,10 @@ svg.tool-active { cursor: crosshair; }
 /* --- Layout Objects --- */
 .layout-object{cursor:move;}
 .layout-object .core{
-  filter:url(#shadow);
-  transition:filter .2s ease;
+  transition:opacity .2s ease;
 }
-.layout-object:hover .core{filter:url(#shadow) brightness(1.08);}
-.layout-object.selected .core{filter:url(#shadow) brightness(1.12);}
+.layout-object:hover .core{opacity:0.94;}
+.layout-object.selected .core{opacity:0.9;}
 #items-layer .layout-object .core path,
 #items-layer .layout-object .core rect,
 #items-layer .layout-object .core circle,
@@ -350,6 +349,11 @@ svg.tool-active { cursor: crosshair; }
 .panel-header h3{margin:0;font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .panel-actions{display:flex;gap:6px}
 .panel-actions button,.panel-actions select{border:1px solid var(--border);background:#fff;border-radius:8px;padding:4px 8px;font-size:13px;cursor:pointer}
+.component-fieldset{border:1px solid var(--border);border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px;margin:0}
+.component-fieldset legend{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.component-fieldset label{display:flex;align-items:center;gap:6px;font-size:13px;}
+.component-fieldset input[type="radio"]{accent-color:var(--ui-accent);}
+.component-fieldset.hidden{display:none;}
 .panel-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--text)}
 .panel-row input,.panel-row select{flex:1;border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:13px}
 
