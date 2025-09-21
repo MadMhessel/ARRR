@@ -11,9 +11,9 @@ if (ITEM_TEMPLATES['zone'] && !ITEM_TEMPLATES['zone'].schematicSvg) {
 if (ITEM_TEMPLATES['cafe-table-square-70'] && !ITEM_TEMPLATES['cafe-table-square-70'].schematicSvg) {
   ITEM_TEMPLATES['cafe-table-square-70'].schematicSvg = () => `
     <g class="core schematic-only" data-id="cafe-table-square-70">
-        <rect x="-35" y="-35" width="70" height="79" class="shape shape-fill"/>
-        <line x1="0" y1="-35" x2="0" y2="44" class="furn-center"/>
-        <line x1="-35" y1="4.5" x2="35" y2="4.5" class="furn-center"/>
+        <rect x="-35" y="-39.5" width="70" height="79" class="shape shape-fill"/>
+        <line x1="0" y1="-39.5" x2="0" y2="39.5" class="furn-center"/>
+        <line x1="-35" y1="0" x2="35" y2="0" class="furn-center"/>
     </g>
   `;
 }
@@ -21,9 +21,9 @@ if (ITEM_TEMPLATES['cafe-table-square-70'] && !ITEM_TEMPLATES['cafe-table-square
 if (ITEM_TEMPLATES['cafe-hightop-round-70'] && !ITEM_TEMPLATES['cafe-hightop-round-70'].schematicSvg) {
   ITEM_TEMPLATES['cafe-hightop-round-70'].schematicSvg = () => `
     <g class="core schematic-only" data-id="cafe-hightop-round-70">
-        <circle cx="0" cy="6.5" r="35" class="shape shape-fill"/>
-        <line x1="0" y1="-35" x2="0" y2="48" class="furn-center"/>
-        <line x1="-35" y1="6.5" x2="35" y2="6.5" class="furn-center"/>
+        <circle cx="0" cy="0" r="35" class="shape shape-fill"/>
+        <line x1="0" y1="-41.5" x2="0" y2="41.5" class="furn-center"/>
+        <line x1="-35" y1="0" x2="35" y2="0" class="furn-center"/>
     </g>
   `;
 }
@@ -31,8 +31,8 @@ if (ITEM_TEMPLATES['cafe-hightop-round-70'] && !ITEM_TEMPLATES['cafe-hightop-rou
 if (ITEM_TEMPLATES['cafe-communal-240'] && !ITEM_TEMPLATES['cafe-communal-240'].schematicSvg) {
   ITEM_TEMPLATES['cafe-communal-240'].schematicSvg = () => `
     <g class="core schematic-only" data-id="cafe-communal-240">
-        <rect x="-120" y="-45" width="240" height="99" class="shape shape-fill"/>
-        <line x1="0" y1="-45" x2="0" y2="54" class="furn-center"/>
+        <rect x="-120" y="-49.5" width="240" height="99" class="shape shape-fill"/>
+        <line x1="0" y1="-49.5" x2="0" y2="49.5" class="furn-center"/>
     </g>
   `;
 }
@@ -40,9 +40,9 @@ if (ITEM_TEMPLATES['cafe-communal-240'] && !ITEM_TEMPLATES['cafe-communal-240'].
 if (ITEM_TEMPLATES['banquette-160'] && !ITEM_TEMPLATES['banquette-160'].schematicSvg) {
   ITEM_TEMPLATES['banquette-160'].schematicSvg = () => `
     <g class="core schematic-only" data-id="banquette-160">
-        <rect x="-80" y="-40" width="160" height="65" class="shape shape-fill"/>
-        <rect x="-72" y="-20.5" width="144" height="26" class="shape"/>
-        <line x1="0" y1="-40" x2="0" y2="25" class="furn-center"/>
+        <rect x="-80" y="-32.5" width="160" height="65" class="shape shape-fill"/>
+        <rect x="-72" y="-13" width="144" height="26" class="shape"/>
+        <line x1="0" y1="-32.5" x2="0" y2="32.5" class="furn-center"/>
     </g>
   `;
 }
@@ -50,9 +50,9 @@ if (ITEM_TEMPLATES['banquette-160'] && !ITEM_TEMPLATES['banquette-160'].schemati
 if (ITEM_TEMPLATES['banquette-220'] && !ITEM_TEMPLATES['banquette-220'].schematicSvg) {
   ITEM_TEMPLATES['banquette-220'].schematicSvg = () => `
     <g class="core schematic-only" data-id="banquette-220">
-        <rect x="-110" y="-40" width="220" height="65" class="shape shape-fill"/>
-        <rect x="-99" y="-20.5" width="198" height="26" class="shape"/>
-        <line x1="0" y1="-40" x2="0" y2="25" class="furn-center"/>
+        <rect x="-110" y="-32.5" width="220" height="65" class="shape shape-fill"/>
+        <rect x="-99" y="-13" width="198" height="26" class="shape"/>
+        <line x1="0" y1="-32.5" x2="0" y2="32.5" class="furn-center"/>
     </g>
   `;
 }
@@ -60,9 +60,9 @@ if (ITEM_TEMPLATES['banquette-220'] && !ITEM_TEMPLATES['banquette-220'].schemati
 if (ITEM_TEMPLATES['booth-2'] && !ITEM_TEMPLATES['booth-2'].schematicSvg) {
   ITEM_TEMPLATES['booth-2'].schematicSvg = () => `
     <g class="core schematic-only" data-id="booth-2">
-        <rect x="-45" y="-52" width="90" height="87" class="shape shape-fill"/>
-        <rect x="-40.5" y="-25.9" width="81" height="34.8" class="shape"/>
-        <line x1="0" y1="-52" x2="0" y2="35" class="furn-center"/>
+        <rect x="-45" y="-43.5" width="90" height="87" class="shape shape-fill"/>
+        <rect x="-40.5" y="-17.4" width="81" height="34.8" class="shape"/>
+        <line x1="0" y1="-43.5" x2="0" y2="43.5" class="furn-center"/>
     </g>
   `;
 }
@@ -70,9 +70,9 @@ if (ITEM_TEMPLATES['booth-2'] && !ITEM_TEMPLATES['booth-2'].schematicSvg) {
 if (ITEM_TEMPLATES['booth-4'] && !ITEM_TEMPLATES['booth-4'].schematicSvg) {
   ITEM_TEMPLATES['booth-4'].schematicSvg = () => `
     <g class="core schematic-only" data-id="booth-4">
-        <rect x="-70" y="-58" width="140" height="98" class="shape shape-fill"/>
-        <rect x="-63" y="-28.6" width="126" height="39.2" class="shape"/>
-        <line x1="0" y1="-58" x2="0" y2="40" class="furn-center"/>
+        <rect x="-70" y="-49" width="140" height="98" class="shape shape-fill"/>
+        <rect x="-63" y="-19.6" width="126" height="39.2" class="shape"/>
+        <line x1="0" y1="-49" x2="0" y2="49" class="furn-center"/>
     </g>
   `;
 }
@@ -80,8 +80,8 @@ if (ITEM_TEMPLATES['booth-4'] && !ITEM_TEMPLATES['booth-4'].schematicSvg) {
 if (ITEM_TEMPLATES['bar-counter-straight-180'] && !ITEM_TEMPLATES['bar-counter-straight-180'].schematicSvg) {
   ITEM_TEMPLATES['bar-counter-straight-180'].schematicSvg = () => `
     <g class="core schematic-only" data-id="bar-counter-straight-180">
-        <rect x="-90" y="-36" width="180" height="84" class="shape shape-fill"/>
-        <line x1="-90" y1="6" x2="90" y2="6" class="furn-center"/>
+        <rect x="-90" y="-42" width="180" height="84" class="shape shape-fill"/>
+        <line x1="-90" y1="0" x2="90" y2="0" class="furn-center"/>
     </g>
   `;
 }
@@ -89,8 +89,8 @@ if (ITEM_TEMPLATES['bar-counter-straight-180'] && !ITEM_TEMPLATES['bar-counter-s
 if (ITEM_TEMPLATES['bar-counter-straight-240'] && !ITEM_TEMPLATES['bar-counter-straight-240'].schematicSvg) {
   ITEM_TEMPLATES['bar-counter-straight-240'].schematicSvg = () => `
     <g class="core schematic-only" data-id="bar-counter-straight-240">
-        <rect x="-120" y="-36" width="240" height="84" class="shape shape-fill"/>
-        <line x1="-120" y1="6" x2="120" y2="6" class="furn-center"/>
+        <rect x="-120" y="-42" width="240" height="84" class="shape shape-fill"/>
+        <line x1="-120" y1="0" x2="120" y2="0" class="furn-center"/>
     </g>
   `;
 }
@@ -98,8 +98,8 @@ if (ITEM_TEMPLATES['bar-counter-straight-240'] && !ITEM_TEMPLATES['bar-counter-s
 if (ITEM_TEMPLATES['bar-counter-l-180x180'] && !ITEM_TEMPLATES['bar-counter-l-180x180'].schematicSvg) {
   ITEM_TEMPLATES['bar-counter-l-180x180'].schematicSvg = () => `
     <g class="core schematic-only" data-id="bar-counter-l-180x180">
-        <rect x="-90" y="-36" width="180" height="126" class="shape shape-fill"/>
-        <line x1="-90" y1="27" x2="90" y2="27" class="furn-center"/>
+        <rect x="-90" y="-63" width="180" height="126" class="shape shape-fill"/>
+        <line x1="-90" y1="0" x2="90" y2="0" class="furn-center"/>
     </g>
   `;
 }
@@ -116,8 +116,8 @@ if (ITEM_TEMPLATES['bar-counter-island-180x90'] && !ITEM_TEMPLATES['bar-counter-
 if (ITEM_TEMPLATES['bar-back-shelf-180'] && !ITEM_TEMPLATES['bar-back-shelf-180'].schematicSvg) {
   ITEM_TEMPLATES['bar-back-shelf-180'].schematicSvg = () => `
     <g class="core schematic-only" data-id="bar-back-shelf-180">
-        <rect x="-90" y="-48" width="180" height="56" class="shape shape-fill"/>
-        <line x1="-90" y1="-20" x2="90" y2="-20" class="furn-center"/>
+        <rect x="-90" y="-28" width="180" height="56" class="shape shape-fill"/>
+        <line x1="-90" y1="0" x2="90" y2="0" class="furn-center"/>
     </g>
   `;
 }
@@ -125,8 +125,8 @@ if (ITEM_TEMPLATES['bar-back-shelf-180'] && !ITEM_TEMPLATES['bar-back-shelf-180'
 if (ITEM_TEMPLATES['espresso-2g'] && !ITEM_TEMPLATES['espresso-2g'].schematicSvg) {
   ITEM_TEMPLATES['espresso-2g'].schematicSvg = () => `
     <g class="core schematic-only" data-id="espresso-2g">
-        <rect x="-46" y="-30" width="92" height="52" class="shape shape-fill"/>
-        <rect x="-34.96" y="-22.2" width="69.92" height="15.6" class="shape"/>
+        <rect x="-46" y="-26" width="92" height="52" class="shape shape-fill"/>
+        <rect x="-34.96" y="-18.2" width="69.92" height="15.6" class="shape"/>
     </g>
   `;
 }
@@ -134,8 +134,8 @@ if (ITEM_TEMPLATES['espresso-2g'] && !ITEM_TEMPLATES['espresso-2g'].schematicSvg
 if (ITEM_TEMPLATES['espresso-3g'] && !ITEM_TEMPLATES['espresso-3g'].schematicSvg) {
   ITEM_TEMPLATES['espresso-3g'].schematicSvg = () => `
     <g class="core schematic-only" data-id="espresso-3g">
-        <rect x="-66" y="-30" width="132" height="52" class="shape shape-fill"/>
-        <rect x="-50.16" y="-22.2" width="100.32" height="15.6" class="shape"/>
+        <rect x="-66" y="-26" width="132" height="52" class="shape shape-fill"/>
+        <rect x="-50.16" y="-18.2" width="100.32" height="15.6" class="shape"/>
     </g>
   `;
 }
@@ -143,8 +143,8 @@ if (ITEM_TEMPLATES['espresso-3g'] && !ITEM_TEMPLATES['espresso-3g'].schematicSvg
 if (ITEM_TEMPLATES['grinder-80mm'] && !ITEM_TEMPLATES['grinder-80mm'].schematicSvg) {
   ITEM_TEMPLATES['grinder-80mm'].schematicSvg = () => `
     <g class="core schematic-only" data-id="grinder-80mm">
-        <rect x="-12" y="-34" width="24" height="52" class="shape shape-fill"/>
-        <rect x="-9.12" y="-26.2" width="18.24" height="15.6" class="shape"/>
+        <rect x="-12" y="-26" width="24" height="52" class="shape shape-fill"/>
+        <rect x="-9.12" y="-18.2" width="18.24" height="15.6" class="shape"/>
     </g>
   `;
 }
@@ -233,8 +233,8 @@ if (ITEM_TEMPLATES['freezer-60'] && !ITEM_TEMPLATES['freezer-60'].schematicSvg) 
 if (ITEM_TEMPLATES['pastry-case-120'] && !ITEM_TEMPLATES['pastry-case-120'].schematicSvg) {
   ITEM_TEMPLATES['pastry-case-120'].schematicSvg = () => `
     <g class="core schematic-only" data-id="pastry-case-120">
-        <rect x="-60" y="-38" width="120" height="68" class="shape shape-fill"/>
-        <rect x="-45.6" y="-27.8" width="91.2" height="20.4" class="shape"/>
+        <rect x="-60" y="-34" width="120" height="68" class="shape shape-fill"/>
+        <rect x="-45.6" y="-23.8" width="91.2" height="20.4" class="shape"/>
     </g>
   `;
 }
@@ -242,8 +242,8 @@ if (ITEM_TEMPLATES['pastry-case-120'] && !ITEM_TEMPLATES['pastry-case-120'].sche
 if (ITEM_TEMPLATES['pastry-case-120-curved'] && !ITEM_TEMPLATES['pastry-case-120-curved'].schematicSvg) {
   ITEM_TEMPLATES['pastry-case-120-curved'].schematicSvg = () => `
     <g class="core schematic-only" data-id="pastry-case-120-curved">
-        <rect x="-60" y="-40" width="120" height="70" class="shape shape-fill"/>
-        <rect x="-45.6" y="-29.5" width="91.2" height="21" class="shape"/>
+        <rect x="-60" y="-35" width="120" height="70" class="shape shape-fill"/>
+        <rect x="-45.6" y="-24.5" width="91.2" height="21" class="shape"/>
     </g>
   `;
 }
@@ -251,8 +251,8 @@ if (ITEM_TEMPLATES['pastry-case-120-curved'] && !ITEM_TEMPLATES['pastry-case-120
 if (ITEM_TEMPLATES['pos-terminal'] && !ITEM_TEMPLATES['pos-terminal'].schematicSvg) {
   ITEM_TEMPLATES['pos-terminal'].schematicSvg = () => `
     <g class="core schematic-only" data-id="pos-terminal">
-        <rect x="-18" y="-12" width="36" height="30" class="shape shape-fill"/>
-        <line x1="0" y1="-12" x2="0" y2="18" class="furn-center"/>
+        <rect x="-18" y="-15" width="36" height="30" class="shape shape-fill"/>
+        <line x1="0" y1="-15" x2="0" y2="15" class="furn-center"/>
     </g>
   `;
 }
@@ -287,8 +287,8 @@ if (ITEM_TEMPLATES['syrup-rack-90'] && !ITEM_TEMPLATES['syrup-rack-90'].schemati
 if (ITEM_TEMPLATES['trash-single'] && !ITEM_TEMPLATES['trash-single'].schematicSvg) {
   ITEM_TEMPLATES['trash-single'].schematicSvg = () => `
     <g class="core schematic-only" data-id="trash-single">
-        <rect x="-16" y="-24" width="32" height="44" class="shape shape-fill"/>
-        <rect x="-12.16" y="-17.4" width="24.32" height="13.2" class="shape"/>
+        <rect x="-16" y="-22" width="32" height="44" class="shape shape-fill"/>
+        <rect x="-12.16" y="-15.4" width="24.32" height="13.2" class="shape"/>
     </g>
   `;
 }
@@ -296,8 +296,8 @@ if (ITEM_TEMPLATES['trash-single'] && !ITEM_TEMPLATES['trash-single'].schematicS
 if (ITEM_TEMPLATES['trash-double'] && !ITEM_TEMPLATES['trash-double'].schematicSvg) {
   ITEM_TEMPLATES['trash-double'].schematicSvg = () => `
     <g class="core schematic-only" data-id="trash-double">
-        <rect x="-32" y="-24" width="64" height="44" class="shape shape-fill"/>
-        <rect x="-24.32" y="-17.4" width="48.64" height="13.2" class="shape"/>
+        <rect x="-32" y="-22" width="64" height="44" class="shape shape-fill"/>
+        <rect x="-24.32" y="-15.4" width="48.64" height="13.2" class="shape"/>
     </g>
   `;
 }
@@ -361,9 +361,8 @@ if (ITEM_TEMPLATES['menu-board-120'] && !ITEM_TEMPLATES['menu-board-120'].schema
 if (ITEM_TEMPLATES['planter-long-120'] && !ITEM_TEMPLATES['planter-long-120'].schematicSvg) {
   ITEM_TEMPLATES['planter-long-120'].schematicSvg = () => `
     <g class="core schematic-only" data-id="planter-long-120">
-        <rect x="-60" y="-18" width="120" height="32" fill="rgba(0,0,0,0)" stroke="none"/>
-        <path d="M0 -18 C60 -10 60 7.6 0 14 C-60 7.6 -60 -10 0 -18Z" class="shape shape-fill"/>
-        <path d="M0 14 C18 7.6 12 -10 0 -14.16" class="shape" fill="none"/>
+        <path d="M0 -16 C60 -8 60 9.6 0 16 C-60 9.6 -60 -8 0 -16Z" class="shape shape-fill"/>
+        <path d="M0 16 C18 9.6 12 -8 0 -12.16" class="shape" fill="none"/>
     </g>
   `;
 }
@@ -380,9 +379,9 @@ if (ITEM_TEMPLATES['partition-120x10'] && !ITEM_TEMPLATES['partition-120x10'].sc
 if (ITEM_TEMPLATES['armchair'] && !ITEM_TEMPLATES['armchair'].schematicSvg) {
   ITEM_TEMPLATES['armchair'].schematicSvg = () => `
     <g class="core schematic-only" data-id="armchair">
-        <rect x="-44" y="-32" width="88" height="76" class="shape shape-fill"/>
-        <rect x="-26.4" y="-9.2" width="52.8" height="30.4" class="shape"/>
-        <line x1="0" y1="-32" x2="0" y2="44" class="furn-center"/>
+        <rect x="-44" y="-38" width="88" height="76" class="shape shape-fill"/>
+        <rect x="-26.4" y="-15.2" width="52.8" height="30.4" class="shape"/>
+        <line x1="0" y1="-38" x2="0" y2="38" class="furn-center"/>
     </g>
   `;
 }
@@ -390,9 +389,9 @@ if (ITEM_TEMPLATES['armchair'] && !ITEM_TEMPLATES['armchair'].schematicSvg) {
 if (ITEM_TEMPLATES['sofa-2'] && !ITEM_TEMPLATES['sofa-2'].schematicSvg) {
   ITEM_TEMPLATES['sofa-2'].schematicSvg = () => `
     <g class="core schematic-only" data-id="sofa-2">
-        <rect x="-88" y="-38" width="176" height="82" class="shape shape-fill"/>
-        <rect x="-79.2" y="-13.4" width="158.4" height="32.8" class="shape"/>
-        <line x1="0" y1="-38" x2="0" y2="44" class="furn-center"/>
+        <rect x="-88" y="-41" width="176" height="82" class="shape shape-fill"/>
+        <rect x="-79.2" y="-16.4" width="158.4" height="32.8" class="shape"/>
+        <line x1="0" y1="-41" x2="0" y2="41" class="furn-center"/>
     </g>
   `;
 }
@@ -400,9 +399,9 @@ if (ITEM_TEMPLATES['sofa-2'] && !ITEM_TEMPLATES['sofa-2'].schematicSvg) {
 if (ITEM_TEMPLATES['sofa-3'] && !ITEM_TEMPLATES['sofa-3'].schematicSvg) {
   ITEM_TEMPLATES['sofa-3'].schematicSvg = () => `
     <g class="core schematic-only" data-id="sofa-3">
-        <rect x="-110" y="-38" width="220" height="82" class="shape shape-fill"/>
-        <rect x="-99" y="-13.4" width="198" height="32.8" class="shape"/>
-        <line x1="0" y1="-38" x2="0" y2="44" class="furn-center"/>
+        <rect x="-110" y="-41" width="220" height="82" class="shape shape-fill"/>
+        <rect x="-99" y="-16.4" width="198" height="32.8" class="shape"/>
+        <line x1="0" y1="-41" x2="0" y2="41" class="furn-center"/>
     </g>
   `;
 }
@@ -410,9 +409,9 @@ if (ITEM_TEMPLATES['sofa-3'] && !ITEM_TEMPLATES['sofa-3'].schematicSvg) {
 if (ITEM_TEMPLATES['sectional-l'] && !ITEM_TEMPLATES['sectional-l'].schematicSvg) {
   ITEM_TEMPLATES['sectional-l'].schematicSvg = () => `
     <g class="core schematic-only" data-id="sectional-l">
-        <rect x="-108" y="-50" width="214" height="146" class="shape shape-fill"/>
-        <rect x="-97.3" y="-6.2" width="192.6" height="58.4" class="shape"/>
-        <line x1="-1" y1="-50" x2="-1" y2="96" class="furn-center"/>
+        <rect x="-107" y="-73" width="214" height="146" class="shape shape-fill"/>
+        <rect x="-96.3" y="-29.2" width="192.6" height="58.4" class="shape"/>
+        <line x1="0" y1="-73" x2="0" y2="73" class="furn-center"/>
     </g>
   `;
 }
@@ -420,9 +419,9 @@ if (ITEM_TEMPLATES['sectional-l'] && !ITEM_TEMPLATES['sectional-l'].schematicSvg
 if (ITEM_TEMPLATES['stool'] && !ITEM_TEMPLATES['stool'].schematicSvg) {
   ITEM_TEMPLATES['stool'].schematicSvg = () => `
     <g class="core schematic-only" data-id="stool">
-        <rect x="-20" y="-20" width="40" height="44" class="shape shape-fill"/>
-        <rect x="-12" y="-6.8" width="24" height="17.6" class="shape"/>
-        <line x1="0" y1="-20" x2="0" y2="24" class="furn-center"/>
+        <rect x="-20" y="-22" width="40" height="44" class="shape shape-fill"/>
+        <rect x="-12" y="-8.8" width="24" height="17.6" class="shape"/>
+        <line x1="0" y1="-22" x2="0" y2="22" class="furn-center"/>
     </g>
   `;
 }
@@ -430,9 +429,9 @@ if (ITEM_TEMPLATES['stool'] && !ITEM_TEMPLATES['stool'].schematicSvg) {
 if (ITEM_TEMPLATES['barstool'] && !ITEM_TEMPLATES['barstool'].schematicSvg) {
   ITEM_TEMPLATES['barstool'].schematicSvg = () => `
     <g class="core schematic-only" data-id="barstool">
-        <rect x="-20" y="-44" width="40" height="78" class="shape shape-fill"/>
-        <rect x="-12" y="-20.6" width="24" height="31.2" class="shape"/>
-        <line x1="0" y1="-44" x2="0" y2="34" class="furn-center"/>
+        <rect x="-20" y="-39" width="40" height="78" class="shape shape-fill"/>
+        <rect x="-12" y="-15.6" width="24" height="31.2" class="shape"/>
+        <line x1="0" y1="-39" x2="0" y2="39" class="furn-center"/>
     </g>
   `;
 }
@@ -495,8 +494,8 @@ if (ITEM_TEMPLATES['desk'] && !ITEM_TEMPLATES['desk'].schematicSvg) {
 if (ITEM_TEMPLATES['workstation-l'] && !ITEM_TEMPLATES['workstation-l'].schematicSvg) {
   ITEM_TEMPLATES['workstation-l'].schematicSvg = () => `
     <g class="core schematic-only" data-id="workstation-l">
-        <rect x="-84" y="-70" width="178" height="150" class="shape shape-fill"/>
-        <line x1="5" y1="-70" x2="5" y2="80" class="furn-center"/>
+        <rect x="-89" y="-75" width="178" height="150" class="shape shape-fill"/>
+        <line x1="0" y1="-75" x2="0" y2="75" class="furn-center"/>
     </g>
   `;
 }
@@ -504,9 +503,9 @@ if (ITEM_TEMPLATES['workstation-l'] && !ITEM_TEMPLATES['workstation-l'].schemati
 if (ITEM_TEMPLATES['office-chair'] && !ITEM_TEMPLATES['office-chair'].schematicSvg) {
   ITEM_TEMPLATES['office-chair'].schematicSvg = () => `
     <g class="core schematic-only" data-id="office-chair">
-        <rect x="6" y="0" width="36" height="50" class="shape shape-fill"/>
-        <rect x="13.2" y="15" width="21.6" height="20" class="shape"/>
-        <line x1="24" y1="0" x2="24" y2="50" class="furn-center"/>
+        <rect x="-18" y="-25" width="36" height="50" class="shape shape-fill"/>
+        <rect x="-10.8" y="-10" width="21.6" height="20" class="shape"/>
+        <line x1="0" y1="-25" x2="0" y2="25" class="furn-center"/>
     </g>
   `;
 }
@@ -559,9 +558,9 @@ if (ITEM_TEMPLATES['server-rack'] && !ITEM_TEMPLATES['server-rack'].schematicSvg
 if (ITEM_TEMPLATES['bed-single'] && !ITEM_TEMPLATES['bed-single'].schematicSvg) {
   ITEM_TEMPLATES['bed-single'].schematicSvg = () => `
     <g class="core schematic-only" data-id="bed-single">
-        <rect x="0" y="0" width="90" height="200" class="shape shape-fill"/>
-        <rect x="0" y="0" width="90" height="70" class="shape"/>
-        <line x1="45" y1="0" x2="45" y2="200" class="furn-center"/>
+        <rect x="-45" y="-100" width="90" height="200" class="shape shape-fill"/>
+        <rect x="-45" y="-100" width="90" height="70" class="shape"/>
+        <line x1="0" y1="-100" x2="0" y2="100" class="furn-center"/>
     </g>
   `;
 }
@@ -569,9 +568,9 @@ if (ITEM_TEMPLATES['bed-single'] && !ITEM_TEMPLATES['bed-single'].schematicSvg) 
 if (ITEM_TEMPLATES['bed-double'] && !ITEM_TEMPLATES['bed-double'].schematicSvg) {
   ITEM_TEMPLATES['bed-double'].schematicSvg = () => `
     <g class="core schematic-only" data-id="bed-double">
-        <rect x="0" y="0" width="160" height="200" class="shape shape-fill"/>
-        <rect x="0" y="0" width="160" height="70" class="shape"/>
-        <line x1="80" y1="0" x2="80" y2="200" class="furn-center"/>
+        <rect x="-80" y="-100" width="160" height="200" class="shape shape-fill"/>
+        <rect x="-80" y="-100" width="160" height="70" class="shape"/>
+        <line x1="0" y1="-100" x2="0" y2="100" class="furn-center"/>
     </g>
   `;
 }
@@ -624,9 +623,9 @@ if (ITEM_TEMPLATES['kitchen-line'] && !ITEM_TEMPLATES['kitchen-line'].schematicS
 if (ITEM_TEMPLATES['sink'] && !ITEM_TEMPLATES['sink'].schematicSvg) {
   ITEM_TEMPLATES['sink'].schematicSvg = () => `
     <g class="core schematic-only" data-id="sink">
-        <rect x="0" y="-10" width="72" height="62" class="shape shape-fill"/>
-        <circle cx="36" cy="21" r="12.4" class="shape"/>
-        <line x1="36" y1="-10" x2="36" y2="52" class="furn-center"/>
+        <rect x="-36" y="-31" width="72" height="62" class="shape shape-fill"/>
+        <circle cx="0" cy="0" r="12.4" class="shape"/>
+        <line x1="0" y1="-31" x2="0" y2="31" class="furn-center"/>
     </g>
   `;
 }
@@ -634,11 +633,11 @@ if (ITEM_TEMPLATES['sink'] && !ITEM_TEMPLATES['sink'].schematicSvg) {
 if (ITEM_TEMPLATES['cooktop-4'] && !ITEM_TEMPLATES['cooktop-4'].schematicSvg) {
   ITEM_TEMPLATES['cooktop-4'].schematicSvg = () => `
     <g class="core schematic-only" data-id="cooktop-4">
-        <rect x="-4" y="-4" width="68" height="63" class="shape shape-fill"/>
-        <circle cx="6.2" cy="5.45" r="7.56" class="shape"/>
-        <circle cx="6.2" cy="49.55" r="7.56" class="shape"/>
-        <circle cx="53.8" cy="5.45" r="7.56" class="shape"/>
-        <circle cx="53.8" cy="49.55" r="7.56" class="shape"/>
+        <rect x="-34" y="-31.5" width="68" height="63" class="shape shape-fill"/>
+        <circle cx="-23.8" cy="-22.05" r="7.56" class="shape"/>
+        <circle cx="-23.8" cy="22.05" r="7.56" class="shape"/>
+        <circle cx="23.8" cy="-22.05" r="7.56" class="shape"/>
+        <circle cx="23.8" cy="22.05" r="7.56" class="shape"/>
     </g>
   `;
 }
@@ -694,9 +693,9 @@ if (ITEM_TEMPLATES['island'] && !ITEM_TEMPLATES['island'].schematicSvg) {
 if (ITEM_TEMPLATES['toilet'] && !ITEM_TEMPLATES['toilet'].schematicSvg) {
   ITEM_TEMPLATES['toilet'].schematicSvg = () => `
     <g class="core schematic-only" data-id="toilet">
-        <rect x="0" y="0" width="40" height="60" class="shape shape-fill"/>
-        <ellipse cx="20" cy="21" rx="10" ry="13.2" class="shape"/>
-        <rect x="8" y="33" width="24" height="21" class="shape"/>
+        <rect x="-20" y="-30" width="40" height="60" class="shape shape-fill"/>
+        <ellipse cx="0" cy="-9" rx="10" ry="13.2" class="shape"/>
+        <rect x="-12" y="3" width="24" height="21" class="shape"/>
     </g>
   `;
 }
@@ -814,9 +813,8 @@ if (ITEM_TEMPLATES['radiator'] && !ITEM_TEMPLATES['radiator'].schematicSvg) {
 if (ITEM_TEMPLATES['plant'] && !ITEM_TEMPLATES['plant'].schematicSvg) {
   ITEM_TEMPLATES['plant'].schematicSvg = () => `
     <g class="core schematic-only" data-id="plant">
-        <rect x="-21.06" y="-40" width="42.12" height="72" fill="rgba(0,0,0,0)" stroke="none"/>
-        <path d="M0 -40 C21.06 -22 21.06 17.6 0 32 C-21.06 17.6 -21.06 -22 0 -40Z" class="shape shape-fill"/>
-        <path d="M0 32 C6.32 17.6 4.21 -22 0 -31.36" class="shape" fill="none"/>
+        <path d="M0 -36 C21.06 -18 21.06 21.6 0 36 C-21.06 21.6 -21.06 -18 0 -36Z" class="shape shape-fill"/>
+        <path d="M0 36 C6.32 21.6 4.21 -18 0 -27.36" class="shape" fill="none"/>
     </g>
   `;
 }
@@ -824,8 +822,8 @@ if (ITEM_TEMPLATES['plant'] && !ITEM_TEMPLATES['plant'].schematicSvg) {
 if (ITEM_TEMPLATES['floor-lamp'] && !ITEM_TEMPLATES['floor-lamp'].schematicSvg) {
   ITEM_TEMPLATES['floor-lamp'].schematicSvg = () => `
     <g class="core schematic-only" data-id="floor-lamp">
-        <rect x="-24" y="-44" width="48" height="77" class="shape shape-fill"/>
-        <line x1="0" y1="-44" x2="0" y2="33" class="furn-center"/>
+        <rect x="-24" y="-38.5" width="48" height="77" class="shape shape-fill"/>
+        <line x1="0" y1="-38.5" x2="0" y2="38.5" class="furn-center"/>
     </g>
   `;
 }
@@ -851,8 +849,8 @@ if (ITEM_TEMPLATES['bar-counter-straight'] && !ITEM_TEMPLATES['bar-counter-strai
 if (ITEM_TEMPLATES['bar-counter-l'] && !ITEM_TEMPLATES['bar-counter-l'].schematicSvg) {
   ITEM_TEMPLATES['bar-counter-l'].schematicSvg = () => `
     <g class="core schematic-only" data-id="bar-counter-l">
-        <rect x="-84" y="-54" width="180" height="138" class="shape shape-fill"/>
-        <line x1="-84" y1="15" x2="96" y2="15" class="furn-center"/>
+        <rect x="-90" y="-69" width="180" height="138" class="shape shape-fill"/>
+        <line x1="-90" y1="0" x2="90" y2="0" class="furn-center"/>
     </g>
   `;
 }

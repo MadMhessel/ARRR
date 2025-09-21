@@ -619,7 +619,7 @@
             }
             const base = core.dataset.baseTransform;
             const dyn = `translate(${-m.cx}, ${-m.cy}) scale(${m.sx}, ${m.sy})`.trim();
-            const combined = [dyn, base].filter(Boolean).join(' ');
+            const combined = [base, dyn].filter(Boolean).join(' ');
             core.setAttribute('transform', combined);
         }
 

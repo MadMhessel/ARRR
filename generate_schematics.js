@@ -35,12 +35,14 @@ function classify(id) {
 function buildElements(id, bbox) {
   const width = bbox.width || 60;
   const height = bbox.height || 60;
-  const minX = Number.isFinite(bbox.x) ? bbox.x : -width / 2;
-  const minY = Number.isFinite(bbox.y) ? bbox.y : -height / 2;
-  const maxX = minX + width;
-  const maxY = minY + height;
-  const cx = Number.isFinite(bbox.cx) ? bbox.cx : (minX + maxX) / 2;
-  const cy = Number.isFinite(bbox.cy) ? bbox.cy : (minY + maxY) / 2;
+  const halfW = width / 2;
+  const halfH = height / 2;
+  const minX = -halfW;
+  const minY = -halfH;
+  const maxX = halfW;
+  const maxY = halfH;
+  const cx = 0;
+  const cy = 0;
   const radius = Math.min(width, height) / 2;
   const type = classify(id);
   const elements = [];
@@ -63,13 +65,13 @@ function buildElements(id, bbox) {
     }
     case 'chair': {
       elements.push(baseRect);
-      elements.push(`<rect x="${fmt(cx - width * 0.3)}" y="${fmt(cy - height * 0.2)}" width="${fmt(width * 0.6)}" height="${fmt(height * 0.4)}" class="shape"/>`);
+      elements.push(`<rect x="${fmt(-width * 0.3)}" y="${fmt(-height * 0.2)}" width="${fmt(width * 0.6)}" height="${fmt(height * 0.4)}" class="shape"/>`);
       elements.push(centerLineV);
       break;
     }
     case 'sofa': {
       elements.push(baseRect);
-      elements.push(`<rect x="${fmt(minX + width * 0.05)}" y="${fmt(cy - height * 0.2)}" width="${fmt(width * 0.9)}" height="${fmt(height * 0.4)}" class="shape"/>`);
+      elements.push(`<rect x="${fmt(minX + width * 0.05)}" y="${fmt(-height * 0.2)}" width="${fmt(width * 0.9)}" height="${fmt(height * 0.4)}" class="shape"/>`);
       elements.push(centerLineV);
       break;
     }
@@ -86,7 +88,7 @@ function buildElements(id, bbox) {
     }
     case 'sink': {
       elements.push(baseRect);
-      elements.push(`<circle cx="${fmt(cx)}" cy="${fmt(cy)}" r="${fmt(radius * 0.4)}" class="shape"/>`);
+      elements.push(`<circle cx="0" cy="0" r="${fmt(radius * 0.4)}" class="shape"/>`);
       elements.push(centerLineV);
       break;
     }
@@ -96,38 +98,37 @@ function buildElements(id, bbox) {
       const offsets = [-0.35, 0.35];
       offsets.forEach(ix => {
         offsets.forEach(iy => {
-          elements.push(`<circle cx="${fmt(cx + width * ix)}" cy="${fmt(cy + height * iy)}" r="${fmt(burnerR)}" class="shape"/>`);
+          elements.push(`<circle cx="${fmt(width * ix)}" cy="${fmt(height * iy)}" r="${fmt(burnerR)}" class="shape"/>`);
         });
       });
       break;
     }
     case 'bath': {
       elements.push(`<rect x="${fmt(minX)}" y="${fmt(minY)}" width="${fmt(width)}" height="${fmt(height)}" rx="${fmt(Math.min(width, height) * 0.2)}" class="shape shape-fill"/>`);
-      elements.push(`<ellipse cx="${fmt(cx)}" cy="${fmt(cy)}" rx="${fmt(width * 0.35)}" ry="${fmt(height * 0.35)}" class="shape"/>`);
+      elements.push(`<ellipse cx="0" cy="0" rx="${fmt(width * 0.35)}" ry="${fmt(height * 0.35)}" class="shape"/>`);
       break;
     }
     case 'shower': {
       elements.push(baseRect);
-      elements.push(`<circle cx="${fmt(cx)}" cy="${fmt(cy)}" r="${fmt(radius * 0.3)}" class="shape"/>`);
+      elements.push(`<circle cx="0" cy="0" r="${fmt(radius * 0.3)}" class="shape"/>`);
       elements.push(centerLineV);
       break;
     }
     case 'toilet': {
       elements.push(baseRect);
-      elements.push(`<ellipse cx="${fmt(cx)}" cy="${fmt(minY + height * 0.35)}" rx="${fmt(width * 0.25)}" ry="${fmt(height * 0.22)}" class="shape"/>`);
-      elements.push(`<rect x="${fmt(cx - width * 0.3)}" y="${fmt(cy + height * 0.05)}" width="${fmt(width * 0.6)}" height="${fmt(height * 0.35)}" class="shape"/>`);
+      elements.push(`<ellipse cx="0" cy="${fmt(-height * 0.15)}" rx="${fmt(width * 0.25)}" ry="${fmt(height * 0.22)}" class="shape"/>`);
+      elements.push(`<rect x="${fmt(-width * 0.3)}" y="${fmt(height * 0.05)}" width="${fmt(width * 0.6)}" height="${fmt(height * 0.35)}" class="shape"/>`);
       break;
     }
     case 'plant': {
-      const leftX = cx - width / 2;
-      const rightX = cx + width / 2;
+      const leftX = -width / 2;
+      const rightX = width / 2;
       const topY = minY;
       const bottomY = maxY;
       const upperCtrlY = topY + height * 0.25;
       const lowerCtrlY = bottomY - height * 0.2;
-      elements.push(`<rect x="${fmt(minX)}" y="${fmt(minY)}" width="${fmt(width)}" height="${fmt(height)}" fill="rgba(0,0,0,0)" stroke="none"/>`);
-      elements.push(`<path d="M${fmt(cx)} ${fmt(topY)} C${fmt(rightX)} ${fmt(upperCtrlY)} ${fmt(rightX)} ${fmt(lowerCtrlY)} ${fmt(cx)} ${fmt(bottomY)} C${fmt(leftX)} ${fmt(lowerCtrlY)} ${fmt(leftX)} ${fmt(upperCtrlY)} ${fmt(cx)} ${fmt(topY)}Z" class="shape shape-fill"/>`);
-      elements.push(`<path d="M${fmt(cx)} ${fmt(bottomY)} C${fmt(cx + width * 0.15)} ${fmt(lowerCtrlY)} ${fmt(cx + width * 0.1)} ${fmt(upperCtrlY)} ${fmt(cx)} ${fmt(topY + height * 0.12)}" class="shape" fill="none"/>`);
+      elements.push(`<path d="M0 ${fmt(topY)} C${fmt(rightX)} ${fmt(upperCtrlY)} ${fmt(rightX)} ${fmt(lowerCtrlY)} 0 ${fmt(bottomY)} C${fmt(leftX)} ${fmt(lowerCtrlY)} ${fmt(leftX)} ${fmt(upperCtrlY)} 0 ${fmt(topY)}Z" class="shape shape-fill"/>`);
+      elements.push(`<path d="M0 ${fmt(bottomY)} C${fmt(width * 0.15)} ${fmt(lowerCtrlY)} ${fmt(width * 0.1)} ${fmt(upperCtrlY)} 0 ${fmt(topY + height * 0.12)}" class="shape" fill="none"/>`);
       break;
     }
     case 'appliance': {
@@ -175,7 +176,11 @@ function buildElements(id, bbox) {
   const {SVG, registerWindow} = svgjs;
   const filePath = path.resolve('templates.js');
   const source = fs.readFileSync(filePath, 'utf8');
-  const mod = new Function(source + '; return ITEM_TEMPLATES;');
+  const patchHeader = '// Auto-generated schematic variants\n';
+  const headerIdx = source.indexOf(patchHeader.trim());
+  const baseSource = headerIdx >= 0 ? source.slice(0, headerIdx).trimEnd() : source.replace(/\s*$/, '');
+
+  const mod = new Function(`${baseSource}; return ITEM_TEMPLATES;`);
   const templates = mod();
   const blocks = [];
 
@@ -196,8 +201,8 @@ function buildElements(id, bbox) {
     blocks.push(block);
   }
 
-  const patchHeader = '// Auto-generated schematic variants\n';
   const patchContent = patchHeader + blocks.join('\n');
   fs.writeFileSync('templates.schematic.patch.js', patchContent);
-  fs.writeFileSync(filePath, source.replace(/\s*$/, '') + '\n\n' + patchContent);
+
+  fs.writeFileSync(filePath, `${baseSource}\n\n${patchContent}`);
 })();
