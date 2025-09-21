@@ -47,6 +47,15 @@
         propW: document.getElementById('prop-w'),
         propH: document.getElementById('prop-h'),
         propA: document.getElementById('prop-a'),
+        componentPanel: document.getElementById('component-panel'),
+        componentType: document.getElementById('component-type'),
+        componentWidth: document.getElementById('component-width'),
+        componentHingeGroup: document.getElementById('component-hinge-group'),
+        componentSwingGroup: document.getElementById('component-swing-group'),
+        componentHingeLeft: document.getElementById('component-hinge-left'),
+        componentHingeRight: document.getElementById('component-hinge-right'),
+        componentSwingIn: document.getElementById('component-swing-in'),
+        componentSwingOut: document.getElementById('component-swing-out'),
         wallTypePanel: document.getElementById('wall-properties'),
         wallTypeOptions: document.getElementById('wall-type-options'),
         wallTypeCaption: document.getElementById('wall-type-caption'),
@@ -122,6 +131,7 @@
         normativeCorridorGuest: CONST.NORMS.PASSAGE_GUEST_MIN,
         normativeCorridorStaff: CONST.NORMS.PASSAGE_STAFF_MIN,
         normativeRadius: CONST.NORMS.TURN_RADIUS_MIN,
+        doorDefaults: { variant: 'single', hinge: 'left', swing: 'in', width: 0.9 },
         // Хранилище результатов последнего анализа (для экспорта CSV)
         lastAnalysis: null,
         // Хранилище выбранного узла стены для редактирования
@@ -178,6 +188,12 @@
     const OPENING_SPECS = {
         door: { widthMeters: 0.9, stroke: '#1A1D1A' },
         window: { widthMeters: 1.2, stroke: '#356D94', fill: 'rgba(150,190,220,0.45)' },
+    };
+    const DOOR_VARIANTS = {
+        single: { label: 'Одинарная дверь 90', widthMeters: 0.9, minCm: 70, maxCm: 110, stepCm: 5, allowHinge: true, allowSwing: true },
+        double: { label: 'Двустворчатая дверь 160', widthMeters: 1.6, minCm: 140, maxCm: 220, stepCm: 10, allowHinge: false, allowSwing: true },
+        sliding: { label: 'Раздвижная дверь 140', widthMeters: 1.4, minCm: 120, maxCm: 240, stepCm: 5, allowHinge: false, allowSwing: false },
+        glass: { label: 'Стеклянная перегородка 100', widthMeters: 1.0, minCm: 80, maxCm: 240, stepCm: 5, allowHinge: false, allowSwing: false }
     };
     const ESTIMATE_PRESETS = {
         standard: { finish: 50, perimeter: 12, engineering: 35 },
@@ -698,6 +714,182 @@
     // --- UI & SELECTION ---
     function updateSelectionUI(el) { if (!el) return; const m = getModel(el); const w = m.ow * m.sx, h = m.oh * m.sy; const sel = el.querySelector('.selection-box'); if (sel) { sel.setAttribute('x', -w / 2 - 5); sel.setAttribute('y', -h / 2 - 5); sel.setAttribute('width', w + 10); sel.setAttribute('height', h + 10); } const rs = el.querySelector('.resize-handle'); if (rs) { rs.setAttribute('x', w / 2 - 6); rs.setAttribute('y', h / 2 - 6); } const ro = el.querySelector('.rotate-handle'); if (ro) { ro.setAttribute('cx', 0); ro.setAttribute('cy', -h / 2 - 20); } }
     function updatePropertiesPanel(model) { if (model && state.selectedObject) { dom.propControls.classList.remove('hidden'); dom.propPlaceholder.classList.add('hidden'); dom.propX.value = Math.round(model.x); dom.propY.value = Math.round(model.y); dom.propW.value = Math.round(model.ow * model.sx); dom.propH.value = Math.round(model.oh * model.sy); dom.propA.value = Math.round(model.a); } else { dom.propControls.classList.add('hidden'); dom.propPlaceholder.classList.remove('hidden'); } }
+    function updateComponentPanel(target) {
+        if (!dom.componentPanel) return;
+        const compEl = target ? target.closest('.wall-component') : null;
+        if (!compEl) {
+            dom.componentPanel.classList.add('hidden');
+            return;
+        }
+        const compModel = componentStore.get(compEl);
+        if (!compModel || (compModel.type !== 'door' && compModel.type !== 'window')) {
+            dom.componentPanel.classList.add('hidden');
+            return;
+        }
+        dom.componentPanel.classList.remove('hidden');
+        if (compModel.type === 'door') {
+            const variant = normaliseDoorComponent(compModel);
+            const selectValue = `door-${compModel.variant}`;
+            dom.componentType.value = selectValue;
+            const widthCm = clampDoorWidthCm(compModel.variant, compModel.width * 100);
+            dom.componentWidth.min = variant.minCm || 50;
+            dom.componentWidth.max = variant.maxCm || 400;
+            dom.componentWidth.step = variant.stepCm || 5;
+            dom.componentWidth.value = widthCm;
+            dom.componentHingeGroup.classList.toggle('hidden', !variant.allowHinge);
+            dom.componentSwingGroup.classList.toggle('hidden', !variant.allowSwing);
+            if (variant.allowHinge) {
+                if (compModel.hinge === 'right') dom.componentHingeRight.checked = true;
+                else dom.componentHingeLeft.checked = true;
+            }
+            if (variant.allowSwing) {
+                if (compModel.swing === 'out') dom.componentSwingOut.checked = true;
+                else dom.componentSwingIn.checked = true;
+            }
+            if (!variant.allowHinge) {
+                dom.componentHingeLeft.checked = true;
+                dom.componentHingeRight.checked = false;
+            }
+            if (!variant.allowSwing) {
+                dom.componentSwingIn.checked = true;
+                dom.componentSwingOut.checked = false;
+            }
+            state.doorDefaults = {
+                variant: compModel.variant,
+                hinge: compModel.hinge,
+                swing: compModel.swing,
+                width: compModel.width
+            };
+        } else {
+            const windowSpec = OPENING_SPECS.window;
+            dom.componentType.value = 'window';
+            const widthMeters = Number.isFinite(compModel.width) && compModel.width > 0 ? compModel.width : windowSpec.widthMeters;
+            dom.componentWidth.min = 40;
+            dom.componentWidth.max = 400;
+            dom.componentWidth.step = 5;
+            dom.componentWidth.value = Math.round(widthMeters * 100);
+            dom.componentHingeGroup.classList.add('hidden');
+            dom.componentSwingGroup.classList.add('hidden');
+        }
+    }
+
+    function getActiveComponentModel() {
+        if (!state.selectedComponent) return null;
+        return componentStore.get(state.selectedComponent) || null;
+    }
+
+    function refreshComponentVisual(compModel) {
+        if (!compModel) return;
+        const wallEl = wallIdMap.get(compModel.wallId);
+        if (wallEl) {
+            updateWallComponentsPosition(wallEl);
+        }
+    }
+
+    function applyComponentType(value) {
+        const compModel = getActiveComponentModel();
+        if (!compModel) return;
+        if (value === 'window') {
+            compModel.type = 'window';
+            delete compModel.variant;
+            delete compModel.hinge;
+            delete compModel.swing;
+            const widthCm = utils.clamp(Math.round((Number.isFinite(compModel.width) && compModel.width > 0 ? compModel.width : OPENING_SPECS.window.widthMeters) * 100), 40, 400);
+            compModel.width = widthCm / 100;
+            delete state.selectedComponent.dataset.variant;
+            delete state.selectedComponent.dataset.hinge;
+            delete state.selectedComponent.dataset.swing;
+        } else {
+            const variantKey = (value && value.startsWith('door-')) ? value.slice(5) : 'single';
+            compModel.type = 'door';
+            compModel.variant = DOOR_VARIANTS[variantKey] ? variantKey : 'single';
+            const variant = normaliseDoorComponent(compModel);
+            const widthCm = clampDoorWidthCm(compModel.variant, compModel.width * 100);
+            compModel.width = widthCm / 100;
+            state.doorDefaults = {
+                variant: compModel.variant,
+                hinge: compModel.hinge,
+                swing: compModel.swing,
+                width: compModel.width
+            };
+            state.selectedComponent.dataset.variant = compModel.variant;
+            state.selectedComponent.dataset.hinge = compModel.hinge;
+            state.selectedComponent.dataset.swing = compModel.swing;
+        }
+        componentStore.set(state.selectedComponent, compModel);
+        state.selectedComponent.dataset.type = compModel.type;
+        state.selectedComponent.dataset.width = compModel.width.toFixed(3);
+        refreshComponentVisual(compModel);
+        updateComponentPanel(state.selectedComponent);
+        commit('component_update');
+    }
+
+    function handleComponentWidthChange() {
+        const compModel = getActiveComponentModel();
+        if (!compModel) return;
+        let valueCm = parseFloat(dom.componentWidth.value);
+        if (!Number.isFinite(valueCm)) {
+            valueCm = compModel.width * 100;
+        }
+        if (compModel.type === 'door') {
+            const snapped = clampDoorWidthCm(compModel.variant, valueCm);
+            dom.componentWidth.value = snapped;
+            compModel.width = snapped / 100;
+            state.doorDefaults = {
+                variant: compModel.variant,
+                hinge: compModel.hinge,
+                swing: compModel.swing,
+                width: compModel.width
+            };
+        } else {
+            const snapped = utils.clamp(Math.round(valueCm / 5) * 5, 40, 400);
+            dom.componentWidth.value = snapped;
+            compModel.width = snapped / 100;
+        }
+        componentStore.set(state.selectedComponent, compModel);
+        state.selectedComponent.dataset.width = compModel.width.toFixed(3);
+        refreshComponentVisual(compModel);
+        updateComponentPanel(state.selectedComponent);
+        commit('component_update');
+    }
+
+    function applyComponentHinge(value) {
+        const compModel = getActiveComponentModel();
+        if (!compModel || compModel.type !== 'door') return;
+        const variant = normaliseDoorComponent(compModel);
+        if (!variant.allowHinge) return;
+        compModel.hinge = value === 'right' ? 'right' : 'left';
+        componentStore.set(state.selectedComponent, compModel);
+        state.selectedComponent.dataset.hinge = compModel.hinge;
+        state.doorDefaults = {
+            variant: compModel.variant,
+            hinge: compModel.hinge,
+            swing: compModel.swing,
+            width: compModel.width
+        };
+        refreshComponentVisual(compModel);
+        updateComponentPanel(state.selectedComponent);
+        commit('component_update');
+    }
+
+    function applyComponentSwing(value) {
+        const compModel = getActiveComponentModel();
+        if (!compModel || compModel.type !== 'door') return;
+        const variant = normaliseDoorComponent(compModel);
+        if (!variant.allowSwing) return;
+        compModel.swing = value === 'out' ? 'out' : 'in';
+        componentStore.set(state.selectedComponent, compModel);
+        state.selectedComponent.dataset.swing = compModel.swing;
+        state.doorDefaults = {
+            variant: compModel.variant,
+            hinge: compModel.hinge,
+            swing: compModel.swing,
+            width: compModel.width
+        };
+        refreshComponentVisual(compModel);
+        updateComponentPanel(state.selectedComponent);
+        commit('component_update');
+    }
     function updateLayersList() { dom.layersList.innerHTML = ''; const items = Array.from(dom.itemsContainer.children).filter(n => n.classList.contains('layout-object')); items.reverse().forEach(el => { const model = getModel(el); const li = createLayerItem(model); dom.layersList.appendChild(li); }); }
     function createLayerItem(model) { const li = document.createElement('li'); li.dataset.id = model.id; li.className = state.selectedObject?.dataset.id === model.id ? 'selected' : ''; if (model.locked) li.classList.add('locked'); li.innerHTML = `<span class="layer-name">${ITEM_TEMPLATES[model.tpl]?.label || model.tpl}</span><button class="layer-vis" title="Видимость">${model.visible ? '👁️' : '⚪'}</button><button class="layer-lock" title="Блокировка">${model.locked ? '🔒' : '🔓'}</button>`; return li; }
     function updateLayerItem(model) { const li = dom.layersList.querySelector(`[data-id="${model.id}"]`); if (!li) return; li.querySelector('.layer-vis').textContent = model.visible ? '👁️' : '⚪'; li.querySelector('.layer-lock').textContent = model.locked ? '🔒' : '🔓'; model.locked ? li.classList.add('locked') : li.classList.remove('locked'); }
@@ -708,6 +900,7 @@
         state.selectedWallHandle = null;
         dom.layersList.querySelector('.selected')?.classList.remove('selected');
         updatePropertiesPanel(null);
+        updateComponentPanel(null);
         highlightWallType(state.defaultWallType);
         updateWallTypeCaption('default', state.defaultWallType);
     }
@@ -759,12 +952,13 @@
             updateViewBox();
         }
     }
-    function selectObject(el) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedObject = el ? el.closest('.layout-object') : null; if (state.selectedObject) { state.selectedObject.classList.add('selected'); dom.itemsContainer.appendChild(state.selectedObject); const model = getModel(state.selectedObject); updatePropertiesPanel(model); const li = dom.layersList.querySelector(`[data-id="${model.id}"]`); if (li) li.classList.add('selected'); } }
+    function selectObject(el) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedObject = el ? el.closest('.layout-object') : null; if (state.selectedObject) { state.selectedObject.classList.add('selected'); dom.itemsContainer.appendChild(state.selectedObject); const model = getModel(state.selectedObject); updatePropertiesPanel(model); updateComponentPanel(null); const li = dom.layersList.querySelector(`[data-id="${model.id}"]`); if (li) li.classList.add('selected'); } }
     function selectWall(wallEl) {
         if (state.activeTool !== 'pointer') return;
         const wall = ensureWallElement(wallEl);
         if (!wall) return;
         clearSelections();
+        updateComponentPanel(null);
         state.selectedWall = wall;
         state.selectedWall.classList.add('selected');
         const model = getWallModel(wall);
@@ -778,7 +972,7 @@
         }
         updateWallHandles(wall);
     }
-    function selectComponent(compEl) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedComponent = compEl; if (state.selectedComponent) { state.selectedComponent.classList.add('selected'); } }
+    function selectComponent(compEl) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedComponent = compEl; if (state.selectedComponent) { state.selectedComponent.classList.add('selected'); updateComponentPanel(state.selectedComponent); } }
 
     // --- WALL DATA MODEL & EDITING ---
     let wallHandleDrag = null;
@@ -875,6 +1069,15 @@
             const compEl = componentIdMap.get(comp.id);
             if (!compEl) return;
             compEl.innerHTML = renderWallComponentMarkup(comp, model);
+            if (Number.isFinite(comp.width)) {
+                compEl.dataset.width = comp.width.toFixed(3);
+            }
+            if (comp.variant) compEl.dataset.variant = comp.variant;
+            else delete compEl.dataset.variant;
+            if (comp.hinge) compEl.dataset.hinge = comp.hinge;
+            else delete compEl.dataset.hinge;
+            if (comp.swing) compEl.dataset.swing = comp.swing;
+            else delete compEl.dataset.swing;
             const { point, angle } = pointAtWallDistance(model, comp.distance);
             const transform = `translate(${point.x}, ${point.y}) rotate(${angle})`;
             compEl.setAttribute('transform', transform);
@@ -952,6 +1155,97 @@
         if (!Number.isFinite(mm)) return 0;
         const ppm = getPixelsPerMeter();
         return (mm * ppm) / SHEET_MM_PER_METER;
+    }
+
+    function getDoorVariant(key) {
+        return DOOR_VARIANTS[key] || DOOR_VARIANTS.single;
+    }
+
+    function normaliseDoorComponent(compModel) {
+        if (!compModel) return getDoorVariant('single');
+        const variantKey = (typeof compModel.variant === 'string' && DOOR_VARIANTS[compModel.variant]) ? compModel.variant : 'single';
+        compModel.variant = variantKey;
+        const variant = DOOR_VARIANTS[variantKey];
+        if (variant.allowHinge) {
+            compModel.hinge = compModel.hinge === 'right' ? 'right' : 'left';
+        } else {
+            compModel.hinge = 'left';
+        }
+        if (variant.allowSwing) {
+            compModel.swing = compModel.swing === 'out' ? 'out' : 'in';
+        } else {
+            compModel.swing = 'in';
+        }
+        if (!Number.isFinite(compModel.width) || compModel.width <= 0) {
+            compModel.width = variant.widthMeters;
+        }
+        return variant;
+    }
+
+    function clampDoorWidthCm(variantKey, widthCm) {
+        const variant = getDoorVariant(variantKey);
+        const step = variant.stepCm || 5;
+        const min = variant.minCm || 50;
+        const max = variant.maxCm || 400;
+        if (!Number.isFinite(widthCm)) {
+            widthCm = variant.widthMeters * 100;
+        }
+        const snapped = Math.round(widthCm / step) * step;
+        return utils.clamp(snapped, min, max);
+    }
+
+    function renderDoorLeaf({ widthUnits, hingeOffset, swingSign, stroke, detailWidth, leafThickness, mirror }) {
+        if (!(widthUnits > 0)) return '';
+        const transforms = [`translate(${hingeOffset.toFixed(3)}, 0)`];
+        if (mirror) transforms.push('scale(-1,1)');
+        if (swingSign < 0) transforms.push('scale(1,-1)');
+        const sweepFlag = swingSign > 0 ? 1 : 0;
+        const lineAttrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
+        const hingeLine = `<line x1="0" y1="${(-leafThickness / 2).toFixed(3)}" x2="0" y2="${(leafThickness / 2).toFixed(3)}" ${lineAttrs}/>`;
+        const leafLine = `<line x1="0" y1="0" x2="0" y2="${(swingSign * widthUnits).toFixed(3)}" ${lineAttrs}/>`;
+        const arc = `<path d="M ${widthUnits.toFixed(3)} 0 A ${widthUnits.toFixed(3)} ${widthUnits.toFixed(3)} 0 0 ${sweepFlag} 0 ${(swingSign * widthUnits).toFixed(3)}" fill="none" ${lineAttrs}/>`;
+        return `<g transform="${transforms.join(' ')}">${hingeLine}${leafLine}${arc}</g>`;
+    }
+
+    function renderDoorVariantMarkup(compModel, variant, { widthUnits, leafThickness, detailWidth, stroke }) {
+        if (!(widthUnits > 0)) return '';
+        const attrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
+        const swingSign = compModel.swing === 'out' ? -1 : 1;
+        const variantKey = compModel.variant || 'single';
+        if (variantKey === 'double') {
+            const half = widthUnits / 2;
+            if (!(half > 0)) return '';
+            const left = renderDoorLeaf({ widthUnits: half, hingeOffset: -widthUnits / 2, swingSign, stroke, detailWidth, leafThickness, mirror: false });
+            const right = renderDoorLeaf({ widthUnits: half, hingeOffset: widthUnits / 2, swingSign, stroke, detailWidth, leafThickness, mirror: true });
+            const center = `<line x1="0" y1="${(-leafThickness / 2).toFixed(3)}" x2="0" y2="${(leafThickness / 2).toFixed(3)}" ${attrs}/>`;
+            return `<g>${left}${right}${center}</g>`;
+        }
+        if (variantKey === 'sliding') {
+            const x0 = -widthUnits / 2;
+            const x1 = widthUnits / 2;
+            const guideOffset = sheetMmToUnits(6);
+            const dash = `${sheetMmToUnits(10).toFixed(3)} ${sheetMmToUnits(6).toFixed(3)}`;
+            const panelWidth = Math.min(widthUnits * 0.6, widthUnits - sheetMmToUnits(20));
+            const panelEnd = Math.min(x1, x0 + Math.max(panelWidth, widthUnits * 0.4));
+            return `<g>
+                <line x1="${x0.toFixed(3)}" y1="0" x2="${x1.toFixed(3)}" y2="0" ${attrs}/>
+                <line x1="${x0.toFixed(3)}" y1="${guideOffset.toFixed(3)}" x2="${x1.toFixed(3)}" y2="${guideOffset.toFixed(3)}" ${attrs} stroke-dasharray="${dash}"/>
+                <line x1="${x0.toFixed(3)}" y1="${(-guideOffset).toFixed(3)}" x2="${panelEnd.toFixed(3)}" y2="${(-guideOffset).toFixed(3)}" ${attrs}/>
+                <line x1="${panelEnd.toFixed(3)}" y1="${(-guideOffset).toFixed(3)}" x2="${panelEnd.toFixed(3)}" y2="${guideOffset.toFixed(3)}" ${attrs}/>
+            </g>`;
+        }
+        if (variantKey === 'glass') {
+            const gap = sheetMmToUnits(6);
+            const x0 = -widthUnits / 2;
+            const x1 = widthUnits / 2;
+            const dash = `${sheetMmToUnits(8).toFixed(3)} ${sheetMmToUnits(6).toFixed(3)}`;
+            return `<g>
+                <line x1="${x0.toFixed(3)}" y1="${gap.toFixed(3)}" x2="${x1.toFixed(3)}" y2="${gap.toFixed(3)}" ${attrs} stroke-dasharray="${dash}"/>
+                <line x1="${x0.toFixed(3)}" y1="${(-gap).toFixed(3)}" x2="${x1.toFixed(3)}" y2="${(-gap).toFixed(3)}" ${attrs}/>
+            </g>`;
+        }
+        const hingeOffset = compModel.hinge === 'right' ? widthUnits / 2 : -widthUnits / 2;
+        return `<g>${renderDoorLeaf({ widthUnits, hingeOffset, swingSign, stroke, detailWidth, leafThickness, mirror: compModel.hinge === 'right' })}</g>`;
     }
 
     function getWallPreset(type) {
@@ -1116,7 +1410,13 @@
         const halfThickness = thicknessUnits / 2;
         model.components.forEach(comp => {
             const spec = OPENING_SPECS[comp.type] || OPENING_SPECS.door;
-            let widthMeters = Number.isFinite(comp.width) && comp.width > 0 ? comp.width : spec.widthMeters;
+            let widthMeters;
+            if (comp.type === 'door') {
+                const variant = normaliseDoorComponent(comp);
+                widthMeters = Number.isFinite(comp.width) && comp.width > 0 ? comp.width : variant.widthMeters;
+            } else {
+                widthMeters = Number.isFinite(comp.width) && comp.width > 0 ? comp.width : spec.widthMeters;
+            }
             if (!Number.isFinite(widthMeters) || widthMeters <= 0) {
                 widthMeters = spec.widthMeters;
             }
@@ -1584,19 +1884,14 @@
         const widthUnits = sheetMmToUnits(widthSheetMm);
         const strokeWidth = Math.max(sheetMmToUnits(0.35), 0.8);
         if (compModel.type === 'door') {
-            const swingRadius = widthUnits;
-            const baseThickness = thicknessUnits || sheetMmToUnits(4);
-            const leafThickness = Math.max(sheetMmToUnits(0.35), baseThickness * 0.45);
-            const hingeX = -widthUnits / 2;
-            const hingeY = -leafThickness / 2;
+            const variant = normaliseDoorComponent(compModel);
+            const widthMeters = Number.isFinite(compModel.width) && compModel.width > 0 ? compModel.width : variant.widthMeters;
+            const widthUnits = sheetMmToUnits(widthMeters * SHEET_MM_PER_METER);
+            if (!(widthUnits > 0)) return '';
             const stroke = spec.stroke || '#1A1D1A';
             const detailWidth = Math.max(sheetMmToUnits(0.25), 0.6);
-            const arcEndX = hingeX + swingRadius;
-            const arcEndY = hingeY + swingRadius;
-            return `
-                <line x1="${hingeX.toFixed(3)}" y1="${hingeY.toFixed(3)}" x2="${hingeX.toFixed(3)}" y2="${(hingeY + leafThickness).toFixed(3)}" stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
-                <path d="M ${hingeX.toFixed(3)} ${hingeY.toFixed(3)} A ${swingRadius.toFixed(3)} ${swingRadius.toFixed(3)} 0 0 1 ${arcEndX.toFixed(3)} ${arcEndY.toFixed(3)}" fill="none" stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
-            `;
+            const leafThickness = Math.max(sheetMmToUnits(0.35), thicknessUnits * 0.45 || sheetMmToUnits(1.2));
+            return renderDoorVariantMarkup(compModel, variant, { widthUnits, leafThickness, detailWidth, stroke });
         }
         const stroke = spec.stroke || '#2F7EBB';
         const fill = spec.fill || 'rgba(163,213,255,0.55)';
@@ -1640,10 +1935,33 @@
             el.setAttribute('transform', `translate(${initialPoint.x}, ${initialPoint.y}) rotate(${ang})`);
         }
         const compModel = { id, type, wallId: wallModel.id, distance: distanceAlong, offset: 0, width: widthMeters };
-        el.innerHTML = renderWallComponentMarkup(compModel, wallModel);
-        if (Number.isFinite(widthMeters)) {
-            el.dataset.width = widthMeters.toFixed(3);
+        if (type === 'door') {
+            compModel.variant = state.doorDefaults.variant;
+            compModel.hinge = state.doorDefaults.hinge;
+            compModel.swing = state.doorDefaults.swing;
+            if (Number.isFinite(state.doorDefaults.width) && state.doorDefaults.width > 0) {
+                compModel.width = state.doorDefaults.width;
+            }
+            const variant = normaliseDoorComponent(compModel);
+            compModel.width = Number.isFinite(compModel.width) && compModel.width > 0 ? compModel.width : variant.widthMeters;
+            state.doorDefaults = {
+                variant: compModel.variant,
+                hinge: compModel.hinge,
+                swing: compModel.swing,
+                width: compModel.width
+            };
+        } else if (type === 'window') {
+            if (!Number.isFinite(compModel.width) || compModel.width <= 0) {
+                compModel.width = spec.widthMeters;
+            }
         }
+        el.innerHTML = renderWallComponentMarkup(compModel, wallModel);
+        if (Number.isFinite(compModel.width)) {
+            el.dataset.width = compModel.width.toFixed(3);
+        }
+        if (compModel.variant) el.dataset.variant = compModel.variant;
+        if (compModel.hinge) el.dataset.hinge = compModel.hinge;
+        if (compModel.swing) el.dataset.swing = compModel.swing;
         componentStore.set(el, compModel);
         componentIdMap.set(id, el);
         if (!Array.isArray(wallModel.components)) wallModel.components = [];
@@ -2681,7 +2999,10 @@
                 wallId: comp.wallId,
                 distance: comp.distance,
                 offset: comp.offset || 0,
-                width: comp.width
+                width: comp.width,
+                variant: comp.type === 'door' ? comp.variant : undefined,
+                hinge: comp.type === 'door' ? comp.hinge : undefined,
+                swing: comp.type === 'door' ? comp.swing : undefined
             })),
             wallDefaults: { type: state.defaultWallType },
             grid: {
@@ -2824,6 +3145,12 @@
             const compModel = componentStore.get(compEl);
             if (compModel) {
                 compModel.offset = 0;
+                if (compModel.type === 'door') {
+                    compModel.variant = compModel.variant || 'single';
+                    compModel.hinge = compModel.hinge || 'left';
+                    compModel.swing = compModel.swing || 'in';
+                    normaliseDoorComponent(compModel);
+                }
                 componentStore.set(compEl, compModel);
             }
         };
@@ -2873,13 +3200,32 @@
             }
             compModel.offset = c.offset || 0;
             const wallModel = getWallModel(wallEl);
-            if (Number.isFinite(c.width) && c.width > 0) {
+            if (compModel.type === 'door') {
+                if (typeof c.variant === 'string') compModel.variant = c.variant;
+                if (typeof c.hinge === 'string') compModel.hinge = c.hinge;
+                if (typeof c.swing === 'string') compModel.swing = c.swing;
+                const variant = normaliseDoorComponent(compModel);
+                if (Number.isFinite(c.width) && c.width > 0) {
+                    let widthMeters = c.width;
+                    if (widthMeters > 10) {
+                        widthMeters = widthMeters / getPixelsPerMeter();
+                    }
+                    compModel.width = widthMeters;
+                } else if (!Number.isFinite(compModel.width) || compModel.width <= 0) {
+                    compModel.width = variant.widthMeters;
+                }
+                compEl.dataset.variant = compModel.variant;
+                compEl.dataset.hinge = compModel.hinge;
+                compEl.dataset.swing = compModel.swing;
+            } else if (Number.isFinite(c.width) && c.width > 0) {
                 let widthMeters = c.width;
                 if (widthMeters > 10) {
                     widthMeters = widthMeters / getPixelsPerMeter();
                 }
                 compModel.width = widthMeters;
-                compEl.dataset.width = widthMeters.toFixed(3);
+            }
+            if (Number.isFinite(compModel.width)) {
+                compEl.dataset.width = compModel.width.toFixed(3);
                 if (wallModel) {
                     compEl.innerHTML = renderWallComponentMarkup(compModel, wallModel);
                 }
@@ -3106,6 +3452,15 @@
     }
 
     function bindEventListeners() {
+        dom.componentType?.addEventListener('change', e => applyComponentType(e.target.value));
+        if (dom.componentWidth) {
+            dom.componentWidth.addEventListener('change', handleComponentWidthChange);
+            dom.componentWidth.addEventListener('blur', handleComponentWidthChange);
+        }
+        dom.componentHingeLeft?.addEventListener('change', () => { if (dom.componentHingeLeft.checked) applyComponentHinge('left'); });
+        dom.componentHingeRight?.addEventListener('change', () => { if (dom.componentHingeRight.checked) applyComponentHinge('right'); });
+        dom.componentSwingIn?.addEventListener('change', () => { if (dom.componentSwingIn.checked) applyComponentSwing('in'); });
+        dom.componentSwingOut?.addEventListener('change', () => { if (dom.componentSwingOut.checked) applyComponentSwing('out'); });
         dom.svg.addEventListener('mousedown', e => {
             // Завершение стены ПКМ
             if (e.button === 2) {
@@ -3198,10 +3553,19 @@
                 const closest = findClosestWallPlacement(p);
                 if (closest.wallEl && closest.dist < 60) {
                     const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    const visual = tool === 'door'
-                        ? `<path d="M -40 0 A 40 40 0 0 1 0 -40" stroke="#8B4513" stroke-width="2" fill="rgba(255,228,196,0.5)"/><line x1="-40" y1="0" x2="-40" y2="-5" stroke="#8B4513" stroke-width="2"/>`
-                        : `<rect x="-60" y="-5.5" width="120" height="11" fill="rgba(163,213,255,0.7)" stroke="#5b9ad4" stroke-width="2" />`;
-                    el.innerHTML = visual;
+                    const previewModel = tool === 'door'
+                        ? {
+                            type: 'door',
+                            variant: state.doorDefaults.variant,
+                            hinge: state.doorDefaults.hinge,
+                            swing: state.doorDefaults.swing,
+                            width: Number.isFinite(state.doorDefaults.width) && state.doorDefaults.width > 0
+                                ? state.doorDefaults.width
+                                : getDoorVariant(state.doorDefaults.variant).widthMeters
+                        }
+                        : { type: 'window', width: OPENING_SPECS.window.widthMeters };
+                    const wallModel = getWallModel(closest.wallEl);
+                    el.innerHTML = renderWallComponentMarkup(previewModel, wallModel);
                     el.setAttribute('transform', `translate(${closest.point.x}, ${closest.point.y}) rotate(${closest.angle})`);
                     dom.previewsContainer.appendChild(el);
                     state.pendingComponentPlacement = closest;

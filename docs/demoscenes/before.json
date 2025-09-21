@@ -1,0 +1,32 @@
+{
+  "view": { "mode": "schematic" },
+  "items": [
+    {"id": "el-1", "tpl": "sofa-2", "x": 260, "y": 260, "a": 0, "sx": 1, "sy": 1, "cx": 0, "cy": 0, "ow": 200, "oh": 95, "locked": false, "visible": true},
+    {"id": "el-2", "tpl": "coffee-rect", "x": 260, "y": 360, "a": 0, "sx": 1, "sy": 1, "cx": 0, "cy": 0, "ow": 120, "oh": 60, "locked": false, "visible": true},
+    {"id": "el-3", "tpl": "chair", "x": 150, "y": 360, "a": 0, "sx": 1, "sy": 1, "cx": 0, "cy": 0, "ow": 45, "oh": 50, "locked": false, "visible": true},
+    {"id": "el-4", "tpl": "kitchen-line", "x": 520, "y": 210, "a": 0, "sx": 1, "sy": 1, "cx": 0, "cy": 0, "ow": 240, "oh": 60, "locked": false, "visible": true},
+    {"id": "el-5", "tpl": "bed-double", "x": 520, "y": 360, "a": 0, "sx": 1, "sy": 1, "cx": 0, "cy": 0, "ow": 160, "oh": 200, "locked": false, "visible": true}
+  ],
+  "walls": [
+    {
+      "id": "wall-1",
+      "points": [
+        {"x": 100, "y": 100},
+        {"x": 720, "y": 100},
+        {"x": 720, "y": 520},
+        {"x": 100, "y": 520},
+        {"x": 100, "y": 100}
+      ],
+      "closed": true,
+      "type": "structural"
+    }
+  ],
+  "components": [
+    {"id": "comp-1", "type": "door", "wallId": "wall-1", "distance": 180, "offset": 0, "width": 0.9}
+  ],
+  "wallDefaults": { "type": "structural" },
+  "grid": { "stepMeters": 0.1, "pixelsPerMeter": 50 },
+  "measurements": [],
+  "normatives": { "corridorGuest": 1.0, "corridorStaff": 0.9, "radius": 1.5 },
+  "estimate": { "preset": "standard", "rates": { "finish": 50, "perimeter": 10, "engineering": 35 } }
+}
