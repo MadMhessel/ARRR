@@ -619,53 +619,8 @@
             }
             const base = core.dataset.baseTransform;
             const dyn = `translate(${-m.cx}, ${-m.cy}) scale(${m.sx}, ${m.sy})`.trim();
-            const compose = (...parts) => parts.filter(part => part && part.trim()).join(' ').trim();
-            const dynFirst = compose(dyn, base);
-            const baseFirst = compose(base, dyn);
-
-            const setTransformForOrder = order => {
-                const value = order === 'base-first' ? baseFirst : dynFirst;
-                core.setAttribute('transform', value);
-                return value;
-            };
-
-            const measureCenterDistance = () => {
-                try {
-                    const bbox = core.getBBox();
-                    if (bbox && Number.isFinite(bbox.x) && Number.isFinite(bbox.y)) {
-                        const cx = bbox.x + bbox.width / 2;
-                        const cy = bbox.y + bbox.height / 2;
-                        return Math.hypot(cx, cy);
-                    }
-                } catch (err) {
-                    // getBBox может выбросить, например, если элемент скрыт
-                }
-                return Number.POSITIVE_INFINITY;
-            };
-
-            const savedOrder = core.dataset.transformOrder;
-            if (savedOrder === 'base-first' || savedOrder === 'dyn-first') {
-                setTransformForOrder(savedOrder);
-            } else {
-                const candidates = [
-                    { order: 'dyn-first', value: dynFirst },
-                    { order: 'base-first', value: baseFirst },
-                ];
-                let best = candidates[0];
-                let bestDistance = Number.POSITIVE_INFINITY;
-
-                for (const candidate of candidates) {
-                    core.setAttribute('transform', candidate.value);
-                    const distance = measureCenterDistance();
-                    if (distance < bestDistance) {
-                        bestDistance = distance;
-                        best = candidate;
-                    }
-                }
-
-                core.dataset.transformOrder = best.order;
-                core.setAttribute('transform', best.value);
-            }
+            const combined = [base, dyn].filter(Boolean).join(' ');
+            core.setAttribute('transform', combined);
         }
 
         updateSelectionUI(el);
@@ -3355,12 +3310,6 @@
 
         analysisLayout({ silent: true });
         commit('init');
-    }
-
-    if (typeof window !== 'undefined') {
-        window.setRenderMode = (mode, options) => setRenderMode(mode, options);
-        window.getRenderMode = () => state.renderMode;
-        window.buildSchematicSymbols = () => { buildSymbolsFromSchematic(); return state.renderMode; };
     }
 
     init();
