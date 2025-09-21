@@ -1,1641 +1,1351 @@
-const FURNITURE_CATEGORIES = [
-    {
-        name: 'Кофейня',
-        items: [
-            { id: 'cafe-table-round-60', label: 'Стол круглый Ø60' },
-            { id: 'cafe-table-square-70', label: 'Стол квадрат 70×70' },
-            { id: 'cafe-hightop-round-70', label: 'Хай-топ Ø70' },
-            { id: 'cafe-communal-240', label: 'Коммунальный 240×90' },
-            { id: 'banquette-160', label: 'Банкетка 160 (3 места)' },
-            { id: 'banquette-220', label: 'Банкетка 220 (4 места)' },
-            { id: 'booth-2', label: 'Кабинка на 2' },
-            { id: 'booth-4', label: 'Кабинка на 4' },
-            { id: 'bar-counter-straight-180', label: 'Барная стойка 180' },
-            { id: 'bar-counter-straight-240', label: 'Барная стойка 240' },
-            { id: 'bar-counter-l-180x180', label: 'Барная стойка Г 180×180' },
-            { id: 'bar-counter-island-180x90', label: 'Бар-остров 180×90' },
-            { id: 'bar-back-shelf-180', label: 'Задняя барная полка 180' },
-            { id: 'espresso-2g', label: 'Эспрессо-машина 2 группы' },
-            { id: 'espresso-3g', label: 'Эспрессо-машина 3 группы' },
-            { id: 'grinder-80mm', label: 'Кофемолка 80 мм' },
-            { id: 'batch-brewer-2', label: 'Бэтч-брю (2 станции)' },
-            { id: 'pour-over-3', label: 'Пуровер-станция ×3' },
-            { id: 'kettle-electric', label: 'Электрочайник' },
-            { id: 'water-filter', label: 'Фильтр воды под мойкой' },
-            { id: 'ice-machine-60', label: 'Льдогенератор 60' },
-            { id: 'undercounter-fridge-90', label: 'Холод под столеш. 90' },
-            { id: 'upright-fridge-60', label: 'Холодильник 60' },
-            { id: 'milk-fridge-60', label: 'Молочный холодильник 60' },
-            { id: 'freezer-60', label: 'Морозильник 60' },
-            { id: 'pastry-case-120', label: 'Витрина кондит. прямая 120' },
-            { id: 'pastry-case-120-curved', label: 'Витрина кондит. радиус 120' },
-            { id: 'pos-terminal', label: 'POS-терминал' },
-            { id: 'cash-drawer', label: 'Денежный ящик' },
-            { id: 'condiment-120', label: 'Станция приправ 120' },
-            { id: 'syrup-rack-90', label: 'Рейл сиропов 90' },
-            { id: 'trash-single', label: 'Урна одинарная' },
-            { id: 'trash-double', label: 'Урна двойная' },
-            { id: 'hand-sink', label: 'Раковина для рук' },
-            { id: 'triple-sink', label: 'Мойка 3-секц.' },
-            { id: 'dishwasher-pro', label: 'Посудомойка подстол.' },
-            { id: 'drying-rack-120', label: 'Сушка посуды 120' },
-            { id: 'queue-post', label: 'Стойка очереди' },
-            { id: 'menu-board-120', label: 'Меню-борд 120' },
-            { id: 'planter-long-120', label: 'Кашпо длинное 120' },
-            { id: 'partition-120x10', label: 'Перегородка 120×10' },
-        ]
-    },
-    {
-        name: 'Сиденья',
-        items: [
-            { id: 'chair', label: 'Стул' },
-            { id: 'armchair', label: 'Кресло' },
-            { id: 'sofa-2', label: 'Диван 2-местный' },
-            { id: 'sofa-3', label: 'Диван 3-местный' },
-            { id: 'sectional-l', label: 'Диван угловой L' },
-            { id: 'stool', label: 'Табурет' },
-            { id: 'barstool', label: 'Барный стул' },
-        ]
-    },
-    {
-        name: 'Столы',
-        items: [
-            { id: 'coffee-round', label: 'Журнальный круглый' },
-            { id: 'coffee-rect', label: 'Журнальный прямой' },
-            { id: 'dining-4', label: 'Обеденный на 4' },
-            { id: 'dining-6', label: 'Обеденный на 6' },
-            { id: 'dining-8', label: 'Обеденный на 8' },
-            { id: 'desk', label: 'Письменный стол' },
-            { id: 'workstation-l', label: 'Рабочая L-станция' },
-        ]
-    },
-    {
-        name: 'Офис',
-        items: [
-            { id: 'office-chair', label: 'Офисное кресло' },
-            { id: 'reception', label: 'Стойка-ресепшн' },
-            { id: 'whiteboard', label: 'Доска' },
-            { id: 'printer', label: 'Принтер' },
-            { id: 'copier', label: 'Ксерокс' },
-            { id: 'server-rack', label: 'Серверная стойка' },
-        ]
-    },
-    {
-        name: 'Спальня',
-        items: [
-            { id: 'bed-single', label: 'Кровать односпальная' },
-            { id: 'bed-double', label: 'Кровать двуспальная' },
-            { id: 'nightstand', label: 'Тумба' },
-            { id: 'wardrobe-2d', label: 'Шкаф 2-створчатый' },
-            { id: 'wardrobe-3d', label: 'Шкаф 3-створчатый' },
-            { id: 'shelving', label: 'Стеллаж' },
-        ]
-    },
-    {
-        name: 'Кухня',
-        items: [
-            { id: 'kitchen-line', label: 'Кухонный модуль' },
-            { id: 'sink', label: 'Мойка' },
-            { id: 'cooktop-4', label: 'Варочная панель' },
-            { id: 'fridge', label: 'Холодильник' },
-            { id: 'oven', label: 'Духовка' },
-            { id: 'microwave', label: 'Микроволновка' },
-            { id: 'dishwasher', label: 'Посудомойка' },
-            { id: 'island', label: 'Кухонный остров' },
-        ]
-    },
-    {
-        name: 'Санузел',
-        items: [
-            { id: 'toilet', label: 'Туалет' },
-            { id: 'bath-sink', label: 'Раковина' },
-            { id: 'shower', label: 'Душ' },
-            { id: 'bathtub', label: 'Ванна' },
-            { id: 'washer', label: 'Стиральная машина' },
-            { id: 'dryer', label: 'Сушильная машина' },
-            { id: 'water-cooler', label: 'Кулер для воды' },
-        ]
-    },
-    {
-        name: 'Техника и AV',
-        items: [
-            { id: 'tv-stand', label: 'ТВ-тумба' },
-            { id: 'tv-wall', label: 'ТВ настенный' },
-            { id: 'projector', label: 'Проектор' },
-            { id: 'projection-screen', label: 'Экран проекционный' },
-            { id: 'ac-indoor', label: 'Кондиционер' },
-            { id: 'radiator', label: 'Радиатор' },
-        ]
-    },
-    {
-        name: 'Декор',
-        items: [
-            { id: 'plant', label: 'Растение' },
-            { id: 'floor-lamp', label: 'Торшер' },
-            { id: 'rug', label: 'Ковёр' },
-        ]
-    },
-];
+const PLAN_LIBRARY = {};
 
-const ITEM_TEMPLATES = {
-    'zone': { label: 'Зона', svg: () => `<g class="core"><rect x="-100" y="-75" class="shape" width="200" height="150" rx="10" fill="rgba(13,110,253,0.1)" stroke="rgba(13,110,253,0.3)"/></g>` },
-    /* === КОФЕЙНЯ === */
-    'cafe-table-round-60': {
-        label: 'Стол круглый Ø60',
-        svg: () => `<g class="core">
-        <circle class="shape" r="30" fill="url(#wood-oak)" stroke="var(--outline)"/>
-        <circle r="26" fill="#ffffff" fill-opacity="0.08"/>
-        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <line x1="0" y1="30" x2="0" y2="42"/>
-            <line x1="-10" y1="42" x2="10" y2="42"/>
-        </g>
-    </g>`,
-        schematicSvg: () => `
-  <g class="core schematic-only" data-id="cafe-table-round-60">
-    <circle r="30" class="shape shape-fill"/>
-    <line x1="0" y1="-30" x2="0" y2="30" class="furn-center"/>
-    <line x1="-30" y1="0" x2="30" y2="0" class="furn-center"/>
-  </g>`
-    },
-    'cafe-table-square-70': { label: 'Стол квадрат 70×70', svg: () => `<g class="core">
-        <rect class="shape" x="-35" y="-35" width="70" height="70" rx="8"
-            fill="url(#wood-oak)" stroke="var(--outline)"/>
-        <rect x="-30" y="-30" width="60" height="60" rx="6"
-            fill="#ffffff" fill-opacity="0.08"/>
-        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <line x1="0" y1="35" x2="0" y2="44"/><line x1="-12" y1="44" x2="12" y2="44"/>
-        </g>
-    </g>` },
-    'cafe-hightop-round-70': { label: 'Хай-топ Ø70', svg: () => `<g class="core">
-        <circle class="shape" r="35" fill="url(#wood-espresso)" stroke="var(--outline)"/>
-        <circle r="30" fill="#000" fill-opacity="0.08"/>
-        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <line x1="0" y1="35" x2="0" y2="48"/><line x1="-12" y1="48" x2="12" y2="48"/>
-        </g>
-    </g>` },
-    'cafe-communal-240': { label: 'Коммунальный 240×90', svg: () => `<g class="core">
-        <rect class="shape" x="-120" y="-45" width="240" height="90" rx="10"
-            fill="url(#wood-oak)" stroke="var(--outline)"/>
-        <rect x="-112" y="-37" width="224" height="74" rx="8"
-            fill="#ffffff" fill-opacity="0.06"/>
-        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <line x1="-90" y1="45" x2="-90" y2="54"/>
-            <line x1="0" y1="45" x2="0" y2="54"/>
-            <line x1="90" y1="45" x2="90" y2="54"/>
-        </g>
-    </g>` },
-    'banquette-160': { label: 'Банкетка 160 (3 места)', svg: () => `<g class="core">
-        <rect class="shape" x="-80" y="-25" width="160" height="50" rx="14"
-            fill="url(#upholstery-cream)" stroke="#5d636b"/>
-        <rect x="-80" y="-40" width="160" height="20" rx="10"
-            fill="url(#upholstery-slate)" stroke="#3b4149"/>
-        <g stroke="#ffffff" stroke-opacity="0.18" stroke-width="4" stroke-linecap="round">
-            <line x1="-40" y1="-12" x2="-40" y2="18"/><line x1="0" y1="-12" x2="0" y2="18"/><line x1="40" y1="-12" x2="40" y2="18"/>
-        </g>
-    </g>` },
-    'banquette-220': { label: 'Банкетка 220 (4 места)', svg: () => `<g class="core">
-        <rect class="shape" x="-110" y="-25" width="220" height="50" rx="14"
-            fill="url(#upholstery-cream)" stroke="#5d636b"/>
-        <rect x="-110" y="-40" width="220" height="20" rx="10"
-            fill="url(#upholstery-slate)" stroke="#3b4149"/>
-        <g stroke="#ffffff" stroke-opacity="0.18" stroke-width="4" stroke-linecap="round">
-            <line x1="-66" y1="-12" x2="-66" y2="18"/><line x1="-22" y1="-12" x2="-22" y2="18"/>
-            <line x1="22" y1="-12" x2="22" y2="18"/><line x1="66" y1="-12" x2="66" y2="18"/>
-        </g>
-    </g>` },
-    'booth-2': { label: 'Кабинка на 2', svg: () => `<g class="core">
-        <rect x="-45" y="-35" width="90" height="70" rx="12"
-            fill="url(#upholstery-cream)" stroke="#5d636b"/>
-        <rect x="-45" y="-52" width="90" height="20" rx="10"
-            fill="url(#upholstery-slate)" stroke="#3b4149"/>
-        <rect x="-18" y="-10" width="36" height="20" rx="6"
-            fill="url(#wood-oak)" stroke="var(--outline)"/>
-    </g>` },
-    'booth-4': { label: 'Кабинка на 4', svg: () => `<g class="core">
-        <rect x="-70" y="-40" width="140" height="80" rx="12"
-            fill="url(#upholstery-cream)" stroke="#5d636b"/>
-        <rect x="-70" y="-58" width="140" height="20" rx="10"
-            fill="url(#upholstery-slate)" stroke="#3b4149"/>
-        <rect x="-24" y="-12" width="48" height="24" rx="6"
-            fill="url(#wood-oak)" stroke="var(--outline)"/>
-    </g>` },
-    'bar-counter-straight-180': { label: 'Барная стойка 180', svg: () => `<g class="core">
-        <rect class="shape" x="-90" y="-36" width="180" height="72" rx="8"
-            fill="url(#counter-marble)" stroke="var(--outline)"/>
-        <rect x="-90" y="-8" width="180" height="16" rx="6"
-            fill="rgba(0,0,0,0.08)"/>
-        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <line x1="-70" y1="36" x2="-70" y2="48"/>
-            <line x1="70" y1="36" x2="70" y2="48"/>
-        </g>
-    </g>` },
-    'bar-counter-straight-240': { label: 'Барная стойка 240', svg: () => `<g class="core">
-        <rect class="shape" x="-120" y="-36" width="240" height="72" rx="8"
-            fill="url(#counter-marble)" stroke="var(--outline)"/>
-        <rect x="-120" y="-8" width="240" height="16" rx="6"
-            fill="rgba(0,0,0,0.08)"/>
-        <g stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <line x1="-100" y1="36" x2="-100" y2="48"/>
-            <line x1="0" y1="36" x2="0" y2="48"/>
-            <line x1="100" y1="36" x2="100" y2="48"/>
-        </g>
-    </g>` },
-    'bar-counter-l-180x180': { label: 'Барная стойка Г 180×180', svg: () => `<g class="core">
-        <path class="shape" d="M-90 -36 H90 V36 H-36 V90 H-90 Z"
-            fill="url(#counter-marble)" stroke="var(--outline)"/>
-        <rect x="-90" y="-8" width="180" height="16" rx="6" fill="rgba(0,0,0,0.08)"/>
-        <rect x="-8" y="-36" width="16" height="126" rx="6" fill="rgba(0,0,0,0.08)"/>
-    </g>` },
-    'bar-counter-island-180x90': { label: 'Бар-остров 180×90', svg: () => `<g class="core">
-        <rect class="shape" x="-90" y="-45" width="180" height="90" rx="10"
-            fill="url(#counter-marble)" stroke="var(--outline)"/>
-        <rect x="-90" y="-10" width="180" height="20" rx="8" fill="rgba(0,0,0,0.08)"/>
-    </g>` },
-    'bar-back-shelf-180': { label: 'Задняя барная полка 180', svg: () => `<g class="core">
-        <rect class="shape" x="-90" y="-8" width="180" height="16" rx="4"
-            fill="url(#wood-espresso)" stroke="#2c180d"/>
-        <rect x="-90" y="-28" width="180" height="12" rx="3"
-            fill="url(#wood-espresso)" stroke="#2c180d"/>
-        <rect x="-90" y="-48" width="180" height="12" rx="3"
-            fill="url(#wood-espresso)" stroke="#2c180d"/>
-    </g>` },
-    'espresso-2g': { label: 'Эспрессо-машина 2 группы', svg: () => `<g class="core">
-        <rect class="shape" x="-46" y="-22" width="92" height="44" rx="8"
-            fill="url(#metal-chrome)" stroke="var(--outline)"/>
-        <rect x="-40" y="-30" width="80" height="10" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <g fill="url(#metal-steel)">
-            <rect x="-28" y="-6" width="16" height="12" rx="2"/>
-            <rect x="12"  y="-6" width="16" height="12" rx="2"/>
-        </g>
-        <rect x="-42" y="12" width="84" height="6" rx="3" fill="#111" fill-opacity="0.45"/>
-    </g>` },
-    'espresso-3g': { label: 'Эспрессо-машина 3 группы', svg: () => `<g class="core">
-        <rect class="shape" x="-66" y="-22" width="132" height="44" rx="8"
-            fill="url(#metal-chrome)" stroke="var(--outline)"/>
-        <rect x="-60" y="-30" width="120" height="10" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <g fill="url(#metal-steel)">
-            <rect x="-40" y="-6" width="16" height="12" rx="2"/>
-            <rect x="-8"  y="-6" width="16" height="12" rx="2"/>
-            <rect x="24"  y="-6" width="16" height="12" rx="2"/>
-        </g>
-        <rect x="-62" y="12" width="124" height="6" rx="3" fill="#111" fill-opacity="0.45"/>
-    </g>` },
-    'grinder-80mm': { label: 'Кофемолка 80 мм', svg: () => `<g class="core">
-        <rect class="shape" x="-12" y="-18" width="24" height="36" rx="4"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <polygon points="-10,-20 10,-20 6,-34 -6,-34"
-                fill="url(#glass-soft)" stroke="var(--outline)"/>
-    </g>` },
-    'batch-brewer-2': { label: 'Бэтч-брю (2 станции)', svg: () => `<g class="core">
-        <rect class="shape" x="-40" y="-22" width="80" height="44" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <g fill="url(#glass-soft)" stroke="var(--outline)">
-            <rect x="-26" y="-10" width="18" height="18" rx="3"/>
-            <rect x="8"   y="-10" width="18" height="18" rx="3"/>
-        </g>
-    </g>` },
-    'pour-over-3': { label: 'Пуровер-станция ×3', svg: () => `<g class="core">
-        <rect class="shape" x="-60" y="-18" width="120" height="36" rx="6"
-            fill="url(#wood-oak)" stroke="var(--outline)"/>
-        <g fill="url(#glass-soft)" stroke="var(--outline)">
-            <circle cx="-40" r="10"/><circle cx="0" r="10"/><circle cx="40" r="10"/>
-        </g>
-    </g>` },
-    'kettle-electric': { label: 'Электрочайник', svg: () => `<g class="core">
-        <ellipse class="shape" cx="0" cy="0" rx="16" ry="12"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <rect x="-10" y="-8" width="20" height="16" rx="4"
-            fill="url(#metal-chrome)" stroke="var(--outline)"/>
-    </g>` },
-    'water-filter': { label: 'Фильтр воды под мойкой', svg: () => `<g class="core">
-        <rect class="shape" x="-20" y="-14" width="40" height="28" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <g fill="url(#metal-chrome)" stroke="var(--outline)">
-            <rect x="-14" y="-8" width="10" height="16" rx="3"/>
-            <rect x="4"   y="-8" width="10" height="16" rx="3"/>
-        </g>
-    </g>` },
-    'ice-machine-60': { label: 'Льдогенератор 60', svg: () => `<g class="core">
-        <rect class="shape" x="-30" y="-30" width="60" height="60" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <rect x="-26" y="-10" width="52" height="14" rx="4"
-            fill="#111" fill-opacity="0.35"/>
-    </g>` },
-    'undercounter-fridge-90': { label: 'Холод под столеш. 90', svg: () => `<g class="core">
-        <rect class="shape" x="-45" y="-30" width="90" height="60" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <rect x="-41" y="-26" width="82" height="52" rx="4"
-            fill="#dfe6ee" stroke="var(--outline)"/>
-        <line x1="0" y1="-26" x2="0" y2="26" stroke="var(--outline)"/>
-    </g>` },
-    'upright-fridge-60': { label: 'Холодильник 60', svg: () => `<g class="core">
-        <rect class="shape" x="-30" y="-36" width="60" height="72" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <rect x="-26" y="-32" width="52" height="64" rx="4"
-            fill="#dfe6ee" stroke="var(--outline)"/>
-    </g>` },
-    'milk-fridge-60': { label: 'Молочный холодильник 60', svg: () => `<g class="core">
-        <rect class="shape" x="-30" y="-28" width="60" height="56" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <rect x="-24" y="-22" width="48" height="44" rx="4"
-            fill="#dfe6ee" stroke="var(--outline)"/>
-        <rect x="-20" y="-18" width="40" height="10" rx="3"
-            fill="#fff" fill-opacity="0.7" stroke="var(--outline)"/>
-    </g>` },
-    'freezer-60': { label: 'Морозильник 60', svg: () => `<g class="core">
-        <rect class="shape" x="-30" y="-30" width="60" height="60" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <rect x="-25" y="-10" width="50" height="20" rx="3"
-            fill="#eaf6ff" stroke="var(--outline)"/>
-    </g>` },
-    'pastry-case-120': { label: 'Витрина кондит. прямая 120', svg: () => `<g class="core">
-        <rect class="shape" x="-60" y="-30" width="120" height="60" rx="8"
-            fill="url(#wood-espresso)" stroke="#2c180d"/>
-        <rect x="-58" y="-38" width="116" height="16" rx="6"
-            fill="url(#glass-soft)" stroke="var(--outline)"/>
-    </g>` },
-    'pastry-case-120-curved': { label: 'Витрина кондит. радиус 120', svg: () => `<g class="core">
-        <rect class="shape" x="-60" y="-30" width="120" height="60" rx="8"
-            fill="url(#wood-espresso)" stroke="#2c180d"/>
-        <path d="M-58 -30 Q0 -50 58 -30" fill="url(#glass-soft)" stroke="var(--outline)"/>
-        <rect x="-58" y="-38" width="116" height="8" rx="4"
-            fill="url(#glass-soft)" stroke="var(--outline)"/>
-    </g>` },
-    'pos-terminal': { label: 'POS-терминал', svg: () => `<g class="core">
-        <rect class="shape" x="-18" y="-12" width="36" height="24" rx="4"
-            fill="#1e2330" stroke="#3a4050"/>
-        <rect x="-14" y="-8" width="28" height="16" rx="3"
-            fill="#0e1320"/>
-        <rect x="-3" y="12" width="6" height="6" rx="2" fill="#5ad1ff"/>
-    </g>` },
-    'cash-drawer': { label: 'Денежный ящик', svg: () => `<g class="core">
-        <rect class="shape" x="-24" y="-14" width="48" height="28" rx="4"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <circle cx="0" cy="0" r="2.5" fill="#333"/>
-    </g>` },
-    'condiment-120': { label: 'Станция приправ 120', svg: () => `<g class="core">
-        <rect class="shape" x="-60" y="-22" width="120" height="44" rx="6"
-            fill="url(#wood-oak)" stroke="var(--outline)"/>
-        <g fill="#fff" fill-opacity="0.75" stroke="#ccc">
-            <rect x="-48" y="-12" width="24" height="18" rx="3"/>
-            <rect x="-12" y="-12" width="24" height="18" rx="3"/>
-            <rect x="24"  y="-12" width="24" height="18" rx="3"/>
-        </g>
-    </g>` },
-    'syrup-rack-90': { label: 'Рейл сиропов 90', svg: () => `<g class="core">
-        <rect class="shape" x="-45" y="-10" width="90" height="20" rx="5"
-            fill="url(#wood-espresso)" stroke="#2c180d"/>
-        <g fill="#f6d5ff" stroke="#a86ad0">
-            <circle cx="-30" r="4"/><circle cx="-15" r="4"/><circle cx="0" r="4"/><circle cx="15" r="4"/><circle cx="30" r="4"/>
-        </g>
-    </g>` },
-    'trash-single': { label: 'Урна одинарная', svg: () => `<g class="core">
-        <rect class="shape" x="-16" y="-20" width="32" height="40" rx="6"
-            fill="#40464f" stroke="#242a33"/>
-        <rect x="-12" y="-24" width="24" height="8" rx="3" fill="#303640"/>
-    </g>` },
-    'trash-double': { label: 'Урна двойная', svg: () => `<g class="core">
-        <rect class="shape" x="-32" y="-20" width="64" height="40" rx="6"
-            fill="#40464f" stroke="#242a33"/>
-        <rect x="-26" y="-24" width="24" height="8" rx="3" fill="#303640"/>
-        <rect x="2"    y="-24" width="24" height="8" rx="3" fill="#303640"/>
-    </g>` },
-    'hand-sink': { label: 'Раковина для рук', svg: () => `<g class="core">
-        <rect class="shape" x="-20" y="-16" width="40" height="32" rx="6"
-            fill="#e9f1fb" stroke="var(--outline)"/>
-        <circle r="5" fill="#c8d7ea"/>
-    </g>` },
-    'triple-sink': { label: 'Мойка 3-секц.', svg: () => `<g class="core">
-        <rect class="shape" x="-90" y="-26" width="180" height="52" rx="8"
-            fill="#e9f1fb" stroke="var(--outline)"/>
-        <g fill="#c8d7ea" stroke="var(--outline)">
-            <rect x="-70" y="-14" width="40" height="28" rx="5"/>
-            <rect x="-20" y="-14" width="40" height="28" rx="5"/>
-            <rect x="30"  y="-14" width="40" height="28" rx="5"/>
-        </g>
-    </g>` },
-    'dishwasher-pro': { label: 'Посудомойка подстол.', svg: () => `<g class="core">
-        <rect class="shape" x="-28" y="-24" width="56" height="48" rx="6"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <rect x="-24" y="-6" width="48" height="12" rx="3"
-            fill="#eaf6ff" stroke="var(--outline)"/>
-    </g>` },
-    'drying-rack-120': { label: 'Сушка посуды 120', svg: () => `<g class="core">
-        <rect class="shape" x="-60" y="-10" width="120" height="20" rx="4"
-            fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <g stroke="#aab7c6">
-            <line x1="-50" y1="-8" x2="-50" y2="8"/><line x1="-30" y1="-8" x2="-30" y2="8"/>
-            <line x1="-10" y1="-8" x2="-10" y2="8"/><line x1="10" y1="-8" x2="10" y2="8"/>
-            <line x1="30"  y1="-8" x2="30" y2="8"/><line x1="50" y1="-8" x2="50" y2="8"/>
-        </g>
-    </g>` },
-    'queue-post': { label: 'Стойка очереди', svg: () => `<g class="core">
-        <circle class="shape" r="10" fill="url(#metal-steel)" stroke="var(--outline)"/>
-        <circle r="14" fill="#000" fill-opacity="0.06"/>
-    </g>` },
-    'menu-board-120': { label: 'Меню-борд 120', svg: () => `<g class="core">
-        <rect class="shape" x="-60" y="-6" width="120" height="12" rx="3"
-            fill="#1e2330" stroke="#3a4050"/>
-        <rect x="-56" y="-2" width="112" height="4" rx="2"
-            fill="#0e1320"/>
-    </g>` },
-    'planter-long-120': { label: 'Кашпо длинное 120', svg: () => `<g class="core">
-        <rect class="shape" x="-60" y="-14" width="120" height="28" rx="6"
-            fill="url(#wood-oak)" stroke="var(--outline)"/>
-        <rect x="-56" y="-18" width="112" height="10" rx="5"
-            fill="url(#foliage-rich)" stroke="#2c6b3f"/>
-    </g>` },
-    'partition-120x10': { label: 'Перегородка 120×10', svg: () => `<g class="core">
-        <rect class="shape" x="-60" y="-5" width="120" height="10" rx="3"
-            fill="#cbd3dd" stroke="#9aa4b0"/>
-    </g>` },
-    'chair': {
-        label: 'Стул',
-        svg: () => `<g class="core">
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.4" stroke-linecap="round">
-            <path d="M-15 10 L-12 32"/>
-            <path d="M15 10 L12 32"/>
-            <path d="M-15 -10 L-20 8"/>
-            <path d="M15 -10 L20 8"/>
-        </g>
-        <path class="shape" d="M-22 -12 Q0 -32 22 -12 V-4 Q0 -22 -22 -4 Z" fill="url(#upholstery-amber)" stroke="#714624"/>
-        <rect class="shape" x="-20" y="-2" width="40" height="24" rx="7" fill="url(#upholstery-amber)" stroke="#714624"/>
-        <rect x="-18" y="-20" width="36" height="10" rx="5" fill="url(#wood-espresso)" stroke="#2c180d"/>
-        <rect x="-14" y="2" width="28" height="6" rx="3" fill="#fff4de" fill-opacity="0.25"/>
-    </g>`,
-        schematicSvg: () => `
-  <g class="core schematic-only" data-id="chair">
-    <rect x="-12" y="-12" width="24" height="24" rx="3.5" class="shape shape-fill"/>
-    <rect x="-7.2" y="-2.4" width="14.4" height="9.6" class="shape"/>
-    <line x1="0" y1="-12" x2="0" y2="12" class="furn-center"/>
-  </g>`
-    },
-    'armchair': { label: 'Кресло', svg: () => `<g class="core">
-        <rect x="-44" y="-32" width="88" height="64" rx="20" fill="url(#upholstery-slate)" stroke="#2f363f"/>
-        <rect x="-42" y="-20" width="18" height="48" rx="8" fill="url(#leather-caramel)" stroke="#4d2d17"/>
-        <rect x="24" y="-20" width="18" height="48" rx="8" fill="url(#leather-caramel)" stroke="#4d2d17"/>
-        <rect class="shape" x="-32" y="-8" width="64" height="40" rx="14" fill="url(#upholstery-cream)" stroke="#5d636b"/>
-        <rect class="shape" x="-30" y="-24" width="60" height="22" rx="12" fill="url(#upholstery-slate)" stroke="#3b4149"/>
-        <path d="M-30 -10 H30" stroke="#ffffff" stroke-opacity="0.18" stroke-width="4" stroke-linecap="round"/>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <path d="M-28 26 L-24 44"/>
-            <path d="M28 26 L24 44"/>
-        </g>
-    </g>` },
-    'sofa-2': { label: 'Диван 2-местный', svg: () => `<g class="core">
-        <rect class="shape" x="-88" y="-38" width="176" height="76" rx="24" fill="url(#upholstery-forest)" stroke="#253523"/>
-        <rect x="-84" y="18" width="168" height="12" rx="5" fill="url(#wood-espresso)" stroke="#1a120b"/>
-        <g fill="url(#upholstery-cream)" stroke="#8c805f">
-            <rect class="shape" x="-66" y="-2" width="58" height="34" rx="12"/>
-            <rect class="shape" x="8" y="-2" width="58" height="34" rx="12"/>
-        </g>
-        <g fill="url(#upholstery-forest)" stroke="#314b31">
-            <rect x="-74" y="-26" width="60" height="20" rx="10"/>
-            <rect x="14" y="-26" width="60" height="20" rx="10"/>
-        </g>
-        <g fill="#ffffff" fill-opacity="0.65" stroke="none">
-            <circle cx="-37" cy="-4" r="10"/>
-            <circle cx="39" cy="-4" r="10"/>
-        </g>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="5" stroke-linecap="round">
-            <path d="M-70 30 L-70 44"/>
-            <path d="M70 30 L70 44"/>
-        </g>
-    </g>` },
-    'sofa-3': { label: 'Диван 3-местный', svg: () => `<g class="core">
-        <rect class="shape" x="-110" y="-38" width="220" height="76" rx="26" fill="url(#upholstery-slate)" stroke="#283039"/>
-        <rect x="-106" y="18" width="212" height="12" rx="5" fill="url(#wood-espresso)" stroke="#1a120b"/>
-        <g fill="url(#upholstery-cream)" stroke="#6c6960">
-            <rect class="shape" x="-84" y="-2" width="54" height="34" rx="12"/>
-            <rect class="shape" x="-18" y="-2" width="54" height="34" rx="12"/>
-            <rect class="shape" x="48" y="-2" width="54" height="34" rx="12"/>
-        </g>
-        <g fill="url(#upholstery-slate)" stroke="#3b424b">
-            <rect x="-92" y="-26" width="60" height="20" rx="10"/>
-            <rect x="-26" y="-26" width="60" height="20" rx="10"/>
-            <rect x="40" y="-26" width="60" height="20" rx="10"/>
-        </g>
-        <g fill="url(#fabric-hatching)" stroke="#c2ae8c" stroke-width="1.2">
-            <rect x="-60" y="10" width="44" height="18" rx="8"/>
-            <rect x="16" y="10" width="44" height="18" rx="8"/>
-        </g>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="5" stroke-linecap="round">
-            <path d="M-90 30 L-90 44"/>
-            <path d="M0 30 L0 44"/>
-            <path d="M90 30 L90 44"/>
-        </g>
-    </g>` },
-    'sectional-l': { label: 'Диван угловой L', svg: () => `<g class="core">
-        <path class="shape" d="M-108 -50 H88 Q106 -50 106 -32 V30 H30 V96 H-96 Q-108 96 -108 84 Z" fill="url(#upholstery-forest)" stroke="#253523"/>
-        <rect x="-104" y="18" width="134" height="12" rx="5" fill="url(#wood-espresso)" stroke="#1a120b"/>
-        <rect x="6" y="30" width="24" height="56" rx="10" fill="url(#wood-espresso)" stroke="#1a120b"/>
-        <g fill="url(#upholstery-cream)" stroke="#8c805f">
-            <rect class="shape" x="-86" y="-6" width="64" height="34" rx="12"/>
-            <rect class="shape" x="-18" y="-6" width="86" height="34" rx="14"/>
-            <rect class="shape" x="-84" y="30" width="60" height="34" rx="12"/>
-        </g>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="5" stroke-linecap="round">
-            <path d="M-92 32 L-92 48"/>
-            <path d="M-6 32 L-6 48"/>
-            <path d="M44 72 L44 90"/>
-        </g>
-    </g>` },
-    'stool': { label: 'Табурет', svg: () => `<g class="core">
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round">
-            <path d="M-10 -6 L-12 16"/>
-            <path d="M10 -6 L12 16"/>
-            <path d="M-6 8 L-4 24"/>
-            <path d="M6 8 L4 24"/>
-        </g>
-        <circle class="shape" r="20" fill="url(#wood-honey)" stroke="#704622"/>
-        <circle r="12" fill="url(#table-round-sheen)"/>
-        <circle r="5" fill="url(#metal-brass)" stroke="#7f601f" stroke-width="0.6"/>
-    </g>` },
-    'barstool': { label: 'Барный стул', svg: () => `<g class="core">
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.2" stroke-linecap="round">
-            <path d="M-8 -20 L-12 28"/>
-            <path d="M8 -20 L12 28"/>
-            <ellipse cy="10" rx="16" ry="3" stroke="url(#metal-brass)"/>
-        </g>
-        <circle class="shape" cy="-24" r="20" fill="url(#leather-caramel)" stroke="#4d2d17"/>
-        <circle cy="-24" r="12" fill="url(#table-round-sheen)"/>
-        <rect x="-8" y="28" width="16" height="6" rx="3" fill="url(#metal-steel)" stroke="#7c858f"/>
-    </g>` },
-    'coffee-round': { label: 'Стол журнальный', svg: () => `<g class="core">
-        <circle class="shape" r="40" fill="url(#wood-honey)" stroke="#835127"/>
-        <circle r="30" fill="url(#table-round-sheen)"/>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.2" stroke-linecap="round">
-            <path d="M-18 38 L-6 20"/>
-            <path d="M18 38 L6 20"/>
-            <path d="M-6 20 L6 20"/>
-        </g>
-    </g>` },
-    'coffee-rect': { label: 'Стол журнальный', svg: () => `<g class="core">
-        <rect class="shape" x="-48" y="-28" width="96" height="56" rx="10" fill="url(#wood-honey)" stroke="#835127"/>
-        <rect x="-32" y="-14" width="64" height="28" rx="8" fill="url(#table-round-sheen)"/>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round">
-            <path d="M-32 26 L-18 10"/>
-            <path d="M32 26 L18 10"/>
-            <path d="M-18 10 H18"/>
-        </g>
-    </g>` },
-    'dining-4': { label: 'Стол обеденный', svg: () => `<g class="core">
-        <rect class="shape" x="-68" y="-44" width="136" height="88" rx="12" fill="url(#wood-oak)" stroke="#7a4c22"/>
-        <rect x="-48" y="-16" width="96" height="32" rx="8" fill="url(#table-round-sheen)"/>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <path d="M-44 40 L-30 10"/>
-            <path d="M44 40 L30 10"/>
-            <path d="M-30 10 H30"/>
-        </g>
-    </g>` },
-    'dining-6': { label: 'Стол обеденный', svg: () => `<g class="core">
-        <rect class="shape" x="-88" y="-48" width="176" height="96" rx="14" fill="url(#wood-oak)" stroke="#7a4c22"/>
-        <rect x="-60" y="-18" width="120" height="36" rx="10" fill="url(#table-round-sheen)"/>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <path d="M-60 44 L-40 12"/>
-            <path d="M60 44 L40 12"/>
-            <path d="M-40 12 H40"/>
-        </g>
-    </g>` },
-    'dining-8': { label: 'Стол обеденный', svg: () => `<g class="core">
-        <rect class="shape" x="-108" y="-48" width="216" height="96" rx="18" fill="url(#wood-oak)" stroke="#7a4c22"/>
-        <rect x="-72" y="-18" width="144" height="36" rx="12" fill="url(#table-round-sheen)"/>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round">
-            <path d="M-74 44 L-50 10"/>
-            <path d="M74 44 L50 10"/>
-            <path d="M-50 10 H50"/>
-        </g>
-    </g>` },
-    'desk': { label: 'Стол письменный', svg: () => `<g class="core">
-        <rect class="shape" x="-76" y="-38" width="152" height="76" rx="10" fill="url(#wood-espresso)" stroke="#50311b"/>
-        <rect x="-70" y="-30" width="64" height="20" rx="6" fill="#ede0d2" stroke="#d0bca2"/>
-        <rect x="14" y="-30" width="62" height="60" rx="8" fill="#62442a" stroke="#3b2415" fill-opacity="0.25"/>
-        <path d="M-12 -30 V38" stroke="#22150c" stroke-opacity="0.3"/>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.4" stroke-linecap="round">
-            <path d="M-52 36 L-40 10"/>
-            <path d="M52 36 L40 10"/>
-        </g>
-    </g>` },
-    'workstation-l': { label: 'Рабочая станция L', svg: () => `<g class="core">
-        <path class="shape" transform="translate(-84, -70)" d="M0 10 C0 4.477 4.477 0 10 0 H168 C173.523 0 178 4.477 178 10 V60 H110 V140 C110 145.523 105.523 150 100 150 H60 V80 H10 C4.477 80 0 75.523 0 70 V10 Z" fill="url(#wood-espresso)" stroke="#50311b"/>
-        <path d="M-10 -6 H70" stroke="#2b1a0f" stroke-opacity="0.2" stroke-width="6" stroke-linecap="round"/>
-        <g fill="none" stroke="url(#metal-steel)" stroke-width="3.6" stroke-linecap="round">
-            <path d="M-64 58 L-52 18"/>
-            <path d="M24 60 L12 18"/>
-            <path d="M74 60 L62 18"/>
-        </g>
-    </g>` },
-    'office-chair': { label: 'Кресло офисное', svg: () => `<g class="core" transform="translate(-22, -26)">
-        <path d="M11,50 L14,50 Q12,48 11,46 L11,50 M33,50 L30,50 Q32,48 33,46 L33,50 M18,50 L20,50 Q19,48 18,46 L18,50 M26,50 L24,50 Q25,48 26,46 L26,50" fill="#1f1f1f"/>
-        <path class="shape" d="M22,0 L22,6 L12,6 Q8,6 8,10 L8,38 Q8,42 12,42 L32,42 Q36,42 36,38 L36,10 Q36,6 32,6 L22,6 Z" fill="url(#upholstery-slate)" stroke="#1c2127"/>
-        <rect x="6" y="12" width="4" height="22" rx="2" fill="url(#metal-steel)" stroke="#1c2127"/>
-        <rect x="38" y="12" width="4" height="22" rx="2" fill="url(#metal-steel)" stroke="#1c2127"/>
-        <path d="M11,46 L33,46 M22,42 V50 M14,42 L11,46 L14,50 M30,42 L33,46 L30,50 M18,42 L18,50 M26,42 L26,50" fill="none" stroke="#1c2127" stroke-width="2" stroke-linecap="round"/>
-    </g>` },
-    'reception': { label: 'Стойка-ресепшн', svg: () => `<g class="core">
-        <rect class="shape" x="-116" y="-44" width="232" height="88" rx="12" fill="url(#wood-espresso)" stroke="#4a2d17"/>
-        <rect x="-112" y="-36" width="224" height="44" rx="10" fill="url(#counter-marble)" stroke="#c4c0bb"/>
-        <path d="M-112 4 H112" stroke="#2f1d10" stroke-opacity="0.25"/>
-        <g fill="none" stroke="#ffffff" stroke-opacity="0.4">
-            <path d="M-80 -12 H-30"/>
-            <path d="M30 -12 H80"/>
-        </g>
-    </g>` },
-    'whiteboard': { label: 'Доска', svg: () => `<g class="core"><rect x="-90" y="-50" class="shape" width="180" height="100" rx="4" fill="#B0C4DE" stroke="#708090"/><rect x="-85" y="-45" width="170" height="90" fill="#FFFFFF" stroke="#E6E6FA"/><path d="M-75 -25 H60 M-75 -5 H30 M-75 15 H0" stroke="#ADD8E6" stroke-width="2"/></g>` },
-    'printer': { label: 'Принтер', svg: () => `<g class="core"><rect x="-30" y="-22.5" class="shape" width="60" height="45" rx="6" fill="#DCDCDC" stroke="#A9A9A9"/><rect x="-25" y="-17.5" width="50" height="10" rx="2" fill="#FFFFFF"/><rect x="-22" y="5.5" width="44" height="12" rx="2" fill="#F5F5F5"/></g>` },
-    'copier': { label: 'Ксерокс', svg: () => `<g class="core"><rect x="-35" y="-45" class="shape" width="70" height="90" rx="6" fill="#DCDCDC" stroke="#A9A9A9"/><rect x="-30" y="-40" width="60" height="20" rx="3" fill="#696969" stroke="#2F4F4F"/><rect x="-27" y="-10" width="54" height="5" rx="2" fill="#FFFFFF"/><rect x="-27" y="5" width="54" height="10" rx="2" fill="#F5F5F5"/><rect x="-27" y="20" width="54" height="10" rx="2" fill="#F5F5F5"/></g>` },
-    'server-rack': { label: 'Серверная стойка', svg: () => `<g class="core"><rect x="-30" y="-50" class="shape" width="60" height="100" rx="4" fill="#1b263b" stroke="#415a77"/><g fill="#74c0fc" opacity="0.6">${[-38,-24,-10,4,18,32].map(y=>`<rect x="-20" y="${y}" width="40" height="8" rx="1"/>`).join('')}</g></g>` },
-    'bed-single': { label: 'Кровать', svg: () => `<g class="core" transform="translate(-45, -100)">
-        <rect class="shape" width="90" height="30" rx="8" fill="#D2B48C" stroke="#8B4513"/>
-        <rect class="shape" y="10" width="90" height="190" rx="10" fill="#F5F5DC" stroke="#BDB76B"/>
-        <rect x="5" y="35" width="80" height="160" fill="#FFFFFF" stroke="#EEE8AA"/>
-        <rect x="10" y="40" width="70" height="40" rx="6" fill="#F0E68C" stroke="#BDB76B"/>
-    </g>` },
-    'bed-double': { label: 'Кровать', svg: () => `<g class="core" transform="translate(-80, -100)">
-        <rect class="shape" width="160" height="30" rx="8" fill="#A0522D" stroke="#800000"/>
-        <rect class="shape" y="10" width="160" height="190" rx="12" fill="#FFE4C4" stroke="#D2691E"/>
-        <rect x="5" y="35" width="150" height="160" fill="#FFFFFF" stroke="#FA8072"/>
-        <rect x="15" y="40" width="60" height="40" rx="6" fill="#FFDAB9" stroke="#D2691E"/>
-        <rect x="85" y="40" width="60" height="40" rx="6" fill="#FFDAB9" stroke="#D2691E"/>
-    </g>` },
-    'nightstand': { label: 'Тумба', svg: () => `<g class="core"><rect x="-20" y="-20" class="shape" width="40" height="40" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/><rect x="-15" y="-12" width="30" height="8" rx="2" fill="#e3c6a4" stroke-opacity="0.5"/><rect x="-15" y="4" width="30" height="8" rx="2" fill="#e3c6a4" stroke-opacity="0.5"/></g>` },
-    'wardrobe-2d': { label: 'Шкаф', svg: () => `<g class="core"><rect x="-60" y="-30" class="shape" width="120" height="60" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/><path d="M0 -25 V25" stroke="#855a3c" stroke-width="1"/><rect x="-8" y="-2" width="4" height="12" rx="2" fill="#855a3c"/><rect x="4" y="-2" width="4" height="12" rx="2" fill="#855a3c"/></g>` },
-    'wardrobe-3d': { label: 'Шкаф', svg: () => `<g class="core"><rect x="-90" y="-30" class="shape" width="180" height="60" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/><path d="M-30 -25 V25 M30 -25 V25" stroke="#855a3c" stroke-width="1"/><rect x="-38" y="-2" width="4" height="12" rx="2" fill="#855a3c"/><rect x="-2" y="-2" width="4" height="12" rx="2" fill="#855a3c"/><rect x="34" y="-2" width="4" height="12" rx="2" fill="#855a3c"/></g>` },
-    'shelving': { label: 'Стеллаж', svg: () => `<g class="core"><rect x="-70" y="-20" class="shape" width="140" height="40" rx="6" fill="none" stroke="#6c757d"/>${[-10,0,10].map(y=>`<path d="M-62 ${y} H62" stroke="#bbb"/>`).join('')}</g>` },
-    'kitchen-line': { label: 'Кухонный модуль', svg: () => `<g class="core"><rect class="shape" x="-96" y="-34" width="192" height="68" rx="10" fill="url(#wood-espresso)" stroke="#3f2a17"/><rect x="-92" y="-30" width="184" height="20" rx="6" fill="url(#counter-marble)" stroke="#c9c4bf"/>${[-84,-28,28].map(x=>`<rect x="${x}" y="-8" width="52" height="36" rx="6" fill="#f3f4f6" stroke="#b7bec7"/>`).join('')}${[-84,-28,28].map(x=>`<rect x="${x+10}" y="12" width="32" height="12" rx="3" fill="#d1d6de" stroke="#a2aab6"/>`).join('')}</g>` },
-    'sink': { label: 'Мойка', svg: () => `<g class="core" transform="translate(-36, -26)">
-        <rect class="shape" width="72" height="52" rx="8" fill="url(#metal-chrome)" stroke="#919aa4"/>
-        <rect x="6" y="8" width="60" height="36" rx="6" fill="url(#glass-soft)" stroke="#7f9bb0"/>
-        <circle cx="36" cy="26" r="4" fill="#5d6a73"/>
-        <path d="M54 6 Q60 -6 52 -10" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round"/>
-        <path d="M54 6 V18" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round"/>
-    </g>` },
-    'cooktop-4': { label: 'Варочная панель', svg: () => `<g class="core" transform="translate(-30, -27.5)">
-        <rect class="shape" width="60" height="55" rx="8" fill="#10151a" stroke="#30363c"/>
-        ${[18,42].map(x=>[15,38].map(y=>`<circle cx="${x}" cy="${y}" r="9" fill="#1c232a" stroke="#4a545d"/><circle cx="${x}" cy="${y}" r="4" fill="#0d1114" stroke="#5b676f"/>`).join('')).join('')}
-        <rect x="-4" y="-4" width="68" height="63" rx="10" fill="none" stroke="#4a545d" stroke-dasharray="6 8" stroke-opacity="0.5"/>
-    </g>` },
-    'fridge': { label: 'Холодильник', svg: () => `<g class="core"><rect x="-36" y="-34" class="shape" width="72" height="68" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><path d="M-30 0 H30" stroke="#b4bdc7"/><rect x="26" y="-26" width="4" height="16" rx="1.5" fill="#dde4ea" stroke="#93a0ad"/><rect x="26" y="10" width="4" height="16" rx="1.5" fill="#dde4ea" stroke="#93a0ad"/></g>` },
-    'oven': { label: 'Духовка', svg: () => `<g class="core"><rect x="-32" y="-32" class="shape" width="64" height="64" rx="8" fill="url(#metal-steel)" stroke="#656d76"/><rect x="-22" y="-18" width="44" height="28" rx="4" fill="#1f2429" stroke="#495057"/><path d="M-20 -24 H20" stroke="#d6dae0" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="18" r="4" fill="#d6dae0"/></g>` },
-    'microwave': { label: 'Микроволновка', svg: () => `<g class="core"><rect x="-30" y="-20" class="shape" width="60" height="40" rx="6" fill="url(#metal-chrome)" stroke="#8f99a5"/><rect x="-20" y="-10" width="32" height="20" rx="3" fill="#0f1418" stroke="#3e464f"/><rect x="15" y="-8" width="10" height="16" rx="3" fill="#d9dee3" stroke="#9da6b1"/><circle cx="20" cy="0" r="2" fill="#6c7682"/></g>` },
-    'dishwasher': { label: 'Посудомойка', svg: () => `<g class="core"><rect x="-32" y="-32" class="shape" width="64" height="64" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><path d="M-20 -22 H20" stroke="#c7d0d8" stroke-width="3" stroke-linecap="round"/><rect x="-24" y="10" width="48" height="14" rx="4" fill="#edf1f5" stroke="#b8c1cc"/></g>` },
-    'island': { label: 'Кухонный остров', svg: () => `<g class="core"><rect class="shape" x="-80" y="-48" width="160" height="96" rx="12" fill="url(#wood-espresso)" stroke="#4a2d17"/><rect x="-74" y="-42" width="148" height="32" rx="8" fill="url(#counter-marble)" stroke="#c4c0bb"/><rect x="-68" y="0" width="136" height="40" rx="10" fill="#f1f3f5" stroke="#b7bec7"/></g>` },
-    'toilet': { label: 'Туалет', svg: () => `<g class="core" transform="translate(-20, -30)">
-        <path class="shape" d="M5 10 H35 C37.761 10 40 12.239 40 15 V55 C40 57.761 37.761 60 35 60 H5 C2.239 60 0 57.761 0 55 V15 C0 12.239 2.239 10 5 10 Z" fill="#F8F8FF" stroke="#DCDCDC"/>
-        <rect x="5" y="0" width="30" height="15" rx="4" fill="#E6E6FA" stroke="#D8BFD8"/>
-        <ellipse cx="20" cy="38" rx="12" ry="15" fill="#FFFFFF" stroke="#DCDCDC"/>
-    </g>` },
-    'bath-sink': { label: 'Раковина', svg: () => `<g class="core"><rect x="-30" y="-22.5" class="shape" width="60" height="45" rx="8" fill="#F8F8FF" stroke="#DCDCDC"/><ellipse cx="0" cy="0" rx="18" ry="12" fill="#FFFFFF" stroke="#E0E0E0"/><circle r="3" fill="#6c757d"/></g>` },
-    'shower': { label: 'Душ', svg: () => `<g class="core"><rect x="-45" y="-45" class="shape" width="90" height="90" rx="2" fill="#F0FFFF" stroke="#B0E0E6"/><path d="M-45 45 L45 -45" stroke="#E0FFFF"/><circle cx="-30" cy="-30" r="5" fill="#C0C0C0"/></g>` },
-    'bathtub': { label: 'Ванна', svg: () => `<g class="core"><rect x="-75" y="-35" class="shape" width="150" height="70" rx="35" fill="#F8F8FF" stroke="#DCDCDC"/><ellipse cx="0" cy="0" rx="68" ry="28" fill="#FFFFFF" stroke="#E0E0E0"/></g>` },
-    'washer': { label: 'Стиральная машина', svg: () => `<g class="core"><rect x="-32" y="-32" class="shape" width="64" height="64" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><circle cy="2" r="18" fill="#d7e1ea" stroke="#6d7a86"/><circle cy="2" r="12" fill="url(#glass-soft)" stroke="#6d7a86"/></g>` },
-    'dryer': { label: 'Сушильная машина', svg: () => `<g class="core"><rect x="-32" y="-32" class="shape" width="64" height="64" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><circle cy="2" r="18" fill="#d7e1ea" stroke="#6d7a86"/><path d="M-10 -8 L10 12 M-10 12 L10 -8" stroke="#6d7a86" stroke-width="2" stroke-linecap="round"/></g>` },
-    'water-cooler': { label: 'Кулер для воды', svg: () => `<g class="core"><rect x="-18" y="-52" class="shape" width="36" height="104" rx="8" fill="url(#metal-chrome)" stroke="#8f99a5"/><circle cy="-36" r="14" fill="url(#glass-soft)" stroke="#4a87b3"/><rect x="-8" y="-6" width="16" height="12" rx="3" fill="#dfe3e8" stroke="#9aa4af"/><path d="M-6 -2 H-2 M2 -2 H6" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/></g>` },
-    'tv-stand': { label: 'ТВ-тумба', svg: () => `<g class="core"><rect x="-70" y="-20" class="shape" width="140" height="40" rx="6" fill="url(#wood-grain)" stroke="#855a3c"/></g>` },
-    'tv-wall': { label: 'ТВ настенный', svg: () => `<g class="core"><rect x="-70" y="-40" class="shape" width="140" height="80" rx="6" fill="#202020" stroke="#000"/><rect x="-60" y="-30" width="120" height="60" rx="2" fill="#000" stroke="#303030"/></g>` },
-    'projector': { label: 'Проектор', svg: () => `<g class="core"><rect x="-25" y="-15" class="shape" width="50" height="30" rx="6" fill="#F5F5F5" stroke="#DCDCDC"/><circle cx="10" r="8" fill="#212529" stroke="#495057"/></g>` },
-    'projection-screen': { label: 'Экран проектора', svg: () => `<g class="core"><rect x="-90" y="-55" class="shape" width="180" height="10" rx="3" fill="#212529"/><rect x="-90" y="-45" width="180" height="100" fill="#FFFFFF" stroke="#DCDCDC"/></g>` },
-    'ac-indoor': { label: 'Кондиционер', svg: () => `<g class="core"><rect x="-50" y="-15" class="shape" width="100" height="30" rx="6" fill="#FFFFFF" stroke="#DCDCDC"/><path d="M-40 7 H40" stroke="#E8E8E8"/></g>` },
-    'radiator': { label: 'Радиатор', svg: () => `<g class="core"><rect x="-60" y="-12.5" class="shape" width="120" height="25" rx="4" fill="#F8F8FF" stroke="#DCDCDC"/>${[-50,-35,-20,-5,10,25,40].map(x=>`<path d="M${x} -8.5 V8.5" stroke="#DCDCDC" stroke-width="2"/>`).join('')}</g>` },
-    'plant': { label: 'Растение', svg: () => `<g class="core">
-        <path d="M-20,0 L20,0 L15,32 L-15,32 Z" fill="url(#ceramic-terracotta)" stroke="#5C3317"/>
-        <ellipse cy="0" rx="18" ry="4" fill="#3a2513" fill-opacity="0.6"/>
-        <path d="M0 -6 C-6 -16 -4 -28 0 -40 C4 -28 6 -16 0 -6 Z" fill="url(#foliage-rich)" stroke="#1f552a"/>
-        <path d="M-12 -10 C-26 -4 -22 -20 -12 -34 C-8 -22 -6 -12 -12 -10 Z" fill="url(#foliage-rich)" stroke="#1f552a"/>
-        <path d="M12 -12 C26 -6 22 -22 12 -36 C8 -24 6 -14 12 -12 Z" fill="url(#foliage-rich)" stroke="#1f552a"/>
-        <path d="M-6 -14 Q0 -20 6 -14" stroke="#d8f5c4" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
-    </g>` },
-    'floor-lamp': { label: 'Торшер', svg: () => `<g class="core" transform="translate(0, -25)">
-        <circle r="11" cy="22" fill="url(#metal-steel)" stroke="#6f7882"/>
-        <path d="M0 -12 V 18" stroke="url(#metal-steel)" stroke-width="3" stroke-linecap="round"/>
-        <path d="M-16,-12 L16,-12 L24,-44 L-24,-44 Z" fill="#fff3c4" stroke="#d0b36d"/>
-        <path d="M-10,-24 L10,-24" stroke="#ffffff" stroke-opacity="0.5" stroke-linecap="round"/>
-    </g>` },
-    'rug': { label: 'Ковёр', svg: () => `<g class="core">
-        <rect x="-90" y="-60" class="shape" width="180" height="120" rx="8" fill="#F5F5DC" stroke="#DEB887"/>
-        <path d="M-80,-50 L80,-50 M-80,50 L80,50 M-80,-40 L80,-40 L80,40 L-80,40 L-80,-40" fill="none" stroke="#D2B48C" stroke-width="2" stroke-dasharray="5 5"/>
-        <text y="10" font-family="serif" font-size="24" text-anchor="middle" fill="#CD853F">⚜</text>
-    </g>` }
-};
+function defineItem(id, config) {
+  PLAN_LIBRARY[id] = config;
+}
 
-// --- Дополнительные параметры и шаблоны ---
-// Добавляем информацию о числе посадочных мест для соответствующих шаблонов.
-// Сиденья и столы имеют количество посадочных мест, используемое в аналитике.
-Object.assign(ITEM_TEMPLATES['chair'] || {}, { seats: 1 });
-Object.assign(ITEM_TEMPLATES['armchair'] || {}, { seats: 1 });
-Object.assign(ITEM_TEMPLATES['sofa-2'] || {}, { seats: 2 });
-Object.assign(ITEM_TEMPLATES['sofa-3'] || {}, { seats: 3 });
-Object.assign(ITEM_TEMPLATES['sectional-l'] || {}, { seats: 4 });
-Object.assign(ITEM_TEMPLATES['stool'] || {}, { seats: 1 });
-Object.assign(ITEM_TEMPLATES['barstool'] || {}, { seats: 1 });
-Object.assign(ITEM_TEMPLATES['dining-4'] || {}, { seats: 4 });
-Object.assign(ITEM_TEMPLATES['dining-6'] || {}, { seats: 6 });
-Object.assign(ITEM_TEMPLATES['dining-8'] || {}, { seats: 8 });
-Object.assign(ITEM_TEMPLATES['office-chair'] || {}, { seats: 1 });
-Object.assign(ITEM_TEMPLATES['cafe-table-round-60'] || {}, { seats: 2 });
-Object.assign(ITEM_TEMPLATES['cafe-table-square-70'] || {}, { seats: 2 });
-Object.assign(ITEM_TEMPLATES['cafe-hightop-round-70'] || {}, { seats: 2 });
-Object.assign(ITEM_TEMPLATES['cafe-communal-240'] || {}, { seats: 6 });
-Object.assign(ITEM_TEMPLATES['banquette-160'] || {}, { seats: 3 });
-Object.assign(ITEM_TEMPLATES['banquette-220'] || {}, { seats: 4 });
-Object.assign(ITEM_TEMPLATES['booth-2'] || {}, { seats: 2 });
-Object.assign(ITEM_TEMPLATES['booth-4'] || {}, { seats: 4 });
-Object.assign(ITEM_TEMPLATES['bar-counter-straight-180'] || {}, { seats: 4 });
-Object.assign(ITEM_TEMPLATES['bar-counter-straight-240'] || {}, { seats: 6 });
-Object.assign(ITEM_TEMPLATES['bar-counter-l-180x180'] || {}, { seats: 5 });
-Object.assign(ITEM_TEMPLATES['bar-counter-island-180x90'] || {}, { seats: 6 });
-
-// Добавляем шаблоны барных стоек с параметрами посадки
-ITEM_TEMPLATES['bar-counter-straight'] = {
-    label: 'Барная стойка',
+[
+  ['zone', {
+    label: 'Зона помещения 200×150',
+    builder: 'zone',
+    width: 200,
+    depth: 150,
+    scaleStepCm: 50
+  }],
+  ['sofa-2seat-200', {
+    label: 'Диван 2-местный 200×95',
+    builder: 'sofa',
+    width: 200,
+    depth: 95,
+    seats: 2,
+    opts: { segments: 2 }
+  }],
+  ['sofa-3seat-240', {
+    label: 'Диван 3-местный 240×100',
+    builder: 'sofa',
+    width: 240,
+    depth: 100,
+    seats: 3,
+    opts: { segments: 3 }
+  }],
+  ['sofa-l-260x180', {
+    label: 'Диван угловой 260×180',
+    builder: 'sofaL',
+    width: 260,
+    depth: 180,
     seats: 4,
-    svg: () => `<g class="core"><rect class="shape" x="-110" y="-36" width="220" height="72" rx="12" fill="url(#wood-espresso)" stroke="#4a2d17"/><rect x="-104" y="-32" width="208" height="22" rx="8" fill="url(#counter-marble)" stroke="#c4c0bb"/><rect x="-110" y="8" width="220" height="16" rx="6" fill="#322218" opacity="0.4"/><path d="M-110 18 H110" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round"/></g>`
-};
-ITEM_TEMPLATES['bar-counter-l'] = {
-    label: 'Барная стойка Г',
-    seats: 5,
-    svg: () => `<g class="core"><path class="shape" transform="translate(-84, -54)" d="M0 12 C0 5.373 5.373 0 12 0 H168 C174.627 0 180 5.373 180 12 V44 H108 V126 C108 132.627 102.627 138 96 138 H60 V76 H12 C5.373 76 0 70.627 0 64 Z" fill="url(#wood-espresso)" stroke="#4a2d17"/><path transform="translate(-78, -48)" d="M0 18 C0 13.582 3.582 10 8 10 H160 C164.418 10 168 13.582 168 18 V34 H108 V116 C108 120.418 104.418 124 100 124 H68 V66 H8 C3.582 66 0 62.418 0 58 Z" fill="url(#counter-marble)" stroke="#c4c0bb"/><path d="M-84 22 H78" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round"/><path d="M-20 70 H60" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round"/></g>`
-};
-ITEM_TEMPLATES['bar-counter-island'] = {
-    label: 'Барный остров',
+    opts: { chaiseRatio: 0.45, backDepthRatio: 0.58, segments: 2 }
+  }],
+  ['chair-armchair-90', {
+    label: 'Кресло 90×90',
+    builder: 'armchair',
+    width: 90,
+    depth: 90,
+    seats: 1
+  }],
+  ['chair-side-45x50', {
+    label: 'Стул 45×50',
+    builder: 'chair',
+    width: 45,
+    depth: 50,
+    seats: 1
+  }],
+  ['seat-banquette-160x60', {
+    label: 'Банкетка 160×60',
+    builder: 'banquette',
+    width: 160,
+    depth: 60,
+    seats: 3
+  }],
+  ['seat-banquette-220x60', {
+    label: 'Банкетка 220×60',
+    builder: 'banquette',
+    width: 220,
+    depth: 60,
+    seats: 4
+  }],
+  ['seat-booth-2-150x120', {
+    label: 'Кабинка на 2 150×120',
+    builder: 'booth',
+    width: 150,
+    depth: 120,
+    seats: 2,
+    opts: { tableWidthRatio: 0.32 }
+  }],
+  ['seat-booth-4-220x140', {
+    label: 'Кабинка на 4 220×140',
+    builder: 'booth',
+    width: 220,
+    depth: 140,
+    seats: 4,
+    opts: { tableWidthRatio: 0.32 }
+  }],
+  ['table-coffee-round-80', {
+    label: 'Журнальный стол Ø80',
+    builder: 'tableRound',
+    width: 80,
+    depth: 80,
+    opts: { cross: false }
+  }],
+  ['table-coffee-rect-120x60', {
+    label: 'Журнальный стол 120×60',
+    builder: 'tableRect',
+    width: 120,
+    depth: 60,
+    opts: { cross: false, cornerRadius: 10 }
+  }],
+  ['storage-media-180x40', {
+    label: 'Медиа-тумба 180×40',
+    builder: 'storage',
+    width: 180,
+    depth: 40,
+    opts: { shelves: [0], dividers: [0.33, 0.66], radius: 8 }
+  }],
+  ['decor-rug-200x140', {
+    label: 'Ковёр 200×140',
+    builder: 'rug',
+    width: 200,
+    depth: 140,
+    scaleStepCm: 10
+  }],
+  ['decor-plant-60', {
+    label: 'Растение Ø60',
+    builder: 'plant',
+    width: 60,
+    depth: 60,
+    scaleStepCm: 10
+  }],
+  ['decor-floorlamp-45x45', {
+    label: 'Торшер 45×45',
+    builder: 'floorLamp',
+    width: 45,
+    depth: 45
+  }],
+  ['table-round-60', {
+    label: 'Стол круглый Ø60',
+    builder: 'tableRound',
+    width: 60,
+    depth: 60,
+    seats: 2
+  }],
+  ['table-round-70', {
+    label: 'Стол круглый Ø70',
+    builder: 'tableRound',
+    width: 70,
+    depth: 70,
+    seats: 3
+  }],
+  ['table-round-80', {
+    label: 'Стол круглый Ø80',
+    builder: 'tableRound',
+    width: 80,
+    depth: 80,
+    seats: 4
+  }],
+  ['table-square-70', {
+    label: 'Стол квадратный 70×70',
+    builder: 'tableRect',
+    width: 70,
+    depth: 70,
+    seats: 4,
+    opts: { cornerRadius: 8 }
+  }],
+  ['table-rect-120x75', {
+    label: 'Стол 120×75',
+    builder: 'tableRect',
+    width: 120,
+    depth: 75,
+    seats: 4,
+    opts: { cornerRadius: 10 }
+  }],
+  ['table-rect-160x90', {
+    label: 'Стол 160×90',
+    builder: 'tableRect',
+    width: 160,
+    depth: 90,
     seats: 6,
-    svg: () => `<g class="core"><rect class="shape" x="-96" y="-40" width="192" height="80" rx="14" fill="url(#wood-espresso)" stroke="#4a2d17"/><rect x="-90" y="-34" width="180" height="24" rx="10" fill="url(#counter-marble)" stroke="#c4c0bb"/><rect x="-82" y="6" width="164" height="20" rx="8" fill="#322218" opacity="0.35"/><path d="M-78 18 H78" stroke="url(#metal-steel)" stroke-width="4" stroke-linecap="round"/></g>`
+    opts: { cornerRadius: 12 }
+  }],
+  ['table-rect-200x100', {
+    label: 'Стол 200×100',
+    builder: 'tableRect',
+    width: 200,
+    depth: 100,
+    seats: 8,
+    opts: { cornerRadius: 12 }
+  }],
+  ['table-rect-240x90', {
+    label: 'Стол 240×90',
+    builder: 'tableRect',
+    width: 240,
+    depth: 90,
+    seats: 10,
+    opts: { cornerRadius: 12 }
+  }],
+  ['table-hightop-round-70', {
+    label: 'Хай-топ Ø70',
+    builder: 'tableRound',
+    width: 70,
+    depth: 70,
+    seats: 3,
+    opts: { innerCircle: true }
+  }],
+  ['table-work-160x80', {
+    label: 'Рабочий стол 160×80',
+    builder: 'tableRect',
+    width: 160,
+    depth: 80,
+    seats: 2,
+    opts: { centerLine: 'horizontal', cornerRadius: 10 }
+  }],
+  ['stool-round-35', {
+    label: 'Табурет Ø35',
+    builder: 'stoolRound',
+    width: 35,
+    depth: 35,
+    seats: 1
+  }],
+  ['stool-bar-35x35', {
+    label: 'Барный табурет 35×35',
+    builder: 'stoolSquare',
+    width: 35,
+    depth: 35,
+    seats: 1
+  }],
+  ['counter-straight-180', {
+    label: 'Столешница прямая 180×60',
+    builder: 'counterStraight',
+    width: 180,
+    depth: 60,
+    scaleStepCm: 10
+  }],
+  ['counter-straight-240', {
+    label: 'Столешница прямая 240×60',
+    builder: 'counterStraight',
+    width: 240,
+    depth: 60,
+    scaleStepCm: 10
+  }],
+  ['counter-l-180x180', {
+    label: 'Столешница Г-образная 180×180',
+    builder: 'counterL',
+    width: 180,
+    depth: 180,
+    opts: { thickness: 60 }
+  }],
+  ['counter-island-180x90', {
+    label: 'Остров 180×90',
+    builder: 'counterIsland',
+    width: 180,
+    depth: 90
+  }],
+  ['counter-back-180x40', {
+    label: 'Барная задняя линия 180×40',
+    builder: 'counterBack',
+    width: 180,
+    depth: 40
+  }],
+  ['partition-linear-120x10', {
+    label: 'Перегородка 120×10',
+    builder: 'partitionLine',
+    width: 120,
+    depth: 10,
+    scaleStepCm: 5
+  }],
+  ['kitchen-sink-60x60', {
+    label: 'Мойка 60×60',
+    builder: 'sink',
+    width: 60,
+    depth: 60,
+    opts: { basins: [{ cx: 0, cy: 0, rx: 18, ry: 18 }], faucet: true }
+  }],
+  ['kitchen-handsink-50x50', {
+    label: 'Раковина для рук 50×50',
+    builder: 'sink',
+    width: 50,
+    depth: 50,
+    opts: { basins: [{ cx: 0, cy: 0, rx: 14, ry: 14 }], faucet: true }
+  }],
+  ['kitchen-triple-sink-180x60', {
+    label: 'Мойка тройная 180×60',
+    builder: 'sink',
+    width: 180,
+    depth: 60,
+    opts: {
+      basins: [
+        { cx: -50, cy: 0, rx: 18, ry: 18 },
+        { cx: 0, cy: 0, rx: 18, ry: 18 },
+        { cx: 50, cy: 0, rx: 18, ry: 18 }
+      ],
+      faucet: true
+    }
+  }],
+  ['kitchen-cooktop-60x60', {
+    label: 'Варочная панель 60×60',
+    builder: 'cooktop',
+    width: 60,
+    depth: 60
+  }],
+  ['kitchen-oven-60x60', {
+    label: 'Духовой шкаф 60×60',
+    builder: 'appliance',
+    width: 60,
+    depth: 60,
+    opts: { innerHeightRatio: 0.4, innerAlign: 'center', horizontal: [0.2, -0.2] }
+  }],
+  ['appliance-dishwasher-60x60', {
+    label: 'Посудомоечная 60×60',
+    builder: 'appliance',
+    width: 60,
+    depth: 60,
+    opts: { innerHeightRatio: 0.35, innerAlign: 'bottom', horizontal: [0] }
+  }],
+  ['appliance-fridge-60x70', {
+    label: 'Холодильник 60×70',
+    builder: 'appliance',
+    width: 60,
+    depth: 70,
+    opts: { inner: false, horizontal: [0] }
+  }],
+  ['appliance-undercounter-90x60', {
+    label: 'Нижний холодильник 90×60',
+    builder: 'appliance',
+    width: 90,
+    depth: 60,
+    opts: { innerAlign: 'top', innerHeightRatio: 0.28, horizontal: [0.15] }
+  }],
+  ['appliance-upright-60x70', {
+    label: 'Шкаф-холодильник 60×70',
+    builder: 'appliance',
+    width: 60,
+    depth: 70,
+    opts: { inner: false, horizontal: [0.25, -0.25] }
+  }],
+  ['appliance-freezer-60x60', {
+    label: 'Морозильник 60×60',
+    builder: 'appliance',
+    width: 60,
+    depth: 60,
+    opts: { inner: false, horizontal: [0] }
+  }],
+  ['appliance-milk-60x60', {
+    label: 'Молочный холодильник 60×60',
+    builder: 'appliance',
+    width: 60,
+    depth: 60,
+    opts: { inner: false, horizontal: [-0.1, 0.2] }
+  }],
+  ['appliance-display-120x70', {
+    label: 'Витрина 120×70',
+    builder: 'appliance',
+    width: 120,
+    depth: 70,
+    opts: { inner: false, shelves: [0.2, -0.2] }
+  }],
+  ['appliance-espresso-80x60', {
+    label: 'Эспрессо-машина 2 гр. 80×60',
+    builder: 'appliance',
+    width: 80,
+    depth: 60,
+    opts: { innerHeightRatio: 0.3, innerAlign: 'top', vertical: [0], horizontal: [-0.15] }
+  }],
+  ['appliance-espresso-110x60', {
+    label: 'Эспрессо-машина 3 гр. 110×60',
+    builder: 'appliance',
+    width: 110,
+    depth: 60,
+    opts: { innerHeightRatio: 0.3, innerAlign: 'top', vertical: [-0.25, 0.25], horizontal: [-0.15] }
+  }],
+  ['appliance-batchbrew-80x45', {
+    label: 'Бэтч-брю 80×45',
+    builder: 'appliance',
+    width: 80,
+    depth: 45,
+    opts: { innerHeightRatio: 0.28, innerAlign: 'top', horizontal: [0], vertical: [-0.2, 0.2] }
+  }],
+  ['appliance-pourover-120x40', {
+    label: 'Пуровер-станция 120×40',
+    builder: 'appliance',
+    width: 120,
+    depth: 40,
+    opts: { inner: false, vertical: [-0.33, 0, 0.33] }
+  }],
+  ['appliance-small-30x30', {
+    label: 'Малый прибор 30×30',
+    builder: 'appliance',
+    width: 30,
+    depth: 30,
+    opts: { inner: false }
+  }],
+  ['appliance-kettle-30x30', {
+    label: 'Электрочайник 30×30',
+    builder: 'appliance',
+    width: 30,
+    depth: 30,
+    opts: { inner: false, circle: { radius: 8 } }
+  }],
+  ['appliance-filter-40x30', {
+    label: 'Фильтр 40×30',
+    builder: 'appliance',
+    width: 40,
+    depth: 30,
+    opts: { innerHeightRatio: 0.4, innerAlign: 'center' }
+  }],
+  ['appliance-ice-60x60', {
+    label: 'Льдогенератор 60×60',
+    builder: 'appliance',
+    width: 60,
+    depth: 60,
+    opts: { innerHeightRatio: 0.3, innerAlign: 'top', horizontal: [0.2] }
+  }],
+  ['appliance-counter-60x40', {
+    label: 'Модуль на столе 60×40',
+    builder: 'appliance',
+    width: 60,
+    depth: 40,
+    opts: { innerHeightRatio: 0.4, innerAlign: 'center', vertical: [0] }
+  }],
+  ['appliance-pos-35x35', {
+    label: 'POS-терминал',
+    builder: 'appliance',
+    width: 35,
+    depth: 35,
+    opts: { innerHeightRatio: 0.3, innerAlign: 'top', horizontal: [0] }
+  }],
+  ['appliance-cashdrawer-45x35', {
+    label: 'Денежный ящик 45×35',
+    builder: 'appliance',
+    width: 45,
+    depth: 35,
+    opts: { innerHeightRatio: 0.3, innerAlign: 'bottom', horizontal: [0] }
+  }],
+  ['fixture-condiment-120x35', {
+    label: 'Станция приправ 120×35',
+    builder: 'appliance',
+    width: 120,
+    depth: 35,
+    opts: { inner: false, vertical: [-0.3, 0, 0.3] }
+  }],
+  ['fixture-syrup-90x30', {
+    label: 'Рейл сиропов 90×30',
+    builder: 'appliance',
+    width: 90,
+    depth: 30,
+    opts: { inner: false, vertical: [-0.25, 0.25] }
+  }],
+  ['fixture-trash-40x40', {
+    label: 'Урна 40×40',
+    builder: 'appliance',
+    width: 40,
+    depth: 40,
+    opts: { inner: false, horizontal: [0] }
+  }],
+  ['fixture-trash-80x40', {
+    label: 'Урна двойная 80×40',
+    builder: 'appliance',
+    width: 80,
+    depth: 40,
+    opts: { inner: false, vertical: [0], horizontal: [0] }
+  }],
+  ['fixture-drying-120x40', {
+    label: 'Сушка 120×40',
+    builder: 'appliance',
+    width: 120,
+    depth: 40,
+    opts: { inner: false, horizontal: [0] }
+  }],
+  ['fixture-queuepost-35', {
+    label: 'Стойка очереди Ø35',
+    builder: 'queuePost',
+    width: 35,
+    depth: 35
+  }],
+  ['fixture-menuboard-120x10', {
+    label: 'Меню-борд 120×10',
+    builder: 'menuBoard',
+    width: 120,
+    depth: 10
+  }],
+  ['decor-planter-120x30', {
+    label: 'Кашпо 120×30',
+    builder: 'planter',
+    width: 120,
+    depth: 30
+  }],
+  ['bed-single-90x200', {
+    label: 'Кровать односп. 90×200',
+    builder: 'bed',
+    width: 90,
+    depth: 200,
+    scaleStepCm: 10,
+    seats: 1,
+    opts: { pillows: 1 }
+  }],
+  ['bed-double-160x200', {
+    label: 'Кровать двусп. 160×200',
+    builder: 'bed',
+    width: 160,
+    depth: 200,
+    scaleStepCm: 10,
+    seats: 2,
+    opts: { pillows: 2 }
+  }],
+  ['bed-queen-180x200', {
+    label: 'Кровать двусп. 180×200',
+    builder: 'bed',
+    width: 180,
+    depth: 200,
+    scaleStepCm: 10,
+    seats: 2,
+    opts: { pillows: 2 }
+  }],
+  ['storage-nightstand-50x40', {
+    label: 'Тумба 50×40',
+    builder: 'storage',
+    width: 50,
+    depth: 40,
+    opts: { shelves: [0], radius: 6 }
+  }],
+  ['storage-wardrobe-120x60', {
+    label: 'Шкаф 120×60',
+    builder: 'storage',
+    width: 120,
+    depth: 60,
+    opts: { dividers: [0.5], shelves: [0.2, -0.2], radius: 10 }
+  }],
+  ['storage-wardrobe-180x60', {
+    label: 'Шкаф 180×60',
+    builder: 'storage',
+    width: 180,
+    depth: 60,
+    opts: { dividers: [0.33, 0.66], shelves: [0.2, -0.2], radius: 10 }
+  }],
+  ['storage-shelving-120x40', {
+    label: 'Стеллаж 120×40',
+    builder: 'storage',
+    width: 120,
+    depth: 40,
+    opts: { shelves: [0.3, 0, -0.3], radius: 8 }
+  }],
+  ['bath-bathtub-170x75', {
+    label: 'Ванна 170×75',
+    builder: 'bathtub',
+    width: 170,
+    depth: 75
+  }],
+  ['bath-shower-90x90', {
+    label: 'Душ 90×90',
+    builder: 'shower',
+    width: 90,
+    depth: 90
+  }],
+  ['bath-toilet-38x70', {
+    label: 'Унитаз 38×70',
+    builder: 'toilet',
+    width: 38,
+    depth: 70
+  }],
+  ['bath-sink-60x50', {
+    label: 'Раковина 60×50',
+    builder: 'sink',
+    width: 60,
+    depth: 50,
+    opts: { basins: [{ cx: 0, cy: 0, rx: 16, ry: 16 }], faucet: true }
+  }],
+  ['appliance-washer-60x60', {
+    label: 'Стиральная машина 60×60',
+    builder: 'washer',
+    width: 60,
+    depth: 60
+  }],
+  ['appliance-dryer-60x60', {
+    label: 'Сушильная машина 60×60',
+    builder: 'washer',
+    width: 60,
+    depth: 60,
+    opts: { innerCircle: 16 }
+  }],
+  ['fixture-watercooler-40x60', {
+    label: 'Кулер 40×60',
+    builder: 'watercooler',
+    width: 40,
+    depth: 60
+  }],
+  ['climate-radiator-120x12', {
+    label: 'Радиатор 120×12',
+    builder: 'radiator',
+    width: 120,
+    depth: 12
+  }],
+  ['climate-ac-100x30', {
+    label: 'Кондиционер 100×30',
+    builder: 'ac',
+    width: 100,
+    depth: 30
+  }],
+  ['fixture-tv-180x20', {
+    label: 'ТВ панель 180×20',
+    builder: 'tv',
+    width: 180,
+    depth: 20
+  }],
+  ['fixture-projector-40x40', {
+    label: 'Проектор 40×40',
+    builder: 'projector',
+    width: 40,
+    depth: 40
+  }],
+  ['fixture-screen-240x10', {
+    label: 'Экран 240×10',
+    builder: 'screen',
+    width: 240,
+    depth: 10,
+    scaleStepCm: 10
+  }],
+  ['chair-office-70x70', {
+    label: 'Офисное кресло 70×70',
+    builder: 'armchair',
+    width: 70,
+    depth: 70,
+    seats: 1,
+    opts: { compact: true }
+  }],
+  ['counter-reception-200x80', {
+    label: 'Ресепшен 200×80',
+    builder: 'counterStraight',
+    width: 200,
+    depth: 80,
+    opts: { edgeOffset: 0.25 }
+  }],
+  ['fixture-whiteboard-180x10', {
+    label: 'Доска 180×10',
+    builder: 'whiteboard',
+    width: 180,
+    depth: 10
+  }],
+  ['appliance-printer-60x45', {
+    label: 'Принтер 60×45',
+    builder: 'appliance',
+    width: 60,
+    depth: 45,
+    opts: { innerHeightRatio: 0.35, innerAlign: 'center', horizontal: [-0.15, 0.15] }
+  }],
+  ['appliance-copier-70x60', {
+    label: 'Ксерокс 70×60',
+    builder: 'appliance',
+    width: 70,
+    depth: 60,
+    opts: { innerHeightRatio: 0.3, innerAlign: 'center', horizontal: [-0.2, 0.2] }
+  }],
+  ['appliance-server-70x70', {
+    label: 'Серверная стойка 70×70',
+    builder: 'appliance',
+    width: 70,
+    depth: 70,
+    opts: { inner: false, horizontal: [-0.3, -0.1, 0.1, 0.3] }
+  }]
+].forEach(([id, config]) => defineItem(id, config));
+
+const CATEGORY_ITEMS = {
+  'Помещения': ['zone'],
+  'Гостиная и общие зоны': [
+    'sofa-2seat-200',
+    'sofa-3seat-240',
+    'sofa-l-260x180',
+    'chair-armchair-90',
+    'chair-side-45x50',
+    'seat-banquette-160x60',
+    'seat-banquette-220x60',
+    'seat-booth-2-150x120',
+    'seat-booth-4-220x140',
+    'table-coffee-round-80',
+    'table-coffee-rect-120x60',
+    'storage-media-180x40',
+    'decor-rug-200x140',
+    'decor-plant-60',
+    'decor-floorlamp-45x45'
+  ],
+  'Столовая и кафе-зона': [
+    'table-round-60',
+    'table-round-70',
+    'table-round-80',
+    'table-square-70',
+    'table-rect-120x75',
+    'table-rect-160x90',
+    'table-rect-200x100',
+    'table-rect-240x90',
+    'table-hightop-round-70',
+    'table-work-160x80',
+    'stool-round-35',
+    'stool-bar-35x35'
+  ],
+  'Кухня и бар': [
+    'counter-straight-180',
+    'counter-straight-240',
+    'counter-l-180x180',
+    'counter-island-180x90',
+    'counter-back-180x40',
+    'partition-linear-120x10',
+    'kitchen-sink-60x60',
+    'kitchen-handsink-50x50',
+    'kitchen-triple-sink-180x60',
+    'kitchen-cooktop-60x60',
+    'kitchen-oven-60x60',
+    'appliance-dishwasher-60x60',
+    'appliance-fridge-60x70',
+    'appliance-undercounter-90x60',
+    'appliance-upright-60x70',
+    'appliance-freezer-60x60',
+    'appliance-milk-60x60',
+    'appliance-display-120x70',
+    'appliance-espresso-80x60',
+    'appliance-espresso-110x60',
+    'appliance-batchbrew-80x45',
+    'appliance-pourover-120x40',
+    'appliance-small-30x30',
+    'appliance-kettle-30x30',
+    'appliance-filter-40x30',
+    'appliance-ice-60x60',
+    'appliance-counter-60x40',
+    'appliance-pos-35x35',
+    'appliance-cashdrawer-45x35',
+    'fixture-condiment-120x35',
+    'fixture-syrup-90x30',
+    'fixture-trash-40x40',
+    'fixture-trash-80x40',
+    'fixture-drying-120x40',
+    'fixture-queuepost-35',
+    'fixture-menuboard-120x10',
+    'decor-planter-120x30'
+  ],
+  'Спальня и хранение': [
+    'bed-single-90x200',
+    'bed-double-160x200',
+    'bed-queen-180x200',
+    'storage-nightstand-50x40',
+    'storage-wardrobe-120x60',
+    'storage-wardrobe-180x60',
+    'storage-shelving-120x40'
+  ],
+  'Санузел и инженерия': [
+    'bath-bathtub-170x75',
+    'bath-shower-90x90',
+    'bath-toilet-38x70',
+    'bath-sink-60x50',
+    'appliance-washer-60x60',
+    'appliance-dryer-60x60',
+    'fixture-watercooler-40x60',
+    'climate-radiator-120x12',
+    'climate-ac-100x30'
+  ],
+  'Техника и медиа': [
+    'fixture-tv-180x20',
+    'fixture-projector-40x40',
+    'fixture-screen-240x10'
+  ],
+  'Офис и сервис': [
+    'chair-office-70x70',
+    'counter-reception-200x80',
+    'fixture-whiteboard-180x10',
+    'appliance-printer-60x45',
+    'appliance-copier-70x60',
+    'appliance-server-70x70'
+  ]
 };
 
-// Расширяем список категорий добавлением секции для барных стоек
-FURNITURE_CATEGORIES.push({
-    name: 'Барные стойки',
-    items: [
-        { id: 'bar-counter-straight', label: 'Барная стойка' },
-        { id: 'bar-counter-l', label: 'Барная стойка Г' },
-        { id: 'bar-counter-island', label: 'Барный остров' }
-    ]
-});
-
-// Auto-generated schematic variants
-if (ITEM_TEMPLATES['zone'] && !ITEM_TEMPLATES['zone'].schematicSvg) {
-  ITEM_TEMPLATES['zone'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="zone">
-        <rect x="-100" y="-75" width="200" height="150" class="shape shape-fill"/>
-        <line x1="0" y1="-75" x2="0" y2="75" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['cafe-table-square-70'] && !ITEM_TEMPLATES['cafe-table-square-70'].schematicSvg) {
-  ITEM_TEMPLATES['cafe-table-square-70'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="cafe-table-square-70">
-        <rect x="-35" y="-39.5" width="70" height="79" class="shape shape-fill"/>
-        <line x1="0" y1="-39.5" x2="0" y2="39.5" class="furn-center"/>
-        <line x1="-35" y1="0" x2="35" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['cafe-hightop-round-70'] && !ITEM_TEMPLATES['cafe-hightop-round-70'].schematicSvg) {
-  ITEM_TEMPLATES['cafe-hightop-round-70'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="cafe-hightop-round-70">
-        <circle cx="0" cy="0" r="35" class="shape shape-fill"/>
-        <line x1="0" y1="-41.5" x2="0" y2="41.5" class="furn-center"/>
-        <line x1="-35" y1="0" x2="35" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['cafe-communal-240'] && !ITEM_TEMPLATES['cafe-communal-240'].schematicSvg) {
-  ITEM_TEMPLATES['cafe-communal-240'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="cafe-communal-240">
-        <rect x="-120" y="-49.5" width="240" height="99" class="shape shape-fill"/>
-        <line x1="0" y1="-49.5" x2="0" y2="49.5" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['banquette-160'] && !ITEM_TEMPLATES['banquette-160'].schematicSvg) {
-  ITEM_TEMPLATES['banquette-160'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="banquette-160">
-        <rect x="-80" y="-32.5" width="160" height="65" class="shape shape-fill"/>
-        <rect x="-72" y="-13" width="144" height="26" class="shape"/>
-        <line x1="0" y1="-32.5" x2="0" y2="32.5" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['banquette-220'] && !ITEM_TEMPLATES['banquette-220'].schematicSvg) {
-  ITEM_TEMPLATES['banquette-220'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="banquette-220">
-        <rect x="-110" y="-32.5" width="220" height="65" class="shape shape-fill"/>
-        <rect x="-99" y="-13" width="198" height="26" class="shape"/>
-        <line x1="0" y1="-32.5" x2="0" y2="32.5" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['booth-2'] && !ITEM_TEMPLATES['booth-2'].schematicSvg) {
-  ITEM_TEMPLATES['booth-2'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="booth-2">
-        <rect x="-45" y="-43.5" width="90" height="87" class="shape shape-fill"/>
-        <rect x="-40.5" y="-17.4" width="81" height="34.8" class="shape"/>
-        <line x1="0" y1="-43.5" x2="0" y2="43.5" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['booth-4'] && !ITEM_TEMPLATES['booth-4'].schematicSvg) {
-  ITEM_TEMPLATES['booth-4'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="booth-4">
-        <rect x="-70" y="-49" width="140" height="98" class="shape shape-fill"/>
-        <rect x="-63" y="-19.6" width="126" height="39.2" class="shape"/>
-        <line x1="0" y1="-49" x2="0" y2="49" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bar-counter-straight-180'] && !ITEM_TEMPLATES['bar-counter-straight-180'].schematicSvg) {
-  ITEM_TEMPLATES['bar-counter-straight-180'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bar-counter-straight-180">
-        <rect x="-90" y="-42" width="180" height="84" class="shape shape-fill"/>
-        <line x1="-90" y1="0" x2="90" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bar-counter-straight-240'] && !ITEM_TEMPLATES['bar-counter-straight-240'].schematicSvg) {
-  ITEM_TEMPLATES['bar-counter-straight-240'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bar-counter-straight-240">
-        <rect x="-120" y="-42" width="240" height="84" class="shape shape-fill"/>
-        <line x1="-120" y1="0" x2="120" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bar-counter-l-180x180'] && !ITEM_TEMPLATES['bar-counter-l-180x180'].schematicSvg) {
-  ITEM_TEMPLATES['bar-counter-l-180x180'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bar-counter-l-180x180">
-        <rect x="-90" y="-63" width="180" height="126" class="shape shape-fill"/>
-        <line x1="-90" y1="0" x2="90" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bar-counter-island-180x90'] && !ITEM_TEMPLATES['bar-counter-island-180x90'].schematicSvg) {
-  ITEM_TEMPLATES['bar-counter-island-180x90'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bar-counter-island-180x90">
-        <rect x="-90" y="-45" width="180" height="90" class="shape shape-fill"/>
-        <rect x="-68.4" y="-31.5" width="136.8" height="27" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bar-back-shelf-180'] && !ITEM_TEMPLATES['bar-back-shelf-180'].schematicSvg) {
-  ITEM_TEMPLATES['bar-back-shelf-180'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bar-back-shelf-180">
-        <rect x="-90" y="-28" width="180" height="56" class="shape shape-fill"/>
-        <line x1="-90" y1="0" x2="90" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['espresso-2g'] && !ITEM_TEMPLATES['espresso-2g'].schematicSvg) {
-  ITEM_TEMPLATES['espresso-2g'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="espresso-2g">
-        <rect x="-46" y="-26" width="92" height="52" class="shape shape-fill"/>
-        <rect x="-34.96" y="-18.2" width="69.92" height="15.6" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['espresso-3g'] && !ITEM_TEMPLATES['espresso-3g'].schematicSvg) {
-  ITEM_TEMPLATES['espresso-3g'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="espresso-3g">
-        <rect x="-66" y="-26" width="132" height="52" class="shape shape-fill"/>
-        <rect x="-50.16" y="-18.2" width="100.32" height="15.6" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['grinder-80mm'] && !ITEM_TEMPLATES['grinder-80mm'].schematicSvg) {
-  ITEM_TEMPLATES['grinder-80mm'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="grinder-80mm">
-        <rect x="-12" y="-26" width="24" height="52" class="shape shape-fill"/>
-        <rect x="-9.12" y="-18.2" width="18.24" height="15.6" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['batch-brewer-2'] && !ITEM_TEMPLATES['batch-brewer-2'].schematicSvg) {
-  ITEM_TEMPLATES['batch-brewer-2'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="batch-brewer-2">
-        <rect x="-40" y="-22" width="80" height="44" class="shape shape-fill"/>
-        <rect x="-30.4" y="-15.4" width="60.8" height="13.2" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['pour-over-3'] && !ITEM_TEMPLATES['pour-over-3'].schematicSvg) {
-  ITEM_TEMPLATES['pour-over-3'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="pour-over-3">
-        <rect x="-60" y="-18" width="120" height="36" class="shape shape-fill"/>
-        <rect x="-45.6" y="-12.6" width="91.2" height="10.8" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['kettle-electric'] && !ITEM_TEMPLATES['kettle-electric'].schematicSvg) {
-  ITEM_TEMPLATES['kettle-electric'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="kettle-electric">
-        <rect x="-16" y="-16" width="32" height="32" class="shape shape-fill"/>
-        <rect x="-12.16" y="-11.2" width="24.32" height="9.6" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['water-filter'] && !ITEM_TEMPLATES['water-filter'].schematicSvg) {
-  ITEM_TEMPLATES['water-filter'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="water-filter">
-        <rect x="-20" y="-14" width="40" height="28" class="shape shape-fill"/>
-        <rect x="-15.2" y="-9.8" width="30.4" height="8.4" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['ice-machine-60'] && !ITEM_TEMPLATES['ice-machine-60'].schematicSvg) {
-  ITEM_TEMPLATES['ice-machine-60'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="ice-machine-60">
-        <rect x="-30" y="-30" width="60" height="60" class="shape shape-fill"/>
-        <rect x="-22.8" y="-21" width="45.6" height="18" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['undercounter-fridge-90'] && !ITEM_TEMPLATES['undercounter-fridge-90'].schematicSvg) {
-  ITEM_TEMPLATES['undercounter-fridge-90'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="undercounter-fridge-90">
-        <rect x="-45" y="-30" width="90" height="60" class="shape shape-fill"/>
-        <rect x="-34.2" y="-21" width="68.4" height="18" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['upright-fridge-60'] && !ITEM_TEMPLATES['upright-fridge-60'].schematicSvg) {
-  ITEM_TEMPLATES['upright-fridge-60'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="upright-fridge-60">
-        <rect x="-30" y="-36" width="60" height="72" class="shape shape-fill"/>
-        <rect x="-22.8" y="-25.2" width="45.6" height="21.6" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['milk-fridge-60'] && !ITEM_TEMPLATES['milk-fridge-60'].schematicSvg) {
-  ITEM_TEMPLATES['milk-fridge-60'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="milk-fridge-60">
-        <rect x="-30" y="-28" width="60" height="56" class="shape shape-fill"/>
-        <rect x="-22.8" y="-19.6" width="45.6" height="16.8" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['freezer-60'] && !ITEM_TEMPLATES['freezer-60'].schematicSvg) {
-  ITEM_TEMPLATES['freezer-60'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="freezer-60">
-        <rect x="-30" y="-30" width="60" height="60" class="shape shape-fill"/>
-        <rect x="-22.8" y="-21" width="45.6" height="18" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['pastry-case-120'] && !ITEM_TEMPLATES['pastry-case-120'].schematicSvg) {
-  ITEM_TEMPLATES['pastry-case-120'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="pastry-case-120">
-        <rect x="-60" y="-34" width="120" height="68" class="shape shape-fill"/>
-        <rect x="-45.6" y="-23.8" width="91.2" height="20.4" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['pastry-case-120-curved'] && !ITEM_TEMPLATES['pastry-case-120-curved'].schematicSvg) {
-  ITEM_TEMPLATES['pastry-case-120-curved'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="pastry-case-120-curved">
-        <rect x="-60" y="-35" width="120" height="70" class="shape shape-fill"/>
-        <rect x="-45.6" y="-24.5" width="91.2" height="21" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['pos-terminal'] && !ITEM_TEMPLATES['pos-terminal'].schematicSvg) {
-  ITEM_TEMPLATES['pos-terminal'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="pos-terminal">
-        <rect x="-18" y="-15" width="36" height="30" class="shape shape-fill"/>
-        <line x1="0" y1="-15" x2="0" y2="15" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['cash-drawer'] && !ITEM_TEMPLATES['cash-drawer'].schematicSvg) {
-  ITEM_TEMPLATES['cash-drawer'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="cash-drawer">
-        <rect x="-24" y="-14" width="48" height="28" class="shape shape-fill"/>
-        <line x1="0" y1="-14" x2="0" y2="14" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['condiment-120'] && !ITEM_TEMPLATES['condiment-120'].schematicSvg) {
-  ITEM_TEMPLATES['condiment-120'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="condiment-120">
-        <rect x="-60" y="-22" width="120" height="44" class="shape shape-fill"/>
-        <rect x="-45.6" y="-15.4" width="91.2" height="13.2" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['syrup-rack-90'] && !ITEM_TEMPLATES['syrup-rack-90'].schematicSvg) {
-  ITEM_TEMPLATES['syrup-rack-90'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="syrup-rack-90">
-        <rect x="-45" y="-10" width="90" height="20" class="shape shape-fill"/>
-        <rect x="-31.5" y="-6" width="63" height="12" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['trash-single'] && !ITEM_TEMPLATES['trash-single'].schematicSvg) {
-  ITEM_TEMPLATES['trash-single'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="trash-single">
-        <rect x="-16" y="-22" width="32" height="44" class="shape shape-fill"/>
-        <rect x="-12.16" y="-15.4" width="24.32" height="13.2" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['trash-double'] && !ITEM_TEMPLATES['trash-double'].schematicSvg) {
-  ITEM_TEMPLATES['trash-double'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="trash-double">
-        <rect x="-32" y="-22" width="64" height="44" class="shape shape-fill"/>
-        <rect x="-24.32" y="-15.4" width="48.64" height="13.2" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['hand-sink'] && !ITEM_TEMPLATES['hand-sink'].schematicSvg) {
-  ITEM_TEMPLATES['hand-sink'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="hand-sink">
-        <rect x="-20" y="-16" width="40" height="32" class="shape shape-fill"/>
-        <circle cx="0" cy="0" r="6.4" class="shape"/>
-        <line x1="0" y1="-16" x2="0" y2="16" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['triple-sink'] && !ITEM_TEMPLATES['triple-sink'].schematicSvg) {
-  ITEM_TEMPLATES['triple-sink'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="triple-sink">
-        <rect x="-90" y="-26" width="180" height="52" class="shape shape-fill"/>
-        <circle cx="0" cy="0" r="10.4" class="shape"/>
-        <line x1="0" y1="-26" x2="0" y2="26" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['dishwasher-pro'] && !ITEM_TEMPLATES['dishwasher-pro'].schematicSvg) {
-  ITEM_TEMPLATES['dishwasher-pro'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="dishwasher-pro">
-        <rect x="-28" y="-24" width="56" height="48" class="shape shape-fill"/>
-        <rect x="-21.28" y="-16.8" width="42.56" height="14.4" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['drying-rack-120'] && !ITEM_TEMPLATES['drying-rack-120'].schematicSvg) {
-  ITEM_TEMPLATES['drying-rack-120'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="drying-rack-120">
-        <rect x="-60" y="-10" width="120" height="20" class="shape shape-fill"/>
-        <rect x="-42" y="-6" width="84" height="12" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['queue-post'] && !ITEM_TEMPLATES['queue-post'].schematicSvg) {
-  ITEM_TEMPLATES['queue-post'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="queue-post">
-        <circle cx="0" cy="0" r="14" class="shape shape-fill"/>
-        <line x1="0" y1="-14" x2="0" y2="14" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['menu-board-120'] && !ITEM_TEMPLATES['menu-board-120'].schematicSvg) {
-  ITEM_TEMPLATES['menu-board-120'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="menu-board-120">
-        <rect x="-60" y="-6" width="120" height="12" class="shape shape-fill"/>
-        <rect x="-51" y="-4.2" width="102" height="4.8" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['planter-long-120'] && !ITEM_TEMPLATES['planter-long-120'].schematicSvg) {
-  ITEM_TEMPLATES['planter-long-120'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="planter-long-120">
-        <path d="M0 -16 C60 -8 60 9.6 0 16 C-60 9.6 -60 -8 0 -16Z" class="shape shape-fill"/>
-        <path d="M0 16 C18 9.6 12 -8 0 -12.16" class="shape" fill="none"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['partition-120x10'] && !ITEM_TEMPLATES['partition-120x10'].schematicSvg) {
-  ITEM_TEMPLATES['partition-120x10'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="partition-120x10">
-        <rect x="-60" y="-5" width="120" height="10" class="shape shape-fill"/>
-        <line x1="0" y1="-5" x2="0" y2="5" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['armchair'] && !ITEM_TEMPLATES['armchair'].schematicSvg) {
-  ITEM_TEMPLATES['armchair'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="armchair">
-        <rect x="-44" y="-38" width="88" height="76" class="shape shape-fill"/>
-        <rect x="-26.4" y="-15.2" width="52.8" height="30.4" class="shape"/>
-        <line x1="0" y1="-38" x2="0" y2="38" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['sofa-2'] && !ITEM_TEMPLATES['sofa-2'].schematicSvg) {
-  ITEM_TEMPLATES['sofa-2'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="sofa-2">
-        <rect x="-88" y="-41" width="176" height="82" class="shape shape-fill"/>
-        <rect x="-79.2" y="-16.4" width="158.4" height="32.8" class="shape"/>
-        <line x1="0" y1="-41" x2="0" y2="41" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['sofa-3'] && !ITEM_TEMPLATES['sofa-3'].schematicSvg) {
-  ITEM_TEMPLATES['sofa-3'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="sofa-3">
-        <rect x="-110" y="-41" width="220" height="82" class="shape shape-fill"/>
-        <rect x="-99" y="-16.4" width="198" height="32.8" class="shape"/>
-        <line x1="0" y1="-41" x2="0" y2="41" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['sectional-l'] && !ITEM_TEMPLATES['sectional-l'].schematicSvg) {
-  ITEM_TEMPLATES['sectional-l'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="sectional-l">
-        <rect x="-107" y="-73" width="214" height="146" class="shape shape-fill"/>
-        <rect x="-96.3" y="-29.2" width="192.6" height="58.4" class="shape"/>
-        <line x1="0" y1="-73" x2="0" y2="73" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['stool'] && !ITEM_TEMPLATES['stool'].schematicSvg) {
-  ITEM_TEMPLATES['stool'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="stool">
-        <rect x="-20" y="-22" width="40" height="44" class="shape shape-fill"/>
-        <rect x="-12" y="-8.8" width="24" height="17.6" class="shape"/>
-        <line x1="0" y1="-22" x2="0" y2="22" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['barstool'] && !ITEM_TEMPLATES['barstool'].schematicSvg) {
-  ITEM_TEMPLATES['barstool'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="barstool">
-        <rect x="-20" y="-39" width="40" height="78" class="shape shape-fill"/>
-        <rect x="-12" y="-15.6" width="24" height="31.2" class="shape"/>
-        <line x1="0" y1="-39" x2="0" y2="39" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['coffee-round'] && !ITEM_TEMPLATES['coffee-round'].schematicSvg) {
-  ITEM_TEMPLATES['coffee-round'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="coffee-round">
-        <circle cx="0" cy="0" r="40" class="shape shape-fill"/>
-        <line x1="0" y1="-40" x2="0" y2="40" class="furn-center"/>
-        <line x1="-40" y1="0" x2="40" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['coffee-rect'] && !ITEM_TEMPLATES['coffee-rect'].schematicSvg) {
-  ITEM_TEMPLATES['coffee-rect'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="coffee-rect">
-        <rect x="-48" y="-28" width="96" height="56" class="shape shape-fill"/>
-        <line x1="0" y1="-28" x2="0" y2="28" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['dining-4'] && !ITEM_TEMPLATES['dining-4'].schematicSvg) {
-  ITEM_TEMPLATES['dining-4'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="dining-4">
-        <rect x="-68" y="-44" width="136" height="88" class="shape shape-fill"/>
-        <line x1="0" y1="-44" x2="0" y2="44" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['dining-6'] && !ITEM_TEMPLATES['dining-6'].schematicSvg) {
-  ITEM_TEMPLATES['dining-6'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="dining-6">
-        <rect x="-88" y="-48" width="176" height="96" class="shape shape-fill"/>
-        <line x1="0" y1="-48" x2="0" y2="48" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['dining-8'] && !ITEM_TEMPLATES['dining-8'].schematicSvg) {
-  ITEM_TEMPLATES['dining-8'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="dining-8">
-        <rect x="-108" y="-48" width="216" height="96" class="shape shape-fill"/>
-        <line x1="0" y1="-48" x2="0" y2="48" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['desk'] && !ITEM_TEMPLATES['desk'].schematicSvg) {
-  ITEM_TEMPLATES['desk'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="desk">
-        <rect x="-76" y="-38" width="152" height="76" class="shape shape-fill"/>
-        <line x1="0" y1="-38" x2="0" y2="38" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['workstation-l'] && !ITEM_TEMPLATES['workstation-l'].schematicSvg) {
-  ITEM_TEMPLATES['workstation-l'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="workstation-l">
-        <rect x="-89" y="-75" width="178" height="150" class="shape shape-fill"/>
-        <line x1="0" y1="-75" x2="0" y2="75" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['office-chair'] && !ITEM_TEMPLATES['office-chair'].schematicSvg) {
-  ITEM_TEMPLATES['office-chair'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="office-chair">
-        <rect x="-18" y="-25" width="36" height="50" class="shape shape-fill"/>
-        <rect x="-10.8" y="-10" width="21.6" height="20" class="shape"/>
-        <line x1="0" y1="-25" x2="0" y2="25" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['reception'] && !ITEM_TEMPLATES['reception'].schematicSvg) {
-  ITEM_TEMPLATES['reception'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="reception">
-        <rect x="-116" y="-44" width="232" height="88" class="shape shape-fill"/>
-        <line x1="0" y1="-44" x2="0" y2="44" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['whiteboard'] && !ITEM_TEMPLATES['whiteboard'].schematicSvg) {
-  ITEM_TEMPLATES['whiteboard'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="whiteboard">
-        <rect x="-90" y="-50" width="180" height="100" class="shape shape-fill"/>
-        <rect x="-76.5" y="-35" width="153" height="40" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['printer'] && !ITEM_TEMPLATES['printer'].schematicSvg) {
-  ITEM_TEMPLATES['printer'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="printer">
-        <rect x="-30" y="-22.5" width="60" height="45" class="shape shape-fill"/>
-        <rect x="-21" y="-13.5" width="42" height="27" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['copier'] && !ITEM_TEMPLATES['copier'].schematicSvg) {
-  ITEM_TEMPLATES['copier'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="copier">
-        <rect x="-35" y="-45" width="70" height="90" class="shape shape-fill"/>
-        <rect x="-24.5" y="-27" width="49" height="54" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['server-rack'] && !ITEM_TEMPLATES['server-rack'].schematicSvg) {
-  ITEM_TEMPLATES['server-rack'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="server-rack">
-        <rect x="-30" y="-50" width="60" height="100" class="shape shape-fill"/>
-        <rect x="-21" y="-30" width="42" height="60" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bed-single'] && !ITEM_TEMPLATES['bed-single'].schematicSvg) {
-  ITEM_TEMPLATES['bed-single'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bed-single">
-        <rect x="-45" y="-100" width="90" height="200" class="shape shape-fill"/>
-        <rect x="-45" y="-100" width="90" height="70" class="shape"/>
-        <line x1="0" y1="-100" x2="0" y2="100" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bed-double'] && !ITEM_TEMPLATES['bed-double'].schematicSvg) {
-  ITEM_TEMPLATES['bed-double'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bed-double">
-        <rect x="-80" y="-100" width="160" height="200" class="shape shape-fill"/>
-        <rect x="-80" y="-100" width="160" height="70" class="shape"/>
-        <line x1="0" y1="-100" x2="0" y2="100" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['nightstand'] && !ITEM_TEMPLATES['nightstand'].schematicSvg) {
-  ITEM_TEMPLATES['nightstand'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="nightstand">
-        <rect x="-20" y="-20" width="40" height="40" class="shape shape-fill"/>
-        <line x1="0" y1="-20" x2="0" y2="20" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['wardrobe-2d'] && !ITEM_TEMPLATES['wardrobe-2d'].schematicSvg) {
-  ITEM_TEMPLATES['wardrobe-2d'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="wardrobe-2d">
-        <rect x="-60" y="-30" width="120" height="60" class="shape shape-fill"/>
-        <line x1="0" y1="-30" x2="0" y2="30" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['wardrobe-3d'] && !ITEM_TEMPLATES['wardrobe-3d'].schematicSvg) {
-  ITEM_TEMPLATES['wardrobe-3d'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="wardrobe-3d">
-        <rect x="-90" y="-30" width="180" height="60" class="shape shape-fill"/>
-        <line x1="0" y1="-30" x2="0" y2="30" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['shelving'] && !ITEM_TEMPLATES['shelving'].schematicSvg) {
-  ITEM_TEMPLATES['shelving'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="shelving">
-        <rect x="-70" y="-20" width="140" height="40" class="shape shape-fill"/>
-        <line x1="0" y1="-20" x2="0" y2="20" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['kitchen-line'] && !ITEM_TEMPLATES['kitchen-line'].schematicSvg) {
-  ITEM_TEMPLATES['kitchen-line'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="kitchen-line">
-        <rect x="-96" y="-34" width="192" height="68" class="shape shape-fill"/>
-        <rect x="-72.96" y="-23.8" width="145.92" height="20.4" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['sink'] && !ITEM_TEMPLATES['sink'].schematicSvg) {
-  ITEM_TEMPLATES['sink'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="sink">
-        <rect x="-36" y="-31" width="72" height="62" class="shape shape-fill"/>
-        <circle cx="0" cy="0" r="12.4" class="shape"/>
-        <line x1="0" y1="-31" x2="0" y2="31" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['cooktop-4'] && !ITEM_TEMPLATES['cooktop-4'].schematicSvg) {
-  ITEM_TEMPLATES['cooktop-4'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="cooktop-4">
-        <rect x="-34" y="-31.5" width="68" height="63" class="shape shape-fill"/>
-        <circle cx="-23.8" cy="-22.05" r="7.56" class="shape"/>
-        <circle cx="-23.8" cy="22.05" r="7.56" class="shape"/>
-        <circle cx="23.8" cy="-22.05" r="7.56" class="shape"/>
-        <circle cx="23.8" cy="22.05" r="7.56" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['fridge'] && !ITEM_TEMPLATES['fridge'].schematicSvg) {
-  ITEM_TEMPLATES['fridge'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="fridge">
-        <rect x="-36" y="-34" width="72" height="68" class="shape shape-fill"/>
-        <rect x="-27.36" y="-23.8" width="54.72" height="20.4" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['oven'] && !ITEM_TEMPLATES['oven'].schematicSvg) {
-  ITEM_TEMPLATES['oven'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="oven">
-        <rect x="-32" y="-32" width="64" height="64" class="shape shape-fill"/>
-        <circle cx="-22.4" cy="-22.4" r="7.68" class="shape"/>
-        <circle cx="-22.4" cy="22.4" r="7.68" class="shape"/>
-        <circle cx="22.4" cy="-22.4" r="7.68" class="shape"/>
-        <circle cx="22.4" cy="22.4" r="7.68" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['microwave'] && !ITEM_TEMPLATES['microwave'].schematicSvg) {
-  ITEM_TEMPLATES['microwave'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="microwave">
-        <rect x="-30" y="-20" width="60" height="40" class="shape shape-fill"/>
-        <rect x="-22.8" y="-14" width="45.6" height="12" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['dishwasher'] && !ITEM_TEMPLATES['dishwasher'].schematicSvg) {
-  ITEM_TEMPLATES['dishwasher'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="dishwasher">
-        <rect x="-32" y="-32" width="64" height="64" class="shape shape-fill"/>
-        <rect x="-24.32" y="-22.4" width="48.64" height="19.2" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['island'] && !ITEM_TEMPLATES['island'].schematicSvg) {
-  ITEM_TEMPLATES['island'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="island">
-        <rect x="-80" y="-48" width="160" height="96" class="shape shape-fill"/>
-        <rect x="-60.8" y="-33.6" width="121.6" height="28.8" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['toilet'] && !ITEM_TEMPLATES['toilet'].schematicSvg) {
-  ITEM_TEMPLATES['toilet'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="toilet">
-        <rect x="-20" y="-30" width="40" height="60" class="shape shape-fill"/>
-        <ellipse cx="0" cy="-9" rx="10" ry="13.2" class="shape"/>
-        <rect x="-12" y="3" width="24" height="21" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bath-sink'] && !ITEM_TEMPLATES['bath-sink'].schematicSvg) {
-  ITEM_TEMPLATES['bath-sink'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bath-sink">
-        <rect x="-30" y="-22.5" width="60" height="45" class="shape shape-fill"/>
-        <circle cx="0" cy="0" r="9" class="shape"/>
-        <line x1="0" y1="-22.5" x2="0" y2="22.5" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['shower'] && !ITEM_TEMPLATES['shower'].schematicSvg) {
-  ITEM_TEMPLATES['shower'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="shower">
-        <rect x="-45" y="-45" width="90" height="90" class="shape shape-fill"/>
-        <circle cx="0" cy="0" r="13.5" class="shape"/>
-        <line x1="0" y1="-45" x2="0" y2="45" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bathtub'] && !ITEM_TEMPLATES['bathtub'].schematicSvg) {
-  ITEM_TEMPLATES['bathtub'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bathtub">
-        <rect x="-75" y="-68" width="150" height="136" rx="27.2" class="shape shape-fill"/>
-        <ellipse cx="0" cy="0" rx="52.5" ry="47.6" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['washer'] && !ITEM_TEMPLATES['washer'].schematicSvg) {
-  ITEM_TEMPLATES['washer'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="washer">
-        <rect x="-32" y="-32" width="64" height="64" class="shape shape-fill"/>
-        <rect x="-24.32" y="-22.4" width="48.64" height="19.2" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['dryer'] && !ITEM_TEMPLATES['dryer'].schematicSvg) {
-  ITEM_TEMPLATES['dryer'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="dryer">
-        <rect x="-32" y="-32" width="64" height="64" class="shape shape-fill"/>
-        <rect x="-24.32" y="-22.4" width="48.64" height="19.2" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['water-cooler'] && !ITEM_TEMPLATES['water-cooler'].schematicSvg) {
-  ITEM_TEMPLATES['water-cooler'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="water-cooler">
-        <rect x="-18" y="-52" width="36" height="104" class="shape shape-fill"/>
-        <rect x="-13.68" y="-36.4" width="27.36" height="31.2" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['tv-stand'] && !ITEM_TEMPLATES['tv-stand'].schematicSvg) {
-  ITEM_TEMPLATES['tv-stand'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="tv-stand">
-        <rect x="-70" y="-20" width="140" height="40" class="shape shape-fill"/>
-        <rect x="-59.5" y="-14" width="119" height="16" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['tv-wall'] && !ITEM_TEMPLATES['tv-wall'].schematicSvg) {
-  ITEM_TEMPLATES['tv-wall'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="tv-wall">
-        <rect x="-70" y="-40" width="140" height="80" class="shape shape-fill"/>
-        <rect x="-59.5" y="-28" width="119" height="32" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['projector'] && !ITEM_TEMPLATES['projector'].schematicSvg) {
-  ITEM_TEMPLATES['projector'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="projector">
-        <rect x="-25" y="-15" width="50" height="30" class="shape shape-fill"/>
-        <rect x="-21.25" y="-10.5" width="42.5" height="12" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['projection-screen'] && !ITEM_TEMPLATES['projection-screen'].schematicSvg) {
-  ITEM_TEMPLATES['projection-screen'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="projection-screen">
-        <rect x="-90" y="-55" width="180" height="110" class="shape shape-fill"/>
-        <rect x="-76.5" y="-38.5" width="153" height="44" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['ac-indoor'] && !ITEM_TEMPLATES['ac-indoor'].schematicSvg) {
-  ITEM_TEMPLATES['ac-indoor'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="ac-indoor">
-        <rect x="-50" y="-15" width="100" height="30" class="shape shape-fill"/>
-        <line x1="0" y1="-15" x2="0" y2="15" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['radiator'] && !ITEM_TEMPLATES['radiator'].schematicSvg) {
-  ITEM_TEMPLATES['radiator'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="radiator">
-        <rect x="-60" y="-12.5" width="120" height="25" class="shape shape-fill"/>
-        <line x1="0" y1="-12.5" x2="0" y2="12.5" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['plant'] && !ITEM_TEMPLATES['plant'].schematicSvg) {
-  ITEM_TEMPLATES['plant'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="plant">
-        <path d="M0 -36 C21.06 -18 21.06 21.6 0 36 C-21.06 21.6 -21.06 -18 0 -36Z" class="shape shape-fill"/>
-        <path d="M0 36 C6.32 21.6 4.21 -18 0 -27.36" class="shape" fill="none"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['floor-lamp'] && !ITEM_TEMPLATES['floor-lamp'].schematicSvg) {
-  ITEM_TEMPLATES['floor-lamp'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="floor-lamp">
-        <rect x="-24" y="-38.5" width="48" height="77" class="shape shape-fill"/>
-        <line x1="0" y1="-38.5" x2="0" y2="38.5" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['rug'] && !ITEM_TEMPLATES['rug'].schematicSvg) {
-  ITEM_TEMPLATES['rug'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="rug">
-        <rect x="-90" y="-60" width="180" height="120" class="shape shape-fill"/>
-        <rect x="-72" y="-48" width="144" height="96" class="shape"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bar-counter-straight'] && !ITEM_TEMPLATES['bar-counter-straight'].schematicSvg) {
-  ITEM_TEMPLATES['bar-counter-straight'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bar-counter-straight">
-        <rect x="-110" y="-36" width="220" height="72" class="shape shape-fill"/>
-        <line x1="-110" y1="0" x2="110" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bar-counter-l'] && !ITEM_TEMPLATES['bar-counter-l'].schematicSvg) {
-  ITEM_TEMPLATES['bar-counter-l'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bar-counter-l">
-        <rect x="-90" y="-69" width="180" height="138" class="shape shape-fill"/>
-        <line x1="-90" y1="0" x2="90" y2="0" class="furn-center"/>
-    </g>
-  `;
-}
-
-if (ITEM_TEMPLATES['bar-counter-island'] && !ITEM_TEMPLATES['bar-counter-island'].schematicSvg) {
-  ITEM_TEMPLATES['bar-counter-island'].schematicSvg = () => `
-    <g class="core schematic-only" data-id="bar-counter-island">
-        <rect x="-96" y="-40" width="192" height="80" class="shape shape-fill"/>
-        <rect x="-72.96" y="-28" width="145.92" height="24" class="shape"/>
-    </g>
-  `;
+const FURNITURE_CATEGORIES = Object.entries(CATEGORY_ITEMS).map(([name, ids]) => ({
+  name,
+  items: ids.map(id => ({ id, label: PLAN_LIBRARY[id]?.label || id }))
+}));
+
+const ITEM_TEMPLATES = {};
+
+function fmt(num) {
+  if (!Number.isFinite(num)) return '0';
+  const value = Math.round(num * 100) / 100;
+  if (Object.is(value, -0)) return '0';
+  return value.toString();
+}
+
+function join(parts) {
+  return parts.filter(Boolean).join('');
+}
+
+function rect(width, height, options = {}) {
+  const { x = 0, y = 0, radius = 0, className = 'shape' } = options;
+  const x0 = x - width / 2;
+  const y0 = y - height / 2;
+  const rx = radius ? ` rx="${fmt(radius)}"` : '';
+  return `<rect x="${fmt(x0)}" y="${fmt(y0)}" width="${fmt(width)}" height="${fmt(height)}"${rx} class="${className}"/>`;
+}
+
+function circle(radius, options = {}) {
+  const { cx = 0, cy = 0, className = 'shape' } = options;
+  return `<circle cx="${fmt(cx)}" cy="${fmt(cy)}" r="${fmt(radius)}" class="${className}"/>`;
+}
+
+function ellipse(rx, ry, options = {}) {
+  const { cx = 0, cy = 0, className = 'shape' } = options;
+  return `<ellipse cx="${fmt(cx)}" cy="${fmt(cy)}" rx="${fmt(rx)}" ry="${fmt(ry)}" class="${className}"/>`;
+}
+
+function line(x1, y1, x2, y2, className = 'shape-detail') {
+  return `<line x1="${fmt(x1)}" y1="${fmt(y1)}" x2="${fmt(x2)}" y2="${fmt(y2)}" class="${className}"/>`;
+}
+
+function path(d, className = 'shape shape-fill') {
+  return `<path d="${d}" class="${className}"/>`;
+}
+
+function registerTemplate(id, config) {
+  const builder = typeof config.builder === 'function' ? config.builder : BUILDERS[config.builder];
+  if (!builder) throw new Error(`Unknown builder: ${config.builder}`);
+  const context = { id, label: config.label, width: config.width, depth: config.depth, opts: config.opts || {} };
+  const render = variant => builder({ ...context, variant });
+  const template = {
+    label: config.label,
+    baseSize: { width: config.width, height: config.depth },
+    scaleStepCm: config.scaleStepCm || 5,
+    svg: () => `<g class="core" data-id="${id}">${render('rich')}</g>`,
+    schematicSvg: () => `<g class="core schematic-only" data-id="${id}">${render('schematic')}</g>`
+  };
+  if (config.seats) template.seats = config.seats;
+  ITEM_TEMPLATES[id] = template;
+}
+function buildZone({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.12 }),
+    line(0, -depth / 2, 0, depth / 2, 'furn-center')
+  ]);
+}
+
+function buildSofa({ width, depth, opts = {} }) {
+  const segments = Math.max(1, opts.segments || 2);
+  const radius = Math.min(width, depth) * 0.15;
+  const seatDepth = depth * 0.58;
+  const seatCenterY = depth * 0.12;
+  const inset = Math.min(width, depth) * 0.12;
+  const backHeight = depth * 0.25;
+  const seatHeight = seatDepth - inset * 0.6;
+  const parts = [
+    rect(width, depth, { className: 'shape shape-fill', radius }),
+    rect(width - inset, seatHeight, { className: 'shape-detail', y: seatCenterY }),
+    rect(width, backHeight, { className: 'shape-detail', y: -depth / 2 + backHeight / 2 })
+  ];
+  const seatTop = seatCenterY - seatHeight / 2;
+  const seatBottom = seatCenterY + seatHeight / 2;
+  for (let i = 1; i < segments; i += 1) {
+    const x = -width / 2 + (width / segments) * i;
+    parts.push(line(x, seatTop, x, seatBottom));
+  }
+  return join(parts);
+}
+
+function buildSofaL({ width, depth, opts = {} }) {
+  const chaiseRatio = opts.chaiseRatio ?? 0.45;
+  const backDepthRatio = opts.backDepthRatio ?? 0.58;
+  const chaiseWidth = width * chaiseRatio;
+  const mainDepth = depth * backDepthRatio;
+  const thickness = Math.min(width, depth) * 0.12;
+  const x0 = -width / 2;
+  const y0 = -depth / 2;
+  const shape = `M ${fmt(x0)} ${fmt(y0)} H ${fmt(x0 + width)} V ${fmt(y0 + mainDepth)} H ${fmt(x0 + chaiseWidth)} V ${fmt(y0 + depth)} H ${fmt(x0)} Z`;
+  const parts = [path(shape, 'shape shape-fill')];
+  const mainSeat = rect(width - thickness * 1.2, mainDepth - thickness * 1.4, {
+    className: 'shape-detail',
+    y: y0 + mainDepth / 2 + thickness * 0.3
+  });
+  parts.push(mainSeat);
+  const chaiseSeatHeight = depth - mainDepth - thickness * 1.2;
+  if (chaiseSeatHeight > 0) {
+    parts.push(rect(chaiseWidth - thickness * 1.2, chaiseSeatHeight, {
+      className: 'shape-detail',
+      x: x0 + chaiseWidth / 2,
+      y: y0 + mainDepth + chaiseSeatHeight / 2 + thickness * 0.3
+    }));
+  }
+  parts.push(line(x0 + chaiseWidth, y0 + mainDepth, x0 + chaiseWidth, y0 + depth));
+  return join(parts);
+}
+
+function buildArmchair({ width, depth, opts = {} }) {
+  const radius = Math.min(width, depth) * 0.18;
+  const seatDepth = depth * 0.58;
+  const seatCenterY = depth * 0.1;
+  const backHeight = depth * 0.28;
+  const parts = [
+    rect(width, depth, { className: 'shape shape-fill', radius }),
+    rect(width * 0.72, seatDepth, { className: 'shape-detail', y: seatCenterY }),
+    rect(width, backHeight, { className: 'shape-detail', y: -depth / 2 + backHeight / 2 })
+  ];
+  if (!opts.compact) {
+    const armInset = width * 0.18;
+    parts.push(line(-width / 2 + armInset, seatCenterY - seatDepth / 2, -width / 2 + armInset, depth / 2 - armInset));
+    parts.push(line(width / 2 - armInset, seatCenterY - seatDepth / 2, width / 2 - armInset, depth / 2 - armInset));
+  }
+  return join(parts);
+}
+
+function buildChair({ width, depth }) {
+  const radius = Math.min(width, depth) * 0.15;
+  const seatDepth = depth * 0.55;
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius }),
+    rect(width * 0.7, seatDepth, { className: 'shape-detail', y: depth * 0.12 }),
+    rect(width, depth * 0.25, { className: 'shape-detail', y: -depth / 2 + depth * 0.12 })
+  ]);
+}
+
+function buildStoolRound({ width }) {
+  const radius = width / 2;
+  return join([
+    circle(radius, { className: 'shape shape-fill' }),
+    circle(radius * 0.35, { className: 'shape-detail' })
+  ]);
+}
+
+function buildStoolSquare({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.2 }),
+    rect(width * 0.6, depth * 0.6, { className: 'shape-detail' })
+  ]);
+}
+
+function buildBanquette({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.18 }),
+    rect(width * 0.92, depth * 0.55, { className: 'shape-detail', y: depth * 0.1 }),
+    rect(width, depth * 0.22, { className: 'shape-detail', y: -depth / 2 + depth * 0.11 })
+  ]);
+}
+
+function buildBooth({ width, depth, opts = {} }) {
+  const seatDepth = depth * 0.22;
+  const tableWidth = width * (opts.tableWidthRatio || 0.3);
+  const tableDepth = depth * 0.28;
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.1 }),
+    rect(width * 0.92, seatDepth, { className: 'shape-detail', y: depth / 2 - seatDepth / 2 }),
+    rect(width * 0.92, seatDepth, { className: 'shape-detail', y: -depth / 2 + seatDepth / 2 }),
+    rect(tableWidth, tableDepth, { className: 'shape-detail' }),
+    line(-tableWidth / 2, 0, tableWidth / 2, 0)
+  ]);
+}
+
+function buildTableRound({ width, depth, opts = {} }) {
+  const radius = width / 2;
+  const parts = [circle(radius, { className: 'shape shape-fill' })];
+  if (opts.innerCircle) parts.push(circle(radius * 0.35, { className: 'shape-detail' }));
+  if (opts.cross !== false) {
+    parts.push(line(0, -depth / 2, 0, depth / 2, 'furn-center'));
+    parts.push(line(-width / 2, 0, width / 2, 0, 'furn-center'));
+  }
+  return join(parts);
+}
+
+function buildTableRect({ width, depth, opts = {} }) {
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: opts.cornerRadius || Math.min(width, depth) * 0.12 })];
+  if (opts.cross !== false) {
+    parts.push(line(0, -depth / 2, 0, depth / 2, 'furn-center'));
+    parts.push(line(-width / 2, 0, width / 2, 0, 'furn-center'));
+  }
+  if (opts.centerLine === 'horizontal') parts.push(line(-width / 2, 0, width / 2, 0));
+  return join(parts);
+}
+
+function buildCounterStraight({ width, depth, opts = {} }) {
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 })];
+  const offset = opts.edgeOffset ? depth * opts.edgeOffset : depth * 0.3;
+  parts.push(line(-width / 2, offset - depth / 2, width / 2, offset - depth / 2));
+  return join(parts);
+}
+
+function buildCounterL({ width, depth, opts = {} }) {
+  const thickness = opts.thickness || Math.min(width, depth) * 0.35;
+  const x0 = -width / 2;
+  const y0 = -depth / 2;
+  const outline = `M ${fmt(x0)} ${fmt(y0)} H ${fmt(x0 + width)} V ${fmt(y0 + thickness)} H ${fmt(x0 + thickness)} V ${fmt(y0 + depth)} H ${fmt(x0)} Z`;
+  return join([
+    path(outline, 'shape shape-fill'),
+    line(x0, y0 + thickness / 2, x0 + width, y0 + thickness / 2),
+    line(x0 + thickness / 2, y0 + thickness, x0 + thickness / 2, y0 + depth)
+  ]);
+}
+
+function buildCounterIsland({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.12 }),
+    rect(width * 0.6, depth * 0.35, { className: 'shape-detail' })
+  ]);
+}
+
+function buildCounterBack({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.1 }),
+    line(-width / 2, 0, width / 2, 0)
+  ]);
+}
+
+function buildPartitionLine({ width, depth }) {
+  return rect(width, depth, { className: 'shape shape-fill', radius: depth * 0.4 });
+}
+function buildSink({ width, depth, opts = {} }) {
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 })];
+  (opts.basins || []).forEach(basin => {
+    parts.push(ellipse(basin.rx || width * 0.25, basin.ry || depth * 0.3, {
+      cx: basin.cx || 0,
+      cy: basin.cy || 0,
+      className: 'shape-detail'
+    }));
+  });
+  if (opts.faucet) parts.push(line(0, -depth / 2, 0, -depth / 2 + depth * 0.2));
+  return join(parts);
+}
+
+function buildCooktop({ width, depth }) {
+  const burnerRadius = Math.min(width, depth) * 0.18;
+  const offsets = [-0.3, 0.3];
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 })];
+  offsets.forEach(ox => offsets.forEach(oy => {
+    parts.push(circle(burnerRadius, { cx: width * ox / 2, cy: depth * oy / 2, className: 'shape-detail' }));
+  }));
+  return join(parts);
+}
+
+function buildBed({ width, depth, opts = {} }) {
+  const headHeight = depth * 0.25;
+  const pillowCount = Math.max(1, opts.pillows || 2);
+  const parts = [
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.12 }),
+    rect(width, headHeight, { className: 'shape-detail', y: -depth / 2 + headHeight / 2 })
+  ];
+  const pillowWidth = width / pillowCount - width * 0.08;
+  const pillowHeight = headHeight * 0.6;
+  for (let i = 0; i < pillowCount; i += 1) {
+    const cx = -width / 2 + pillowWidth / 2 + (width / pillowCount) * i;
+    parts.push(rect(pillowWidth, pillowHeight, {
+      className: 'shape-detail',
+      x: cx,
+      y: -depth / 2 + headHeight * 0.65
+    }));
+  }
+  parts.push(line(0, -depth / 2 + headHeight, 0, depth / 2 - depth * 0.08));
+  return join(parts);
+}
+
+function buildStorage({ width, depth, opts = {} }) {
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: opts.radius || Math.min(width, depth) * 0.1 })];
+  (opts.dividers || []).forEach(ratio => {
+    const x = -width / 2 + width * ratio;
+    parts.push(line(x, -depth / 2, x, depth / 2));
+  });
+  (opts.shelves || []).forEach(ratio => {
+    const y = depth * ratio;
+    parts.push(line(-width / 2, y, width / 2, y));
+  });
+  return join(parts);
+}
+
+function buildBathtub({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.3 }),
+    ellipse(width * 0.38, depth * 0.35, { className: 'shape-detail' })
+  ]);
+}
+
+function buildShower({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill' }),
+    line(-width / 2, depth / 2, width / 2, -depth / 2),
+    circle(Math.min(width, depth) * 0.08, { className: 'shape-detail' })
+  ]);
+}
+
+function buildToilet({ width, depth }) {
+  const bowlHeight = depth * 0.55;
+  const cisternHeight = depth - bowlHeight;
+  return join([
+    rect(width, bowlHeight, { className: 'shape shape-fill', y: depth / 2 - bowlHeight / 2, radius: Math.min(width, bowlHeight) * 0.35 }),
+    ellipse(width * 0.35, bowlHeight * 0.4, { className: 'shape-detail', cy: depth / 2 - bowlHeight * 0.55 }),
+    rect(width * 0.75, cisternHeight, { className: 'shape-detail', y: -depth / 2 + cisternHeight / 2 })
+  ]);
+}
+
+function buildWasher({ width, depth, opts = {} }) {
+  const radius = Math.min(width, depth) * 0.3;
+  const inner = opts.innerCircle || radius * 0.75;
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 }),
+    circle(radius, { className: 'shape-detail' }),
+    circle(inner, { className: 'shape-detail' })
+  ]);
+}
+
+function buildWatercooler({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.12 }),
+    rect(width * 0.6, depth * 0.35, { className: 'shape-detail', y: -depth * 0.15 }),
+    rect(width * 0.6, depth * 0.18, { className: 'shape-detail', y: depth * 0.2 })
+  ]);
+}
+
+function buildTV({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill' }),
+    rect(width * 0.88, depth * 0.6, { className: 'shape-detail' })
+  ]);
+}
+
+function buildProjector({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.2 }),
+    circle(Math.min(width, depth) * 0.2, { className: 'shape-detail', cx: width * 0.25 })
+  ]);
+}
+
+function buildScreen({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: depth * 0.4 }),
+    line(-width / 2, 0, width / 2, 0)
+  ]);
+}
+
+function buildAC({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.2 }),
+    line(-width / 2, 0, width / 2, 0)
+  ]);
+}
+
+function buildRadiator({ width, depth }) {
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: depth * 0.4 })];
+  const segmentWidth = width / 6;
+  for (let i = 1; i < 6; i += 1) {
+    const x = -width / 2 + segmentWidth * i;
+    parts.push(line(x, -depth / 2, x, depth / 2));
+  }
+  return join(parts);
+}
+
+function buildPlant({ width }) {
+  const radius = width / 2;
+  const leaf = `M 0 ${fmt(radius)} C ${fmt(radius * 0.6)} ${fmt(radius * 0.1)} ${fmt(radius * 0.6)} ${fmt(-radius * 0.4)} 0 ${fmt(-radius * 0.9)} C ${fmt(-radius * 0.6)} ${fmt(-radius * 0.4)} ${fmt(-radius * 0.6)} ${fmt(radius * 0.1)} 0 ${fmt(radius)} Z`;
+  return join([
+    circle(radius, { className: 'shape shape-fill' }),
+    path(leaf, 'shape-detail')
+  ]);
+}
+
+function buildFloorLamp({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.3 }),
+    line(0, -depth / 2, 0, depth / 2)
+  ]);
+}
+
+function buildRug({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.1 }),
+    rect(width * 0.82, depth * 0.82, { className: 'shape-detail' })
+  ]);
+}
+
+function buildQueuePost({ width }) {
+  const radius = width / 2;
+  return join([
+    circle(radius, { className: 'shape shape-fill' }),
+    line(0, -radius, 0, radius)
+  ]);
+}
+
+function buildMenuBoard({ width, depth }) {
+  return rect(width, depth, { className: 'shape shape-fill', radius: depth * 0.4 });
+}
+
+function buildPlanter({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.2 }),
+    rect(width * 0.9, depth * 0.4, { className: 'shape-detail', y: -depth * 0.15 })
+  ]);
+}
+
+function buildWhiteboard({ width, depth }) {
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: depth * 0.4 }),
+    rect(width * 0.9, depth * 0.4, { className: 'shape-detail' })
+  ]);
+}
+function buildAppliance({ width, depth, opts = {} }) {
+  const radius = opts.radius ?? Math.min(width, depth) * 0.1;
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius })];
+  if (opts.inner !== false) {
+    const innerWidth = opts.innerWidth ?? width - Math.min(width, depth) * 0.3;
+    const innerHeight = opts.innerHeight ?? depth * (opts.innerHeightRatio ?? 0.35);
+    let innerY = 0;
+    if (opts.innerY !== undefined) innerY = opts.innerY;
+    else if (opts.innerAlign === 'top') innerY = -depth / 2 + innerHeight / 2 + depth * 0.12;
+    else if (opts.innerAlign === 'bottom') innerY = depth / 2 - innerHeight / 2 - depth * 0.12;
+    parts.push(rect(innerWidth, innerHeight, { className: 'shape-detail', y: innerY }));
+  }
+  (opts.horizontal || []).forEach(ratio => {
+    const y = depth * ratio;
+    parts.push(line(-width / 2, y, width / 2, y));
+  });
+  (opts.vertical || []).forEach(ratio => {
+    const x = width * ratio;
+    parts.push(line(x, -depth / 2, x, depth / 2));
+  });
+  if (opts.circle) {
+    parts.push(circle(opts.circle.radius || Math.min(width, depth) * 0.2, {
+      className: 'shape-detail',
+      cx: opts.circle.cx || 0,
+      cy: opts.circle.cy || 0
+    }));
+  }
+  return join(parts);
+}
+const BUILDERS = {
+  zone: buildZone,
+  sofa: buildSofa,
+  sofaL: buildSofaL,
+  armchair: buildArmchair,
+  chair: buildChair,
+  stoolRound: buildStoolRound,
+  stoolSquare: buildStoolSquare,
+  banquette: buildBanquette,
+  booth: buildBooth,
+  tableRound: buildTableRound,
+  tableRect: buildTableRect,
+  counterStraight: buildCounterStraight,
+  counterL: buildCounterL,
+  counterIsland: buildCounterIsland,
+  counterBack: buildCounterBack,
+  partitionLine: buildPartitionLine,
+  sink: buildSink,
+  cooktop: buildCooktop,
+  bed: buildBed,
+  storage: buildStorage,
+  bathtub: buildBathtub,
+  shower: buildShower,
+  toilet: buildToilet,
+  washer: buildWasher,
+  watercooler: buildWatercooler,
+  tv: buildTV,
+  projector: buildProjector,
+  screen: buildScreen,
+  ac: buildAC,
+  radiator: buildRadiator,
+  plant: buildPlant,
+  floorLamp: buildFloorLamp,
+  rug: buildRug,
+  queuePost: buildQueuePost,
+  menuBoard: buildMenuBoard,
+  planter: buildPlanter,
+  whiteboard: buildWhiteboard,
+  appliance: buildAppliance
+};
+Object.entries(PLAN_LIBRARY).forEach(([id, config]) => registerTemplate(id, config));
+const TEMPLATE_MIGRATION_MAP = {
+  'zone': 'zone',
+  'cafe-table-round-60': 'table-round-60',
+  'cafe-table-square-70': 'table-square-70',
+  'cafe-hightop-round-70': 'table-hightop-round-70',
+  'cafe-communal-240': 'table-rect-240x90',
+  'banquette-160': 'seat-banquette-160x60',
+  'banquette-220': 'seat-banquette-220x60',
+  'booth-2': 'seat-booth-2-150x120',
+  'booth-4': 'seat-booth-4-220x140',
+  'bar-counter-straight-180': 'counter-straight-180',
+  'bar-counter-straight-240': 'counter-straight-240',
+  'bar-counter-l-180x180': 'counter-l-180x180',
+  'bar-counter-island-180x90': 'counter-island-180x90',
+  'bar-back-shelf-180': 'counter-back-180x40',
+  'espresso-2g': 'appliance-espresso-80x60',
+  'espresso-3g': 'appliance-espresso-110x60',
+  'grinder-80mm': 'appliance-small-30x30',
+  'batch-brewer-2': 'appliance-batchbrew-80x45',
+  'pour-over-3': 'appliance-pourover-120x40',
+  'kettle-electric': 'appliance-kettle-30x30',
+  'water-filter': 'appliance-filter-40x30',
+  'ice-machine-60': 'appliance-ice-60x60',
+  'undercounter-fridge-90': 'appliance-undercounter-90x60',
+  'upright-fridge-60': 'appliance-upright-60x70',
+  'milk-fridge-60': 'appliance-milk-60x60',
+  'freezer-60': 'appliance-freezer-60x60',
+  'pastry-case-120': 'appliance-display-120x70',
+  'pastry-case-120-curved': 'appliance-display-120x70',
+  'pos-terminal': 'appliance-pos-35x35',
+  'cash-drawer': 'appliance-cashdrawer-45x35',
+  'condiment-120': 'fixture-condiment-120x35',
+  'syrup-rack-90': 'fixture-syrup-90x30',
+  'trash-single': 'fixture-trash-40x40',
+  'trash-double': 'fixture-trash-80x40',
+  'hand-sink': 'kitchen-handsink-50x50',
+  'triple-sink': 'kitchen-triple-sink-180x60',
+  'dishwasher-pro': 'appliance-dishwasher-60x60',
+  'drying-rack-120': 'fixture-drying-120x40',
+  'queue-post': 'fixture-queuepost-35',
+  'menu-board-120': 'fixture-menuboard-120x10',
+  'planter-long-120': 'decor-planter-120x30',
+  'partition-120x10': 'partition-linear-120x10',
+  'chair': 'chair-side-45x50',
+  'armchair': 'chair-armchair-90',
+  'sofa-2': 'sofa-2seat-200',
+  'sofa-3': 'sofa-3seat-240',
+  'sectional-l': 'sofa-l-260x180',
+  'stool': 'stool-round-35',
+  'barstool': 'stool-bar-35x35',
+  'coffee-round': 'table-coffee-round-80',
+  'coffee-rect': 'table-coffee-rect-120x60',
+  'dining-4': 'table-rect-120x75',
+  'dining-6': 'table-rect-160x90',
+  'dining-8': 'table-rect-200x100',
+  'desk': 'table-work-160x80',
+  'workstation-l': 'counter-l-180x180',
+  'office-chair': 'chair-office-70x70',
+  'reception': 'counter-reception-200x80',
+  'whiteboard': 'fixture-whiteboard-180x10',
+  'printer': 'appliance-printer-60x45',
+  'copier': 'appliance-copier-70x60',
+  'server-rack': 'appliance-server-70x70',
+  'bed-single': 'bed-single-90x200',
+  'bed-double': 'bed-double-160x200',
+  'nightstand': 'storage-nightstand-50x40',
+  'wardrobe-2d': 'storage-wardrobe-120x60',
+  'wardrobe-3d': 'storage-wardrobe-180x60',
+  'shelving': 'storage-shelving-120x40',
+  'kitchen-line': 'counter-straight-180',
+  'sink': 'kitchen-sink-60x60',
+  'cooktop-4': 'kitchen-cooktop-60x60',
+  'fridge': 'appliance-fridge-60x70',
+  'oven': 'kitchen-oven-60x60',
+  'microwave': 'appliance-counter-60x40',
+  'dishwasher': 'appliance-dishwasher-60x60',
+  'island': 'counter-island-180x90',
+  'toilet': 'bath-toilet-38x70',
+  'bath-sink': 'bath-sink-60x50',
+  'shower': 'bath-shower-90x90',
+  'bathtub': 'bath-bathtub-170x75',
+  'washer': 'appliance-washer-60x60',
+  'dryer': 'appliance-dryer-60x60',
+  'water-cooler': 'fixture-watercooler-40x60',
+  'tv-stand': 'storage-media-180x40',
+  'tv-wall': 'fixture-tv-180x20',
+  'projector': 'fixture-projector-40x40',
+  'projection-screen': 'fixture-screen-240x10',
+  'ac-indoor': 'climate-ac-100x30',
+  'radiator': 'climate-radiator-120x12',
+  'plant': 'decor-plant-60',
+  'floor-lamp': 'decor-floorlamp-45x45',
+  'rug': 'decor-rug-200x140',
+  'bar-counter-straight': 'counter-straight-180',
+  'bar-counter-l': 'counter-l-180x180',
+  'bar-counter-island': 'counter-island-180x90'
+};
+
+const TEMPLATE_MIGRATION_RULES = [];
+
+if (typeof globalThis !== 'undefined') {
+  globalThis.TEMPLATE_MIGRATION_MAP = TEMPLATE_MIGRATION_MAP;
+  globalThis.TEMPLATE_MIGRATION_RULES = TEMPLATE_MIGRATION_RULES;
 }

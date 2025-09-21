@@ -8,11 +8,11 @@
   --danger:#dc3545;
   --ui-accent:#0066cc;
   --wall-stroke:2px;
-  --furn-stroke:1.2px;
-  --furn-detail-stroke:0.6px;
-  --outline:#222;
-  --accent:#5d636b;
-  --fill-light:rgba(19,79,23,0.04);
+  --furn-stroke:1.4px;
+  --furn-detail-stroke:0.75px;
+  --outline:#161a17;
+  --accent:#4e6b57;
+  --fill-light:rgba(118,168,132,0.18);
   --stroke:var(--furn-stroke);
   --handle:var(--ui-accent);
   --select:rgba(0,102,204,0.85);
@@ -23,6 +23,7 @@
 svg.plan *{vector-effect:non-scaling-stroke;}
 .shape{vector-effect:non-scaling-stroke;stroke:var(--outline);stroke-width:var(--furn-stroke);fill:none;stroke-linejoin:round;stroke-linecap:round;}
 .shape-fill{fill:var(--fill-light);stroke:var(--outline);stroke-width:var(--furn-stroke);}
+.shape-detail{vector-effect:non-scaling-stroke;stroke:var(--outline);stroke-width:var(--furn-detail-stroke);fill:none;stroke-linejoin:round;stroke-linecap:round;}
 .furn-center{stroke:var(--accent);stroke-width:var(--furn-detail-stroke);stroke-dasharray:3 2;fill:none;vector-effect:non-scaling-stroke;}
 .svg-mode--schematic .rich-only{display:none!important;}
 .svg-mode--schematic .schematic-only{display:inline!important;}
