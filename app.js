@@ -606,7 +606,25 @@
     // --- DATA & MODEL ---
     function getModel(el) { if (!el || !el.dataset) return {}; return { id: el.dataset.id, tpl: el.dataset.template || 'zone', x: +el.dataset.x || 0, y: +el.dataset.y || 0, a: +el.dataset.a || 0, sx: +el.dataset.sx || 1, sy: +el.dataset.sy || 1, cx: +el.dataset.cx || 0, cy: +el.dataset.cy || 0, ow: +el.dataset.ow || 0, oh: +el.dataset.oh || 0, locked: el.dataset.locked === 'true', visible: el.dataset.visible !== 'false' }; }
     function setModel(el, model) { for (const k in model) { if (model[k] !== undefined) el.dataset[k] = model[k]; } applyTransformFromDataset(el); updatePropertiesPanel(model); updateLayerItem(model); }
-    function applyTransformFromDataset(el) { const m = getModel(el); el.setAttribute('transform', `translate(${m.x}, ${m.y}) rotate(${m.a})`); const core = el.querySelector('.core'); if (core) { core.setAttribute('transform', `translate(${-m.cx}, ${-m.cy}) scale(${m.sx}, ${m.sy})`); } updateSelectionUI(el); }
+    function applyTransformFromDataset(el) {
+        const m = getModel(el);
+        // позиция и поворот всего объекта
+        el.setAttribute('transform', `translate(${m.x}, ${m.y}) rotate(${m.a})`);
+
+        const core = el.querySelector('.core');
+        if (core) {
+            if (!core.dataset.baseTransform) {
+                const init = core.getAttribute('transform') || '';
+                core.dataset.baseTransform = init.trim();
+            }
+            const base = core.dataset.baseTransform;
+            const dyn = `translate(${-m.cx}, ${-m.cy}) scale(${m.sx}, ${m.sy})`.trim();
+            const combined = [base, dyn].filter(Boolean).join(' ');
+            core.setAttribute('transform', combined);
+        }
+
+        updateSelectionUI(el);
+    }
 
     // --- UI & SELECTION ---
     function updateSelectionUI(el) { if (!el) return; const m = getModel(el); const w = m.ow * m.sx, h = m.oh * m.sy; const sel = el.querySelector('.selection-box'); if (sel) { sel.setAttribute('x', -w / 2 - 5); sel.setAttribute('y', -h / 2 - 5); sel.setAttribute('width', w + 10); sel.setAttribute('height', h + 10); } const rs = el.querySelector('.resize-handle'); if (rs) { rs.setAttribute('x', w / 2 - 6); rs.setAttribute('y', h / 2 - 6); } const ro = el.querySelector('.rotate-handle'); if (ro) { ro.setAttribute('cx', 0); ro.setAttribute('cy', -h / 2 - 20); } }
@@ -2716,6 +2734,7 @@
                 compEl.dataset.id = c.id;
             }
             compModel.offset = c.offset || 0;
+            const wallModel = getWallModel(wallEl);
             if (Number.isFinite(c.width) && c.width > 0) {
                 let widthMeters = c.width;
                 if (widthMeters > 10) {
@@ -2723,14 +2742,15 @@
                 }
                 compModel.width = widthMeters;
                 compEl.dataset.width = widthMeters.toFixed(3);
-                compEl.innerHTML = renderWallComponentMarkup(compModel, wallModel);
+                if (wallModel) {
+                    compEl.innerHTML = renderWallComponentMarkup(compModel, wallModel);
+                }
             }
             componentStore.set(compEl, compModel);
             if (originalId && originalId !== compModel.id) {
                 componentIdMap.delete(originalId);
             }
             componentIdMap.set(compModel.id, compEl);
-            const wallModel = getWallModel(wallEl);
             if (wallModel) {
                 wallModel.components = wallModel.components || [];
                 if (!wallModel.components.includes(compModel)) wallModel.components.push(compModel);
