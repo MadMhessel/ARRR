@@ -137,6 +137,8 @@
     const componentStore = new Map();
     const componentIdMap = new Map();
     const wallMaskMap = new Map();
+    const TEMPLATE_ID_MAP = (typeof globalThis !== 'undefined' && globalThis.TEMPLATE_MIGRATION_MAP) ? globalThis.TEMPLATE_MIGRATION_MAP : {};
+    const TEMPLATE_RULES = (typeof globalThis !== 'undefined' && globalThis.TEMPLATE_MIGRATION_RULES) ? globalThis.TEMPLATE_MIGRATION_RULES : [];
     const WALL_TYPES = [
         { id: 'structural', label: 'Капитальная', description: 'Несущая стена, толщина ~250 мм' },
         { id: 'partition', label: 'Перегородка', description: 'Лёгкая перегородка, толщина ~100 мм' },
@@ -174,8 +176,8 @@
         },
     };
     const OPENING_SPECS = {
-        door: { widthMeters: 0.9, stroke: '#8B4513' },
-        window: { widthMeters: 1.2, stroke: '#2F7EBB', fill: 'rgba(163,213,255,0.55)' },
+        door: { widthMeters: 0.9, stroke: '#1A1D1A' },
+        window: { widthMeters: 1.2, stroke: '#356D94', fill: 'rgba(150,190,220,0.45)' },
     };
     const ESTIMATE_PRESETS = {
         standard: { finish: 50, perimeter: 12, engineering: 35 },
@@ -606,6 +608,27 @@
 
     // --- DATA & MODEL ---
     function getModel(el) { if (!el || !el.dataset) return {}; return { id: el.dataset.id, tpl: el.dataset.template || 'zone', x: +el.dataset.x || 0, y: +el.dataset.y || 0, a: +el.dataset.a || 0, sx: +el.dataset.sx || 1, sy: +el.dataset.sy || 1, cx: +el.dataset.cx || 0, cy: +el.dataset.cy || 0, ow: +el.dataset.ow || 0, oh: +el.dataset.oh || 0, locked: el.dataset.locked === 'true', visible: el.dataset.visible !== 'false' }; }
+    function resolveTemplateId(raw) {
+        if (typeof raw !== 'string') return 'zone';
+        const key = raw.trim();
+        if (!key) return 'zone';
+        if (ITEM_TEMPLATES[key]) return key;
+        if (TEMPLATE_ID_MAP[key]) {
+            const mapped = TEMPLATE_ID_MAP[key];
+            if (ITEM_TEMPLATES[mapped]) return mapped;
+        }
+        for (const rule of TEMPLATE_RULES) {
+            if (!rule || !rule.test) continue;
+            const match = key.match(rule.test);
+            if (!match) continue;
+            const target = typeof rule.target === 'function' ? rule.target(match, key) : rule.target;
+            if (target && ITEM_TEMPLATES[target]) {
+                TEMPLATE_ID_MAP[key] = target;
+                return target;
+            }
+        }
+        return ITEM_TEMPLATES[key] ? key : 'zone';
+    }
     function setModel(el, model) { for (const k in model) { if (model[k] !== undefined) el.dataset[k] = model[k]; } applyTransformFromDataset(el); updatePropertiesPanel(model); updateLayerItem(model); }
     function applyTransformFromDataset(el) {
         const m = getModel(el);
@@ -1464,7 +1487,7 @@
         const el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         el.classList.add('layout-object');
         el.dataset.id = `el-${state.objectCounter++}`;
-        const safeTpl = ITEM_TEMPLATES[tpl] ? tpl : 'zone';
+        const safeTpl = resolveTemplateId(tpl);
         el.dataset.template = safeTpl;
         let coreMarkup = renderItemTemplate(safeTpl, state.renderMode);
         if (!coreMarkup && typeof ITEM_TEMPLATES[safeTpl]?.svg === 'function') {
@@ -1561,14 +1584,18 @@
         const widthUnits = sheetMmToUnits(widthSheetMm);
         const strokeWidth = Math.max(sheetMmToUnits(0.35), 0.8);
         if (compModel.type === 'door') {
-            const radius = widthUnits / 2;
-            const stroke = spec.stroke || '#8B4513';
-            const safeHalfThickness = halfThickness || sheetMmToUnits(4) / 2;
-            const arcEndX = radius;
-            const arcEndY = safeHalfThickness - radius;
+            const swingRadius = widthUnits;
+            const baseThickness = thicknessUnits || sheetMmToUnits(4);
+            const leafThickness = Math.max(sheetMmToUnits(0.35), baseThickness * 0.45);
+            const hingeX = -widthUnits / 2;
+            const hingeY = -leafThickness / 2;
+            const stroke = spec.stroke || '#1A1D1A';
+            const detailWidth = Math.max(sheetMmToUnits(0.25), 0.6);
+            const arcEndX = hingeX + swingRadius;
+            const arcEndY = hingeY + swingRadius;
             return `
-                <line x1="${(-radius).toFixed(3)}" y1="${safeHalfThickness.toFixed(3)}" x2="${(-radius).toFixed(3)}" y2="${(-safeHalfThickness).toFixed(3)}" stroke="${stroke}" stroke-width="${strokeWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
-                <path d="M ${(-radius).toFixed(3)} ${safeHalfThickness.toFixed(3)} A ${radius.toFixed(3)} ${radius.toFixed(3)} 0 0 1 ${arcEndX.toFixed(3)} ${arcEndY.toFixed(3)}" fill="none" stroke="${stroke}" stroke-width="${strokeWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+                <line x1="${hingeX.toFixed(3)}" y1="${hingeY.toFixed(3)}" x2="${hingeX.toFixed(3)}" y2="${(hingeY + leafThickness).toFixed(3)}" stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
+                <path d="M ${hingeX.toFixed(3)} ${hingeY.toFixed(3)} A ${swingRadius.toFixed(3)} ${swingRadius.toFixed(3)} 0 0 1 ${arcEndX.toFixed(3)} ${arcEndY.toFixed(3)}" fill="none" stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round"/>
             `;
         }
         const stroke = spec.stroke || '#2F7EBB';
@@ -2726,9 +2753,29 @@
         hideWallLengthPreview();
 
         (data.items || []).forEach(m => {
-            const el = createLayoutObject(m.tpl, m.x, m.y);
-            setModel(el, m);
-            el.style.display = m.visible ? '' : 'none';
+            const tplId = resolveTemplateId(m.tpl);
+            const el = createLayoutObject(tplId, m.x, m.y);
+            const baseModel = getModel(el);
+            const originalWidth = Number.isFinite(m.ow) && m.ow > 0 ? m.ow : baseModel.ow;
+            const originalHeight = Number.isFinite(m.oh) && m.oh > 0 ? m.oh : baseModel.oh;
+            const scaleX = Number.isFinite(m.sx) && m.sx ? m.sx : 1;
+            const scaleY = Number.isFinite(m.sy) && m.sy ? m.sy : 1;
+            const actualWidth = (originalWidth || baseModel.ow || 1) * scaleX;
+            const actualHeight = (originalHeight || baseModel.oh || 1) * scaleY;
+            const ow = baseModel.ow || originalWidth || 1;
+            const oh = baseModel.oh || originalHeight || 1;
+            const nextModel = {
+                ...m,
+                tpl: tplId,
+                ow,
+                oh,
+                cx: baseModel.cx,
+                cy: baseModel.cy,
+                sx: ow ? actualWidth / ow : 1,
+                sy: oh ? actualHeight / oh : 1
+            };
+            setModel(el, nextModel);
+            el.style.display = nextModel.visible === false ? 'none' : '';
         });
 
         const parseLegacyWall = (raw) => {
