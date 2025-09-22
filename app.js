@@ -158,36 +158,36 @@
     const WALL_RENDER_PRESETS = {
         structural: {
             thickness: 0.25,
-            bodyStroke: 'rgba(15,46,43,0.35)',
-            edgeStroke: '#0F2E2B',
+            bodyStroke: '#111111',
+            edgeStroke: '#111111',
             bodyDashMm: null,
             edgeDashMm: null,
         },
         partition: {
-            thickness: 0.15,
-            bodyStroke: 'rgba(15,46,43,0.25)',
-            edgeStroke: '#0F2E2B',
+            thickness: 0.16,
+            bodyStroke: '#111111',
+            edgeStroke: '#111111',
             bodyDashMm: null,
-            edgeDashMm: [6, 3.2],
+            edgeDashMm: [6, 3],
         },
         glass: {
             thickness: 0.1,
-            bodyStroke: 'rgba(77,171,247,0.32)',
-            edgeStroke: '#2F7EBB',
+            bodyStroke: '#676D72',
+            edgeStroke: '#676D72',
             bodyDashMm: null,
             edgeDashMm: [5, 3],
         },
         half: {
             thickness: 0.1,
-            bodyStroke: 'rgba(15,46,43,0.18)',
-            edgeStroke: '#0F2E2B',
+            bodyStroke: '#111111',
+            edgeStroke: '#676D72',
             bodyDashMm: [4, 3],
             edgeDashMm: [4, 4],
         },
     };
     const OPENING_SPECS = {
-        door: { widthMeters: 0.9, stroke: '#1A1D1A' },
-        window: { widthMeters: 1.2, stroke: '#356D94', fill: 'rgba(150,190,220,0.45)' },
+        door: { widthMeters: 0.9, stroke: '#676D72' },
+        window: { widthMeters: 1.2, stroke: '#676D72', fill: 'rgba(234,243,231,0.25)' },
     };
     const DOOR_VARIANTS = {
         single: { label: 'Одинарная дверь 90', widthMeters: 0.9, minCm: 70, maxCm: 110, stepCm: 5, allowHinge: true, allowSwing: true },
@@ -1201,8 +1201,9 @@
         if (swingSign < 0) transforms.push('scale(1,-1)');
         const sweepFlag = swingSign > 0 ? 1 : 0;
         const lineAttrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
+        const dash = `${sheetMmToUnits(6).toFixed(3)} ${sheetMmToUnits(4).toFixed(3)}`;
         const hingeLine = `<line x1="0" y1="${(-leafThickness / 2).toFixed(3)}" x2="0" y2="${(leafThickness / 2).toFixed(3)}" ${lineAttrs}/>`;
-        const leafLine = `<line x1="0" y1="0" x2="0" y2="${(swingSign * widthUnits).toFixed(3)}" ${lineAttrs}/>`;
+        const leafLine = `<line x1="0" y1="0" x2="0" y2="${(swingSign * widthUnits).toFixed(3)}" ${lineAttrs} stroke-dasharray="${dash}"/>`;
         const arc = `<path d="M ${widthUnits.toFixed(3)} 0 A ${widthUnits.toFixed(3)} ${widthUnits.toFixed(3)} 0 0 ${sweepFlag} 0 ${(swingSign * widthUnits).toFixed(3)}" fill="none" ${lineAttrs}/>`;
         return `<g transform="${transforms.join(' ')}">${hingeLine}${leafLine}${arc}</g>`;
     }
@@ -1210,6 +1211,7 @@
     function renderDoorVariantMarkup(compModel, variant, { widthUnits, leafThickness, detailWidth, stroke }) {
         if (!(widthUnits > 0)) return '';
         const attrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
+        const dash = `${sheetMmToUnits(6).toFixed(3)} ${sheetMmToUnits(4).toFixed(3)}`;
         const swingSign = compModel.swing === 'out' ? -1 : 1;
         const variantKey = compModel.variant || 'single';
         if (variantKey === 'double') {
@@ -1217,7 +1219,7 @@
             if (!(half > 0)) return '';
             const left = renderDoorLeaf({ widthUnits: half, hingeOffset: -widthUnits / 2, swingSign, stroke, detailWidth, leafThickness, mirror: false });
             const right = renderDoorLeaf({ widthUnits: half, hingeOffset: widthUnits / 2, swingSign, stroke, detailWidth, leafThickness, mirror: true });
-            const center = `<line x1="0" y1="${(-leafThickness / 2).toFixed(3)}" x2="0" y2="${(leafThickness / 2).toFixed(3)}" ${attrs}/>`;
+            const center = `<line x1="0" y1="${(-leafThickness / 2).toFixed(3)}" x2="0" y2="${(leafThickness / 2).toFixed(3)}" ${attrs} stroke-dasharray="${dash}"/>`;
             return `<g>${left}${right}${center}</g>`;
         }
         if (variantKey === 'sliding') {
@@ -1889,7 +1891,7 @@
             const widthUnits = sheetMmToUnits(widthMeters * SHEET_MM_PER_METER);
             if (!(widthUnits > 0)) return '';
             const stroke = spec.stroke || '#1A1D1A';
-            const detailWidth = Math.max(sheetMmToUnits(0.25), 0.6);
+            const detailWidth = Math.max(sheetMmToUnits(0.3), 0.8);
             const leafThickness = Math.max(sheetMmToUnits(0.35), thicknessUnits * 0.45 || sheetMmToUnits(1.2));
             return renderDoorVariantMarkup(compModel, variant, { widthUnits, leafThickness, detailWidth, stroke });
         }

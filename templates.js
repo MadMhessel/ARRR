@@ -43,11 +43,11 @@ function defineItem(id, config) {
     depth: 90,
     seats: 1
   }],
-  ['chair-side-45x50', {
-    label: 'Стул 45×50',
+  ['chair-side-45x45', {
+    label: 'Стул 45×45',
     builder: 'chair',
     width: 45,
-    depth: 50,
+    depth: 45,
     seats: 1
   }],
   ['seat-banquette-160x60', {
@@ -57,12 +57,20 @@ function defineItem(id, config) {
     depth: 60,
     seats: 3
   }],
-  ['seat-banquette-220x60', {
-    label: 'Банкетка 220×60',
+  ['seat-banquette-corner-180x180', {
+    label: 'Банкетка угловая 180×180',
+    builder: 'banquetteCorner',
+    width: 180,
+    depth: 180,
+    seats: 4,
+    opts: { seatDepth: 50 }
+  }],
+  ['seat-banquette-120x60', {
+    label: 'Банкетка 120×60',
     builder: 'banquette',
-    width: 220,
+    width: 120,
     depth: 60,
-    seats: 4
+    seats: 2
   }],
   ['seat-booth-2-150x120', {
     label: 'Кабинка на 2 150×120',
@@ -150,19 +158,19 @@ function defineItem(id, config) {
     seats: 4,
     opts: { cornerRadius: 8 }
   }],
-  ['table-rect-120x75', {
-    label: 'Стол 120×75',
+  ['table-rect-120x70', {
+    label: 'Стол 120×70',
     builder: 'tableRect',
     width: 120,
-    depth: 75,
+    depth: 70,
     seats: 4,
     opts: { cornerRadius: 10 }
   }],
-  ['table-rect-160x90', {
-    label: 'Стол 160×90',
+  ['table-rect-160x80', {
+    label: 'Стол 160×80',
     builder: 'tableRect',
     width: 160,
-    depth: 90,
+    depth: 80,
     seats: 6,
     opts: { cornerRadius: 12 }
   }],
@@ -266,6 +274,19 @@ function defineItem(id, config) {
     depth: 50,
     opts: { basins: [{ cx: 0, cy: 0, rx: 14, ry: 14 }], faucet: true }
   }],
+  ['utility-mopsink-60x60', {
+    label: 'Мойка для швабры 60×60',
+    builder: 'mopSink',
+    width: 60,
+    depth: 60
+  }],
+  ['utility-floor-drain-15x15', {
+    label: 'Половой трап 15×15',
+    builder: 'floorDrain',
+    width: 15,
+    depth: 15,
+    scaleStepCm: 5
+  }],
   ['kitchen-triple-sink-180x60', {
     label: 'Мойка тройная 180×60',
     builder: 'sink',
@@ -307,19 +328,19 @@ function defineItem(id, config) {
     depth: 70,
     opts: { inner: false, horizontal: [0] }
   }],
-  ['appliance-undercounter-90x60', {
-    label: 'Нижний холодильник 90×60',
-    builder: 'appliance',
-    width: 90,
-    depth: 60,
-    opts: { innerAlign: 'top', innerHeightRatio: 0.28, horizontal: [0.15] }
-  }],
-  ['appliance-upright-60x70', {
-    label: 'Шкаф-холодильник 60×70',
+  ['appliance-undercounter-60x60', {
+    label: 'Холодильник подстольный 60×60',
     builder: 'appliance',
     width: 60,
+    depth: 60,
+    opts: { innerAlign: 'top', innerHeightRatio: 0.28, vertical: [0.3], horizontal: [0.15] }
+  }],
+  ['appliance-upright-70x70', {
+    label: 'Холодильник напольный 70×70',
+    builder: 'appliance',
+    width: 70,
     depth: 70,
-    opts: { inner: false, horizontal: [0.25, -0.25] }
+    opts: { inner: false, horizontal: [0.25, -0.25], handle: { side: 'right' } }
   }],
   ['appliance-freezer-60x60', {
     label: 'Морозильник 60×60',
@@ -335,47 +356,52 @@ function defineItem(id, config) {
     depth: 60,
     opts: { inner: false, horizontal: [-0.1, 0.2] }
   }],
-  ['appliance-display-120x70', {
-    label: 'Витрина 120×70',
+  ['appliance-display-120x60', {
+    label: 'Витрина 120×60',
     builder: 'appliance',
     width: 120,
-    depth: 70,
-    opts: { inner: false, shelves: [0.2, -0.2] }
+    depth: 60,
+    opts: { inner: false, horizontal: [0.18, -0.18], frontArcs: [{ offset: -30 }, { offset: 30 }] }
   }],
   ['appliance-espresso-80x60', {
     label: 'Эспрессо-машина 2 гр. 80×60',
     builder: 'appliance',
     width: 80,
     depth: 60,
-    opts: { innerHeightRatio: 0.3, innerAlign: 'top', vertical: [0], horizontal: [-0.15] }
+    opts: { innerHeightRatio: 0.3, innerAlign: 'top', vertical: [0], horizontal: [-0.15], frontArcs: [{ offset: -20 }, { offset: 20 }] }
   }],
   ['appliance-espresso-110x60', {
     label: 'Эспрессо-машина 3 гр. 110×60',
     builder: 'appliance',
     width: 110,
     depth: 60,
-    opts: { innerHeightRatio: 0.3, innerAlign: 'top', vertical: [-0.25, 0.25], horizontal: [-0.15] }
+    opts: { innerHeightRatio: 0.3, innerAlign: 'top', vertical: [-0.25, 0.25], horizontal: [-0.15], frontArcs: [{ offset: -35 }, { offset: 0 }, { offset: 35 }] }
   }],
   ['appliance-batchbrew-80x45', {
     label: 'Бэтч-брю 80×45',
     builder: 'appliance',
     width: 80,
     depth: 45,
-    opts: { innerHeightRatio: 0.28, innerAlign: 'top', horizontal: [0], vertical: [-0.2, 0.2] }
+    opts: { innerHeightRatio: 0.28, innerAlign: 'top', horizontal: [0], vertical: [-0.2, 0.2], circles: [
+      { cx: -17.6, cy: -2.25, radius: 9.6 },
+      { cx: 17.6, cy: -2.25, radius: 9.6 }
+    ] }
   }],
   ['appliance-pourover-120x40', {
     label: 'Пуровер-станция 120×40',
     builder: 'appliance',
     width: 120,
     depth: 40,
-    opts: { inner: false, vertical: [-0.33, 0, 0.33] }
+    opts: { inner: false, vertical: [-0.33, 0, 0.33], circles: [
+      { cx: -33.6, cy: 0, radius: 9.6 },
+      { cx: 33.6, cy: 0, radius: 9.6 }
+    ] }
   }],
-  ['appliance-small-30x30', {
-    label: 'Малый прибор 30×30',
-    builder: 'appliance',
+  ['appliance-grinder-30x30', {
+    label: 'Кофемолка 30×30',
+    builder: 'grinder',
     width: 30,
-    depth: 30,
-    opts: { inner: false }
+    depth: 30
   }],
   ['appliance-kettle-30x30', {
     label: 'Электрочайник 30×30',
@@ -438,14 +464,17 @@ function defineItem(id, config) {
     builder: 'appliance',
     width: 40,
     depth: 40,
-    opts: { inner: false, horizontal: [0] }
+    opts: { inner: false, horizontal: [0], paths: [{ d: 'M -16 -14 Q 0 -22 16 -14' }] }
   }],
   ['fixture-trash-80x40', {
     label: 'Урна двойная 80×40',
     builder: 'appliance',
     width: 80,
     depth: 40,
-    opts: { inner: false, vertical: [0], horizontal: [0] }
+    opts: { inner: false, vertical: [0], horizontal: [0], paths: [
+      { d: 'M -36 -14 Q -20 -22 -4 -14' },
+      { d: 'M 4 -14 Q 20 -22 36 -14' }
+    ] }
   }],
   ['fixture-drying-120x40', {
     label: 'Сушка 120×40',
@@ -647,109 +676,84 @@ function defineItem(id, config) {
 ].forEach(([id, config]) => defineItem(id, config));
 
 const CATEGORY_ITEMS = {
-  'Помещения': ['zone'],
-  'Гостиная и общие зоны': [
-    'sofa-2seat-200',
-    'sofa-3seat-240',
-    'sofa-l-260x180',
-    'chair-armchair-90',
-    'chair-side-45x50',
-    'seat-banquette-160x60',
-    'seat-banquette-220x60',
-    'seat-booth-2-150x120',
-    'seat-booth-4-220x140',
-    'table-coffee-round-80',
-    'table-coffee-rect-120x60',
-    'storage-media-180x40',
-    'decor-rug-200x140',
-    'decor-plant-60',
-    'decor-floorlamp-45x45'
-  ],
-  'Столовая и кафе-зона': [
+  'Помещение': ['zone'],
+  'Посадка гостей': [
     'table-round-60',
     'table-round-70',
     'table-round-80',
-    'table-square-70',
-    'table-rect-120x75',
-    'table-rect-160x90',
+    'table-rect-120x70',
+    'table-rect-160x80',
     'table-rect-200x100',
     'table-rect-240x90',
     'table-hightop-round-70',
     'table-work-160x80',
+    'chair-side-45x45',
     'stool-round-35',
-    'stool-bar-35x35'
+    'stool-bar-35x35',
+    'seat-banquette-120x60',
+    'seat-banquette-160x60',
+    'seat-banquette-corner-180x180',
+    'seat-booth-2-150x120',
+    'seat-booth-4-220x140'
   ],
-  'Кухня и бар': [
+  'Бар и кухонная линия': [
     'counter-straight-180',
     'counter-straight-240',
     'counter-l-180x180',
     'counter-island-180x90',
     'counter-back-180x40',
-    'partition-linear-120x10',
-    'kitchen-sink-60x60',
-    'kitchen-handsink-50x50',
-    'kitchen-triple-sink-180x60',
-    'kitchen-cooktop-60x60',
-    'kitchen-oven-60x60',
-    'appliance-dishwasher-60x60',
-    'appliance-fridge-60x70',
-    'appliance-undercounter-90x60',
-    'appliance-upright-60x70',
-    'appliance-freezer-60x60',
-    'appliance-milk-60x60',
-    'appliance-display-120x70',
+    'partition-linear-120x10'
+  ],
+  'Оборудование кофе-бара': [
     'appliance-espresso-80x60',
     'appliance-espresso-110x60',
+    'appliance-grinder-30x30',
     'appliance-batchbrew-80x45',
     'appliance-pourover-120x40',
-    'appliance-small-30x30',
-    'appliance-kettle-30x30',
-    'appliance-filter-40x30',
+    'appliance-dishwasher-60x60',
+    'appliance-undercounter-60x60',
+    'appliance-display-120x60',
+    'appliance-milk-60x60',
     'appliance-ice-60x60',
     'appliance-counter-60x40',
     'appliance-pos-35x35',
     'appliance-cashdrawer-45x35',
     'fixture-condiment-120x35',
-    'fixture-syrup-90x30',
+    'fixture-syrup-90x30'
+  ],
+  'Сантехника и уборка': [
+    'kitchen-sink-60x60',
+    'kitchen-handsink-50x50',
+    'utility-mopsink-60x60',
+    'utility-floor-drain-15x15',
+    'kitchen-triple-sink-180x60',
+    'bath-sink-60x50',
+    'bath-toilet-38x70',
+    'bath-shower-90x90',
+    'appliance-washer-60x60',
+    'appliance-dryer-60x60'
+  ],
+  'Хранение и инфраструктура': [
+    'appliance-fridge-60x70',
+    'appliance-upright-70x70',
+    'appliance-freezer-60x60',
+    'storage-shelving-120x40',
+    'storage-wardrobe-120x60',
+    'storage-wardrobe-180x60',
     'fixture-trash-40x40',
     'fixture-trash-80x40',
     'fixture-drying-120x40',
-    'fixture-queuepost-35',
-    'fixture-menuboard-120x10',
+    'fixture-watercooler-40x60',
+    'decor-plant-60',
     'decor-planter-120x30'
   ],
-  'Спальня и хранение': [
-    'bed-single-90x200',
-    'bed-double-160x200',
-    'bed-queen-180x200',
-    'storage-nightstand-50x40',
-    'storage-wardrobe-120x60',
-    'storage-wardrobe-180x60',
-    'storage-shelving-120x40'
-  ],
-  'Санузел и инженерия': [
-    'bath-bathtub-170x75',
-    'bath-shower-90x90',
-    'bath-toilet-38x70',
-    'bath-sink-60x50',
-    'appliance-washer-60x60',
-    'appliance-dryer-60x60',
-    'fixture-watercooler-40x60',
-    'climate-radiator-120x12',
-    'climate-ac-100x30'
-  ],
-  'Техника и медиа': [
-    'fixture-tv-180x20',
-    'fixture-projector-40x40',
-    'fixture-screen-240x10'
-  ],
-  'Офис и сервис': [
-    'chair-office-70x70',
-    'counter-reception-200x80',
-    'fixture-whiteboard-180x10',
-    'appliance-printer-60x45',
-    'appliance-copier-70x60',
-    'appliance-server-70x70'
+  'Сервис и оформление': [
+    'fixture-queuepost-35',
+    'fixture-menuboard-120x10',
+    'decor-floorlamp-45x45',
+    'table-coffee-round-80',
+    'table-coffee-rect-120x60',
+    'storage-media-180x40'
   ]
 };
 
@@ -915,6 +919,20 @@ function buildStoolSquare({ width, depth }) {
   ]);
 }
 
+function buildGrinder({ width, depth }) {
+  const baseWidth = width * 0.82;
+  const baseHeight = depth * 0.56;
+  const baseY = depth * 0.225;
+  const hopperBaseY = baseY - baseHeight / 2;
+  const hopperWidth = width * 0.7;
+  return join([
+    rect(baseWidth, baseHeight, { className: 'shape shape-fill', radius: Math.min(baseWidth, baseHeight) * 0.22, y: baseY }),
+    path(`M ${fmt(-hopperWidth / 2)} ${fmt(hopperBaseY)} L 0 ${fmt(-depth / 2)} L ${fmt(hopperWidth / 2)} ${fmt(hopperBaseY)} Z`, 'shape-detail'),
+    rect(width * 0.5, baseHeight * 0.18, { className: 'shape-detail', y: baseY + baseHeight * 0.18 }),
+    circle(width * 0.18, { className: 'shape-detail', cy: baseY })
+  ]);
+}
+
 function buildBanquette({ width, depth }) {
   const radius = Math.min(width, depth) * 0.18;
   const seatDepth = depth * 0.58;
@@ -926,6 +944,34 @@ function buildBanquette({ width, depth }) {
     rect(width * 0.9, seatDepth, { className: 'shape-detail', y: seatY }),
     line(-width / 2 + backInset, backY, width / 2 - backInset, backY)
   ]);
+}
+
+function buildBanquetteCorner({ width, depth, opts = {} }) {
+  const seatDepth = (opts.seatDepth || Math.min(width, depth) * 0.28);
+  const xMin = -width / 2;
+  const xMax = width / 2;
+  const yMin = -depth / 2;
+  const yMax = depth / 2;
+  const innerX = xMin + seatDepth;
+  const innerY = yMin + seatDepth;
+  const outline = [
+    `M ${fmt(xMin)} ${fmt(yMin)}`,
+    `H ${fmt(xMax)}`,
+    `V ${fmt(innerY)}`,
+    `H ${fmt(innerX)}`,
+    `V ${fmt(yMax)}`,
+    `H ${fmt(xMin)}`,
+    'Z'
+  ].join(' ');
+  const backOffset = seatDepth * 0.45;
+  const innerBackX = xMin + backOffset;
+  const innerBackY = yMin + backOffset;
+  const parts = [
+    path(outline, 'shape shape-fill'),
+    line(innerBackX, innerBackY, xMax - backOffset, innerBackY),
+    line(innerBackX, innerBackY, innerBackX, yMax - backOffset)
+  ];
+  return join(parts);
 }
 
 function buildBooth({ width, depth, opts = {} }) {
@@ -1051,6 +1097,24 @@ function buildSink({ width, depth, opts = {} }) {
   });
   if (opts.faucet) parts.push(line(0, -depth / 2, 0, -depth / 2 + depth * 0.2));
   return join(parts);
+}
+
+function buildMopSink({ width, depth }) {
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 })];
+  const offset = Math.min(width, depth) * 0.25;
+  parts.push(line(-width / 2 + offset, -depth / 2, width / 2, depth / 2 - offset));
+  parts.push(line(-width / 2, -depth / 2 + offset, width / 2 - offset, depth / 2));
+  parts.push(line(-width / 2, depth / 2 - offset, width / 2, -depth / 2 + offset));
+  return join(parts);
+}
+
+function buildFloorDrain({ width, depth }) {
+  const size = Math.min(width, depth);
+  return join([
+    rect(size, size, { className: 'shape', radius: size * 0.15 }),
+    line(-size / 2, 0, size / 2, 0),
+    line(0, -size / 2, 0, size / 2)
+  ]);
 }
 
 function buildCooktop({ width, depth }) {
@@ -1246,12 +1310,44 @@ function buildAppliance({ width, depth, opts = {} }) {
     const x = width * ratio;
     parts.push(line(x, -depth / 2, x, depth / 2));
   });
-  if (opts.circle) {
+  if (Array.isArray(opts.circles)) {
+    opts.circles.forEach(cfg => {
+      if (!cfg) return;
+      const radiusValue = cfg.radius || Math.min(width, depth) * 0.2;
+      parts.push(circle(radiusValue, {
+        className: cfg.className || 'shape-detail',
+        cx: cfg.cx || 0,
+        cy: cfg.cy || 0
+      }));
+    });
+  } else if (opts.circle) {
     parts.push(circle(opts.circle.radius || Math.min(width, depth) * 0.2, {
-      className: 'shape-detail',
+      className: opts.circle.className || 'shape-detail',
       cx: opts.circle.cx || 0,
       cy: opts.circle.cy || 0
     }));
+  }
+  (opts.paths || []).forEach(def => {
+    if (!def || !def.d) return;
+    parts.push(path(def.d, def.className || 'shape-detail'));
+  });
+  (opts.frontArcs || []).forEach(arc => {
+    if (!arc) return;
+    const center = arc.offset !== undefined ? arc.offset : width * (arc.ratio || 0);
+    const arcWidth = arc.width || width * (arc.widthRatio || 0.28);
+    const radiusValue = arc.radius || Math.min(arcWidth / 2, depth * 0.28);
+    const inset = arc.inset || depth * 0.12;
+    const y = depth / 2 - inset;
+    const x0 = center - arcWidth / 2;
+    const x1 = center + arcWidth / 2;
+    parts.push(path(`M ${fmt(x0)} ${fmt(y)} A ${fmt(radiusValue)} ${fmt(radiusValue)} 0 0 1 ${fmt(x1)} ${fmt(y)}`, arc.className || 'shape-detail'));
+  });
+  if (opts.handle) {
+    const side = opts.handle.side === 'left' ? -1 : 1;
+    const inset = opts.handle.inset ?? Math.min(width, depth) * 0.18;
+    const handleLength = opts.handle.length ?? depth * 0.45;
+    const x = side * (width / 2 - inset);
+    parts.push(line(x, -handleLength / 2, x, handleLength / 2));
   }
   return join(parts);
 }
@@ -1263,7 +1359,9 @@ const BUILDERS = {
   chair: buildChair,
   stoolRound: buildStoolRound,
   stoolSquare: buildStoolSquare,
+  grinder: buildGrinder,
   banquette: buildBanquette,
+  banquetteCorner: buildBanquetteCorner,
   booth: buildBooth,
   tableRound: buildTableRound,
   tableRect: buildTableRect,
@@ -1273,6 +1371,8 @@ const BUILDERS = {
   counterBack: buildCounterBack,
   partitionLine: buildPartitionLine,
   sink: buildSink,
+  mopSink: buildMopSink,
+  floorDrain: buildFloorDrain,
   cooktop: buildCooktop,
   bed: buildBed,
   storage: buildStorage,
@@ -1303,7 +1403,7 @@ const TEMPLATE_MIGRATION_MAP = {
   'cafe-hightop-round-70': 'table-hightop-round-70',
   'cafe-communal-240': 'table-rect-240x90',
   'banquette-160': 'seat-banquette-160x60',
-  'banquette-220': 'seat-banquette-220x60',
+  'banquette-220': 'seat-banquette-120x60',
   'booth-2': 'seat-booth-2-150x120',
   'booth-4': 'seat-booth-4-220x140',
   'bar-counter-straight-180': 'counter-straight-180',
@@ -1313,18 +1413,18 @@ const TEMPLATE_MIGRATION_MAP = {
   'bar-back-shelf-180': 'counter-back-180x40',
   'espresso-2g': 'appliance-espresso-80x60',
   'espresso-3g': 'appliance-espresso-110x60',
-  'grinder-80mm': 'appliance-small-30x30',
+  'grinder-80mm': 'appliance-grinder-30x30',
   'batch-brewer-2': 'appliance-batchbrew-80x45',
   'pour-over-3': 'appliance-pourover-120x40',
   'kettle-electric': 'appliance-kettle-30x30',
   'water-filter': 'appliance-filter-40x30',
   'ice-machine-60': 'appliance-ice-60x60',
-  'undercounter-fridge-90': 'appliance-undercounter-90x60',
-  'upright-fridge-60': 'appliance-upright-60x70',
+  'undercounter-fridge-90': 'appliance-undercounter-60x60',
+  'upright-fridge-60': 'appliance-upright-70x70',
   'milk-fridge-60': 'appliance-milk-60x60',
   'freezer-60': 'appliance-freezer-60x60',
-  'pastry-case-120': 'appliance-display-120x70',
-  'pastry-case-120-curved': 'appliance-display-120x70',
+  'pastry-case-120': 'appliance-display-120x60',
+  'pastry-case-120-curved': 'appliance-display-120x60',
   'pos-terminal': 'appliance-pos-35x35',
   'cash-drawer': 'appliance-cashdrawer-45x35',
   'condiment-120': 'fixture-condiment-120x35',
@@ -1339,7 +1439,7 @@ const TEMPLATE_MIGRATION_MAP = {
   'menu-board-120': 'fixture-menuboard-120x10',
   'planter-long-120': 'decor-planter-120x30',
   'partition-120x10': 'partition-linear-120x10',
-  'chair': 'chair-side-45x50',
+  'chair': 'chair-side-45x45',
   'armchair': 'chair-armchair-90',
   'sofa-2': 'sofa-2seat-200',
   'sofa-3': 'sofa-3seat-240',
@@ -1348,8 +1448,8 @@ const TEMPLATE_MIGRATION_MAP = {
   'barstool': 'stool-bar-35x35',
   'coffee-round': 'table-coffee-round-80',
   'coffee-rect': 'table-coffee-rect-120x60',
-  'dining-4': 'table-rect-120x75',
-  'dining-6': 'table-rect-160x90',
+  'dining-4': 'table-rect-120x70',
+  'dining-6': 'table-rect-160x80',
   'dining-8': 'table-rect-200x100',
   'desk': 'table-work-160x80',
   'workstation-l': 'counter-l-180x180',

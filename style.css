@@ -7,12 +7,14 @@
   --muted:#6c757d;
   --danger:#dc3545;
   --ui-accent:#0066cc;
-  --wall-stroke:2px;
-  --furn-stroke:1.4px;
-  --furn-detail-stroke:0.75px;
-  --outline:#161a17;
-  --accent:#4e6b57;
-  --fill-light:rgba(118,168,132,0.18);
+  --wall-stroke:3px;
+  --furn-stroke:1.8px;
+  --furn-detail-stroke:1px;
+  --outline:#111111;
+  --detail-stroke:#676d72;
+  --accent:#676d72;
+  --fill-light:#eaf3e7;
+  --grid-stroke:#dde5e0;
   --stroke:var(--furn-stroke);
   --handle:var(--ui-accent);
   --select:rgba(0,102,204,0.85);
@@ -23,8 +25,8 @@
 svg.plan *{vector-effect:non-scaling-stroke;}
 .shape{vector-effect:non-scaling-stroke;stroke:var(--outline);stroke-width:var(--furn-stroke);fill:none;stroke-linejoin:round;stroke-linecap:round;}
 .shape-fill{fill:var(--fill-light);stroke:var(--outline);stroke-width:var(--furn-stroke);}
-.shape-detail{vector-effect:non-scaling-stroke;stroke:var(--outline);stroke-width:var(--furn-detail-stroke);fill:none;stroke-linejoin:round;stroke-linecap:round;}
-.furn-center{stroke:var(--accent);stroke-width:var(--furn-detail-stroke);stroke-dasharray:3 2;fill:none;vector-effect:non-scaling-stroke;}
+.shape-detail{vector-effect:non-scaling-stroke;stroke:var(--detail-stroke);stroke-width:var(--furn-detail-stroke);fill:none;stroke-linejoin:round;stroke-linecap:round;}
+.furn-center{stroke:var(--detail-stroke);stroke-width:var(--furn-detail-stroke);stroke-dasharray:3 2;fill:none;vector-effect:non-scaling-stroke;}
 .svg-mode--schematic .rich-only{display:none!important;}
 .svg-mode--schematic .schematic-only{display:inline!important;}
 .svg-mode--rich .schematic-only{display:none!important;}
@@ -120,15 +122,13 @@ svg.tool-active { cursor: crosshair; }
   stroke-linejoin: round;
   pointer-events: stroke;
 }
-#walls-layer .wall.selected .wall-edge {
-  filter: drop-shadow(0 0 6px rgba(0,102,204,.6));
-}
-#walls-layer .wall.selected .wall-body {
-  filter: drop-shadow(0 0 4px rgba(0,102,204,.35));
+.wall.selected .wall-body,
+.wall.selected .wall-edge {
+  stroke: var(--ui-accent) !important;
 }
 .wall-component { cursor: pointer; }
 .wall-component.selected > * { stroke: var(--ui-accent) !important; stroke-width: 3; vector-effect: non-scaling-stroke; }
-.floor{fill:#fdfdfd;}
+.floor{fill:var(--fill-light);}
 #grid-layer{pointer-events:none}
 
 #preview-layer,
@@ -139,19 +139,15 @@ svg.tool-active { cursor: crosshair; }
 /* --- Measurement Layer --- */
 #measurement-layer line {
   vector-effect: non-scaling-stroke;
-  stroke: var(--accent);
-  /* Толще, чтобы линия была лучше видна */
-  stroke-width: 3;
+  stroke: var(--detail-stroke);
+  stroke-width: 1.2px;
   marker-start: url(#dim-arrow);
   marker-end: url(#dim-arrow);
 }
 #measurement-layer text {
-  font-size: 14px;
-  font-weight: bold;
-  fill: var(--accent);
-  stroke: white;
-  stroke-width: 0.5;
-  paint-order: stroke;
+  font-size: 13px;
+  font-weight: 400;
+  fill: var(--outline);
   pointer-events: none;
 }
 
