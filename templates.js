@@ -188,7 +188,7 @@ function defineItem(id, config) {
     width: 70,
     depth: 70,
     seats: 3,
-    opts: { innerCircle: true }
+    opts: { highTop: true }
   }],
   ['table-work-160x80', {
     label: 'Рабочий стол 160×80',
@@ -888,11 +888,14 @@ function buildArmchair({ width, depth, opts = {} }) {
 
 function buildChair({ width, depth }) {
   const radius = Math.min(width, depth) * 0.15;
-  const seatDepth = depth * 0.55;
+  const seatWidth = width * 0.7;
+  const seatDepth = depth * 0.6;
+  const seatOffsetY = depth * 0.12;
+  const backY = -depth / 2 + depth * 0.18;
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius }),
-    rect(width * 0.7, seatDepth, { className: 'shape-detail', y: depth * 0.12 }),
-    rect(width, depth * 0.25, { className: 'shape-detail', y: -depth / 2 + depth * 0.12 })
+    rect(seatWidth, seatDepth, { className: 'shape-detail', y: seatOffsetY }),
+    line(-seatWidth / 2, backY, seatWidth / 2, backY)
   ]);
 }
 
@@ -900,56 +903,104 @@ function buildStoolRound({ width }) {
   const radius = width / 2;
   return join([
     circle(radius, { className: 'shape shape-fill' }),
-    circle(radius * 0.35, { className: 'shape-detail' })
+    circle(radius * 0.28, { className: 'shape-detail' })
   ]);
 }
 
 function buildStoolSquare({ width, depth }) {
+  const radius = Math.min(width, depth) * 0.2;
   return join([
-    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.2 }),
-    rect(width * 0.6, depth * 0.6, { className: 'shape-detail' })
+    rect(width, depth, { className: 'shape shape-fill', radius }),
+    rect(width * 0.55, depth * 0.55, { className: 'shape-detail' })
   ]);
 }
 
 function buildBanquette({ width, depth }) {
+  const radius = Math.min(width, depth) * 0.18;
+  const seatDepth = depth * 0.58;
+  const seatY = depth * 0.12;
+  const backInset = Math.min(width, depth) * 0.08;
+  const backY = -depth / 2 + depth * 0.18;
   return join([
-    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.18 }),
-    rect(width * 0.92, depth * 0.55, { className: 'shape-detail', y: depth * 0.1 }),
-    rect(width, depth * 0.22, { className: 'shape-detail', y: -depth / 2 + depth * 0.11 })
+    rect(width, depth, { className: 'shape shape-fill', radius }),
+    rect(width * 0.9, seatDepth, { className: 'shape-detail', y: seatY }),
+    line(-width / 2 + backInset, backY, width / 2 - backInset, backY)
   ]);
 }
 
 function buildBooth({ width, depth, opts = {} }) {
-  const seatDepth = depth * 0.22;
-  const tableWidth = width * (opts.tableWidthRatio || 0.3);
+  const radius = Math.min(width, depth) * 0.1;
+  const seatDepth = depth * 0.24;
+  const tableWidth = width * (opts.tableWidthRatio || 0.32);
   const tableDepth = depth * 0.28;
+  const tableY = -depth / 2 + seatDepth + tableDepth / 2 + depth * 0.05;
+  const framePath = [
+    `M ${fmt(-width / 2)} ${fmt(depth / 2 - seatDepth)}`,
+    `V ${fmt(-depth / 2 + radius)}`,
+    `Q ${fmt(-width / 2)} ${fmt(-depth / 2)} ${fmt(-width / 2 + radius)} ${fmt(-depth / 2)}`,
+    `H ${fmt(width / 2 - radius)}`,
+    `Q ${fmt(width / 2)} ${fmt(-depth / 2)} ${fmt(width / 2)} ${fmt(-depth / 2 + radius)}`,
+    `V ${fmt(depth / 2 - seatDepth)}`
+  ].join(' ');
   return join([
-    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.1 }),
-    rect(width * 0.92, seatDepth, { className: 'shape-detail', y: depth / 2 - seatDepth / 2 }),
-    rect(width * 0.92, seatDepth, { className: 'shape-detail', y: -depth / 2 + seatDepth / 2 }),
-    rect(tableWidth, tableDepth, { className: 'shape-detail' }),
-    line(-tableWidth / 2, 0, tableWidth / 2, 0)
+    rect(width, depth, { className: 'shape shape-fill', radius }),
+    path(framePath, 'shape-detail'),
+    rect(tableWidth, tableDepth, { className: 'shape-detail', y: tableY }),
+    line(0, tableY - tableDepth / 2, 0, tableY + tableDepth / 2)
   ]);
 }
 
 function buildTableRound({ width, depth, opts = {} }) {
   const radius = width / 2;
   const parts = [circle(radius, { className: 'shape shape-fill' })];
-  if (opts.innerCircle) parts.push(circle(radius * 0.35, { className: 'shape-detail' }));
-  if (opts.cross !== false) {
-    parts.push(line(0, -depth / 2, 0, depth / 2, 'furn-center'));
-    parts.push(line(-width / 2, 0, width / 2, 0, 'furn-center'));
+  const showAxis = opts.axis !== false;
+  const axisLength = radius * (opts.axisLengthRatio || 0.65);
+  if (showAxis) {
+    const axisEnd = Math.min(axisLength, radius - radius * 0.12);
+    parts.push(line(0, 0, 0, axisEnd));
+  }
+  if (opts.highTop) {
+    const dropWidth = radius * 0.7;
+    const dropDepth = radius * 0.24;
+    const outerY = -radius + dropDepth;
+    const outerControlY = outerY - dropDepth * 0.8;
+    const innerWidth = dropWidth * 0.6;
+    const innerY = outerY + dropDepth * 0.45;
+    const innerControlY = innerY - dropDepth * 0.6;
+    parts.push(path(`M ${fmt(-dropWidth / 2)} ${fmt(outerY)} Q 0 ${fmt(outerControlY)} ${fmt(dropWidth / 2)} ${fmt(outerY)}`, 'shape-detail'));
+    parts.push(path(`M ${fmt(-innerWidth / 2)} ${fmt(innerY)} Q 0 ${fmt(innerControlY)} ${fmt(innerWidth / 2)} ${fmt(innerY)}`, 'shape-detail'));
+  }
+  if (opts.innerCircle) {
+    const innerRadius = typeof opts.innerCircle === 'number' ? opts.innerCircle : radius * 0.35;
+    parts.push(circle(innerRadius, { className: 'shape-detail' }));
   }
   return join(parts);
 }
 
 function buildTableRect({ width, depth, opts = {} }) {
-  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: opts.cornerRadius || Math.min(width, depth) * 0.12 })];
-  if (opts.cross !== false) {
-    parts.push(line(0, -depth / 2, 0, depth / 2, 'furn-center'));
-    parts.push(line(-width / 2, 0, width / 2, 0, 'furn-center'));
+  const radius = opts.cornerRadius || Math.min(width, depth) * 0.12;
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius })];
+  let showShortAxes = opts.shortAxes !== false;
+  if (opts.cross === false) showShortAxes = false;
+  if (opts.shortAxes === true) showShortAxes = true;
+  if (showShortAxes) {
+    const shorter = Math.min(width, depth);
+    const offset = shorter * 0.12;
+    const axisLength = Math.min(shorter * 0.45, Math.max(shorter - offset * 2, shorter * 0.3));
+    if (width >= depth) {
+      const leftStart = -width / 2 + offset;
+      const rightStart = width / 2 - offset;
+      parts.push(line(leftStart, 0, leftStart + axisLength, 0));
+      parts.push(line(rightStart, 0, rightStart - axisLength, 0));
+    } else {
+      const topStart = -depth / 2 + offset;
+      const bottomStart = depth / 2 - offset;
+      parts.push(line(0, topStart, 0, topStart + axisLength));
+      parts.push(line(0, bottomStart, 0, bottomStart - axisLength));
+    }
   }
-  if (opts.centerLine === 'horizontal') parts.push(line(-width / 2, 0, width / 2, 0));
+  if (opts.centerLine === 'horizontal' || opts.centerLine === 'both') parts.push(line(-width / 2, 0, width / 2, 0));
+  if (opts.centerLine === 'vertical' || opts.centerLine === 'both') parts.push(line(0, -depth / 2, 0, depth / 2));
   return join(parts);
 }
 
