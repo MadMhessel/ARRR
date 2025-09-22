@@ -269,6 +269,19 @@
                 }
             }
 
+            const view = state.viewBox || svg.viewBox?.baseVal;
+            const rect = svg.getBoundingClientRect?.();
+            if (view && rect && rect.width > 0 && rect.height > 0) {
+                const nx = (safePoint.x - rect.left) / rect.width;
+                const ny = (safePoint.y - rect.top) / rect.height;
+                if (Number.isFinite(nx) && Number.isFinite(ny)) {
+                    return {
+                        x: view.x + nx * view.width,
+                        y: view.y + ny * view.height,
+                    };
+                }
+            }
+
             return { ...safePoint };
         },
         screenDeltaToSVG(dx, dy) { const p0 = this.toSVGPoint(0, 0); const p1 = this.toSVGPoint(dx, dy); return { dx: p1.x - p0.x, dy: p1.y - p0.y }; },
