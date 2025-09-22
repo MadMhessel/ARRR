@@ -1256,10 +1256,15 @@ function buildRadiator({ width, depth }) {
 
 function buildPlant({ width }) {
   const radius = width / 2;
-  const leaf = `M 0 ${fmt(radius)} C ${fmt(radius * 0.6)} ${fmt(radius * 0.1)} ${fmt(radius * 0.6)} ${fmt(-radius * 0.4)} 0 ${fmt(-radius * 0.9)} C ${fmt(-radius * 0.6)} ${fmt(-radius * 0.4)} ${fmt(-radius * 0.6)} ${fmt(radius * 0.1)} 0 ${fmt(radius)} Z`;
+  const leafLength = radius * 0.95;
+  const leafWidth = radius * 0.55;
+  const leafPath = `M 0 ${fmt(leafLength)} C ${fmt(leafWidth)} ${fmt(leafLength * 0.45)} ${fmt(leafWidth)} ${fmt(-leafLength * 0.2)} 0 ${fmt(-leafLength * 0.8)} C ${fmt(-leafWidth)} ${fmt(-leafLength * 0.2)} ${fmt(-leafWidth)} ${fmt(leafLength * 0.45)} 0 ${fmt(leafLength)} Z`;
+  const rotations = [0, 90, 180, 270];
+  const leaves = rotations.map(angle => `<path d="${leafPath}" class="${CLASS_ACCENT}" transform="rotate(${fmt(angle)})"/>`).join('');
+  const veins = rotations.map(angle => `<line x1="0" y1="0" x2="0" y2="${fmt(leafLength * 0.7)}" class="${CLASS_DETAIL}" transform="rotate(${fmt(angle)})"/>`).join('');
   return join([
     circle(radius, { className: 'shape shape-fill' }),
-    path(leaf, CLASS_ACCENT)
+    `<g>${leaves}${veins}</g>`
   ]);
 }
 
@@ -1286,7 +1291,22 @@ function buildQueuePost({ width }) {
 }
 
 function buildMenuBoard({ width, depth }) {
-  return rect(width, depth, { className: 'shape shape-fill', radius: depth * 0.4 });
+  const frameRadius = depth * 0.45;
+  const panelWidth = width * 0.85;
+  const panelHeight = depth * 0.6;
+  const headerHeight = depth * 0.16;
+  const legInset = width * 0.15;
+  const legKneeY = depth * 0.72;
+  const baseY = depth / 2;
+  return join([
+    rect(width, depth, { className: 'shape shape-fill', radius: frameRadius }),
+    rect(panelWidth, panelHeight, { className: CLASS_ACCENT, y: -depth * 0.05 }),
+    rect(panelWidth * 0.6, headerHeight, { className: CLASS_DETAIL, y: -depth * 0.25 }),
+    line(-width / 2 + legInset, baseY, -width / 2 + legInset * 0.35, legKneeY, CLASS_DETAIL),
+    line(width / 2 - legInset, baseY, width / 2 - legInset * 0.35, legKneeY, CLASS_DETAIL),
+    line(-panelWidth * 0.35, depth * 0.05, panelWidth * 0.35, depth * 0.05, CLASS_DETAIL),
+    line(-panelWidth * 0.3, depth * 0.18, panelWidth * 0.3, depth * 0.18, CLASS_DETAIL)
+  ]);
 }
 
 function buildPlanter({ width, depth }) {
