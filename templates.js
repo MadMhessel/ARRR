@@ -775,6 +775,9 @@ function join(parts) {
   return parts.filter(Boolean).join('');
 }
 
+const CLASS_ACCENT = 'shape-accent';
+const CLASS_DETAIL = 'shape-detail';
+
 function rect(width, height, options = {}) {
   const { x = 0, y = 0, radius = 0, className = 'shape' } = options;
   const x0 = x - width / 2;
@@ -899,7 +902,7 @@ function buildChair({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius }),
     rect(seatWidth, seatDepth, { className: 'shape-detail', y: seatOffsetY }),
-    line(-seatWidth / 2, backY, seatWidth / 2, backY)
+    line(-seatWidth / 2, backY, seatWidth / 2, backY, CLASS_ACCENT)
   ]);
 }
 
@@ -927,9 +930,9 @@ function buildGrinder({ width, depth }) {
   const hopperWidth = width * 0.7;
   return join([
     rect(baseWidth, baseHeight, { className: 'shape shape-fill', radius: Math.min(baseWidth, baseHeight) * 0.22, y: baseY }),
-    path(`M ${fmt(-hopperWidth / 2)} ${fmt(hopperBaseY)} L 0 ${fmt(-depth / 2)} L ${fmt(hopperWidth / 2)} ${fmt(hopperBaseY)} Z`, 'shape-detail'),
-    rect(width * 0.5, baseHeight * 0.18, { className: 'shape-detail', y: baseY + baseHeight * 0.18 }),
-    circle(width * 0.18, { className: 'shape-detail', cy: baseY })
+    path(`M ${fmt(-hopperWidth / 2)} ${fmt(hopperBaseY)} L 0 ${fmt(-depth / 2)} L ${fmt(hopperWidth / 2)} ${fmt(hopperBaseY)} Z`, CLASS_ACCENT),
+    rect(width * 0.5, baseHeight * 0.18, { className: CLASS_ACCENT, y: baseY + baseHeight * 0.18 }),
+    circle(width * 0.18, { className: CLASS_ACCENT, cy: baseY })
   ]);
 }
 
@@ -942,7 +945,7 @@ function buildBanquette({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius }),
     rect(width * 0.9, seatDepth, { className: 'shape-detail', y: seatY }),
-    line(-width / 2 + backInset, backY, width / 2 - backInset, backY)
+    line(-width / 2 + backInset, backY, width / 2 - backInset, backY, CLASS_ACCENT)
   ]);
 }
 
@@ -968,8 +971,8 @@ function buildBanquetteCorner({ width, depth, opts = {} }) {
   const innerBackY = yMin + backOffset;
   const parts = [
     path(outline, 'shape shape-fill'),
-    line(innerBackX, innerBackY, xMax - backOffset, innerBackY),
-    line(innerBackX, innerBackY, innerBackX, yMax - backOffset)
+    line(innerBackX, innerBackY, xMax - backOffset, innerBackY, CLASS_ACCENT),
+    line(innerBackX, innerBackY, innerBackX, yMax - backOffset, CLASS_ACCENT)
   ];
   return join(parts);
 }
@@ -991,7 +994,7 @@ function buildBooth({ width, depth, opts = {} }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius }),
     path(framePath, 'shape-detail'),
-    rect(tableWidth, tableDepth, { className: 'shape-detail', y: tableY }),
+    rect(tableWidth, tableDepth, { className: CLASS_ACCENT, y: tableY }),
     line(0, tableY - tableDepth / 2, 0, tableY + tableDepth / 2)
   ]);
 }
@@ -1003,7 +1006,7 @@ function buildTableRound({ width, depth, opts = {} }) {
   const axisLength = radius * (opts.axisLengthRatio || 0.65);
   if (showAxis) {
     const axisEnd = Math.min(axisLength, radius - radius * 0.12);
-    parts.push(line(0, 0, 0, axisEnd));
+    parts.push(line(0, 0, 0, axisEnd, CLASS_ACCENT));
   }
   if (opts.highTop) {
     const dropWidth = radius * 0.7;
@@ -1013,12 +1016,12 @@ function buildTableRound({ width, depth, opts = {} }) {
     const innerWidth = dropWidth * 0.6;
     const innerY = outerY + dropDepth * 0.45;
     const innerControlY = innerY - dropDepth * 0.6;
-    parts.push(path(`M ${fmt(-dropWidth / 2)} ${fmt(outerY)} Q 0 ${fmt(outerControlY)} ${fmt(dropWidth / 2)} ${fmt(outerY)}`, 'shape-detail'));
-    parts.push(path(`M ${fmt(-innerWidth / 2)} ${fmt(innerY)} Q 0 ${fmt(innerControlY)} ${fmt(innerWidth / 2)} ${fmt(innerY)}`, 'shape-detail'));
+    parts.push(path(`M ${fmt(-dropWidth / 2)} ${fmt(outerY)} Q 0 ${fmt(outerControlY)} ${fmt(dropWidth / 2)} ${fmt(outerY)}`, CLASS_ACCENT));
+    parts.push(path(`M ${fmt(-innerWidth / 2)} ${fmt(innerY)} Q 0 ${fmt(innerControlY)} ${fmt(innerWidth / 2)} ${fmt(innerY)}`, CLASS_ACCENT));
   }
   if (opts.innerCircle) {
     const innerRadius = typeof opts.innerCircle === 'number' ? opts.innerCircle : radius * 0.35;
-    parts.push(circle(innerRadius, { className: 'shape-detail' }));
+    parts.push(circle(innerRadius, { className: CLASS_ACCENT }));
   }
   return join(parts);
 }
@@ -1036,24 +1039,24 @@ function buildTableRect({ width, depth, opts = {} }) {
     if (width >= depth) {
       const leftStart = -width / 2 + offset;
       const rightStart = width / 2 - offset;
-      parts.push(line(leftStart, 0, leftStart + axisLength, 0));
-      parts.push(line(rightStart, 0, rightStart - axisLength, 0));
+      parts.push(line(leftStart, 0, leftStart + axisLength, 0, CLASS_ACCENT));
+      parts.push(line(rightStart, 0, rightStart - axisLength, 0, CLASS_ACCENT));
     } else {
       const topStart = -depth / 2 + offset;
       const bottomStart = depth / 2 - offset;
-      parts.push(line(0, topStart, 0, topStart + axisLength));
-      parts.push(line(0, bottomStart, 0, bottomStart - axisLength));
+      parts.push(line(0, topStart, 0, topStart + axisLength, CLASS_ACCENT));
+      parts.push(line(0, bottomStart, 0, bottomStart - axisLength, CLASS_ACCENT));
     }
   }
-  if (opts.centerLine === 'horizontal' || opts.centerLine === 'both') parts.push(line(-width / 2, 0, width / 2, 0));
-  if (opts.centerLine === 'vertical' || opts.centerLine === 'both') parts.push(line(0, -depth / 2, 0, depth / 2));
+  if (opts.centerLine === 'horizontal' || opts.centerLine === 'both') parts.push(line(-width / 2, 0, width / 2, 0, CLASS_ACCENT));
+  if (opts.centerLine === 'vertical' || opts.centerLine === 'both') parts.push(line(0, -depth / 2, 0, depth / 2, CLASS_ACCENT));
   return join(parts);
 }
 
 function buildCounterStraight({ width, depth, opts = {} }) {
   const parts = [rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 })];
   const offset = opts.edgeOffset ? depth * opts.edgeOffset : depth * 0.3;
-  parts.push(line(-width / 2, offset - depth / 2, width / 2, offset - depth / 2));
+  parts.push(line(-width / 2, offset - depth / 2, width / 2, offset - depth / 2, CLASS_ACCENT));
   return join(parts);
 }
 
@@ -1064,23 +1067,28 @@ function buildCounterL({ width, depth, opts = {} }) {
   const outline = `M ${fmt(x0)} ${fmt(y0)} H ${fmt(x0 + width)} V ${fmt(y0 + thickness)} H ${fmt(x0 + thickness)} V ${fmt(y0 + depth)} H ${fmt(x0)} Z`;
   return join([
     path(outline, 'shape shape-fill'),
-    line(x0, y0 + thickness / 2, x0 + width, y0 + thickness / 2),
-    line(x0 + thickness / 2, y0 + thickness, x0 + thickness / 2, y0 + depth)
+    line(x0, y0 + thickness / 2, x0 + width, y0 + thickness / 2, CLASS_ACCENT),
+    line(x0 + thickness / 2, y0 + thickness, x0 + thickness / 2, y0 + depth, CLASS_ACCENT)
   ]);
 }
 
 function buildCounterIsland({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.12 }),
-    rect(width * 0.6, depth * 0.35, { className: 'shape-detail' })
+    rect(width * 0.6, depth * 0.35, { className: CLASS_ACCENT })
   ]);
 }
 
 function buildCounterBack({ width, depth }) {
-  return join([
-    rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.1 }),
-    line(-width / 2, 0, width / 2, 0)
-  ]);
+  const parts = [rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.1 })];
+  parts.push(line(-width / 2, 0, width / 2, 0, CLASS_ACCENT));
+  const segmentCount = 4;
+  const insetY = depth * 0.18;
+  for (let i = 1; i <= segmentCount; i += 1) {
+    const x = -width / 2 + (width / (segmentCount + 1)) * i;
+    parts.push(line(x, -insetY, x, insetY, CLASS_ACCENT));
+  }
+  return join(parts);
 }
 
 function buildPartitionLine({ width, depth }) {
@@ -1092,19 +1100,19 @@ function buildSink({ width, depth, opts = {} }) {
     parts.push(ellipse(basin.rx || width * 0.25, basin.ry || depth * 0.3, {
       cx: basin.cx || 0,
       cy: basin.cy || 0,
-      className: 'shape-detail'
+      className: CLASS_ACCENT
     }));
   });
-  if (opts.faucet) parts.push(line(0, -depth / 2, 0, -depth / 2 + depth * 0.2));
+  if (opts.faucet) parts.push(line(0, -depth / 2, 0, -depth / 2 + depth * 0.2, CLASS_ACCENT));
   return join(parts);
 }
 
 function buildMopSink({ width, depth }) {
   const parts = [rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 })];
   const offset = Math.min(width, depth) * 0.25;
-  parts.push(line(-width / 2 + offset, -depth / 2, width / 2, depth / 2 - offset));
-  parts.push(line(-width / 2, -depth / 2 + offset, width / 2 - offset, depth / 2));
-  parts.push(line(-width / 2, depth / 2 - offset, width / 2, -depth / 2 + offset));
+  parts.push(line(-width / 2 + offset, -depth / 2, width / 2, depth / 2 - offset, CLASS_ACCENT));
+  parts.push(line(-width / 2, -depth / 2 + offset, width / 2 - offset, depth / 2, CLASS_ACCENT));
+  parts.push(line(-width / 2, depth / 2 - offset, width / 2, -depth / 2 + offset, CLASS_ACCENT));
   return join(parts);
 }
 
@@ -1112,8 +1120,8 @@ function buildFloorDrain({ width, depth }) {
   const size = Math.min(width, depth);
   return join([
     rect(size, size, { className: 'shape', radius: size * 0.15 }),
-    line(-size / 2, 0, size / 2, 0),
-    line(0, -size / 2, 0, size / 2)
+    line(-size / 2, 0, size / 2, 0, CLASS_ACCENT),
+    line(0, -size / 2, 0, size / 2, CLASS_ACCENT)
   ]);
 }
 
@@ -1122,7 +1130,7 @@ function buildCooktop({ width, depth }) {
   const offsets = [-0.3, 0.3];
   const parts = [rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 })];
   offsets.forEach(ox => offsets.forEach(oy => {
-    parts.push(circle(burnerRadius, { cx: width * ox / 2, cy: depth * oy / 2, className: 'shape-detail' }));
+    parts.push(circle(burnerRadius, { cx: width * ox / 2, cy: depth * oy / 2, className: CLASS_ACCENT }));
   }));
   return join(parts);
 }
@@ -1152,11 +1160,11 @@ function buildStorage({ width, depth, opts = {} }) {
   const parts = [rect(width, depth, { className: 'shape shape-fill', radius: opts.radius || Math.min(width, depth) * 0.1 })];
   (opts.dividers || []).forEach(ratio => {
     const x = -width / 2 + width * ratio;
-    parts.push(line(x, -depth / 2, x, depth / 2));
+    parts.push(line(x, -depth / 2, x, depth / 2, CLASS_ACCENT));
   });
   (opts.shelves || []).forEach(ratio => {
     const y = depth * ratio;
-    parts.push(line(-width / 2, y, width / 2, y));
+    parts.push(line(-width / 2, y, width / 2, y, CLASS_ACCENT));
   });
   return join(parts);
 }
@@ -1164,7 +1172,7 @@ function buildStorage({ width, depth, opts = {} }) {
 function buildBathtub({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.3 }),
-    ellipse(width * 0.38, depth * 0.35, { className: 'shape-detail' })
+    ellipse(width * 0.38, depth * 0.35, { className: CLASS_ACCENT })
   ]);
 }
 
@@ -1181,7 +1189,7 @@ function buildToilet({ width, depth }) {
   const cisternHeight = depth - bowlHeight;
   return join([
     rect(width, bowlHeight, { className: 'shape shape-fill', y: depth / 2 - bowlHeight / 2, radius: Math.min(width, bowlHeight) * 0.35 }),
-    ellipse(width * 0.35, bowlHeight * 0.4, { className: 'shape-detail', cy: depth / 2 - bowlHeight * 0.55 }),
+    ellipse(width * 0.35, bowlHeight * 0.4, { className: CLASS_ACCENT, cy: depth / 2 - bowlHeight * 0.55 }),
     rect(width * 0.75, cisternHeight, { className: 'shape-detail', y: -depth / 2 + cisternHeight / 2 })
   ]);
 }
@@ -1191,16 +1199,20 @@ function buildWasher({ width, depth, opts = {} }) {
   const inner = opts.innerCircle || radius * 0.75;
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.08 }),
-    circle(radius, { className: 'shape-detail' }),
+    circle(radius, { className: CLASS_ACCENT }),
     circle(inner, { className: 'shape-detail' })
   ]);
 }
 
 function buildWatercooler({ width, depth }) {
+  const buttonRadius = Math.min(width, depth) * 0.08;
+  const panelHeight = depth * 0.25;
+  const panelY = -depth / 2 + panelHeight / 2 + depth * 0.08;
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.12 }),
-    rect(width * 0.6, depth * 0.35, { className: 'shape-detail', y: -depth * 0.15 }),
-    rect(width * 0.6, depth * 0.18, { className: 'shape-detail', y: depth * 0.2 })
+    rect(width * 0.7, panelHeight, { className: CLASS_DETAIL, y: panelY }),
+    circle(buttonRadius, { className: CLASS_ACCENT, cy: depth * 0.05 }),
+    circle(buttonRadius, { className: CLASS_ACCENT, cy: depth * 0.22 })
   ]);
 }
 
@@ -1214,21 +1226,21 @@ function buildTV({ width, depth }) {
 function buildProjector({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.2 }),
-    circle(Math.min(width, depth) * 0.2, { className: 'shape-detail', cx: width * 0.25 })
+    circle(Math.min(width, depth) * 0.2, { className: CLASS_ACCENT, cx: width * 0.25 })
   ]);
 }
 
 function buildScreen({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: depth * 0.4 }),
-    line(-width / 2, 0, width / 2, 0)
+    line(-width / 2, 0, width / 2, 0, CLASS_ACCENT)
   ]);
 }
 
 function buildAC({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.2 }),
-    line(-width / 2, 0, width / 2, 0)
+    line(-width / 2, 0, width / 2, 0, CLASS_ACCENT)
   ]);
 }
 
@@ -1237,7 +1249,7 @@ function buildRadiator({ width, depth }) {
   const segmentWidth = width / 6;
   for (let i = 1; i < 6; i += 1) {
     const x = -width / 2 + segmentWidth * i;
-    parts.push(line(x, -depth / 2, x, depth / 2));
+    parts.push(line(x, -depth / 2, x, depth / 2, CLASS_ACCENT));
   }
   return join(parts);
 }
@@ -1247,14 +1259,14 @@ function buildPlant({ width }) {
   const leaf = `M 0 ${fmt(radius)} C ${fmt(radius * 0.6)} ${fmt(radius * 0.1)} ${fmt(radius * 0.6)} ${fmt(-radius * 0.4)} 0 ${fmt(-radius * 0.9)} C ${fmt(-radius * 0.6)} ${fmt(-radius * 0.4)} ${fmt(-radius * 0.6)} ${fmt(radius * 0.1)} 0 ${fmt(radius)} Z`;
   return join([
     circle(radius, { className: 'shape shape-fill' }),
-    path(leaf, 'shape-detail')
+    path(leaf, CLASS_ACCENT)
   ]);
 }
 
 function buildFloorLamp({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.3 }),
-    line(0, -depth / 2, 0, depth / 2)
+    line(0, -depth / 2, 0, depth / 2, CLASS_ACCENT)
   ]);
 }
 
@@ -1269,7 +1281,7 @@ function buildQueuePost({ width }) {
   const radius = width / 2;
   return join([
     circle(radius, { className: 'shape shape-fill' }),
-    line(0, -radius, 0, radius)
+    line(0, -radius, 0, radius, CLASS_ACCENT)
   ]);
 }
 
@@ -1280,14 +1292,14 @@ function buildMenuBoard({ width, depth }) {
 function buildPlanter({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: Math.min(width, depth) * 0.2 }),
-    rect(width * 0.9, depth * 0.4, { className: 'shape-detail', y: -depth * 0.15 })
+    rect(width * 0.9, depth * 0.4, { className: CLASS_ACCENT, y: -depth * 0.15 })
   ]);
 }
 
 function buildWhiteboard({ width, depth }) {
   return join([
     rect(width, depth, { className: 'shape shape-fill', radius: depth * 0.4 }),
-    rect(width * 0.9, depth * 0.4, { className: 'shape-detail' })
+    rect(width * 0.9, depth * 0.4, { className: CLASS_ACCENT })
   ]);
 }
 function buildAppliance({ width, depth, opts = {} }) {
@@ -1300,36 +1312,36 @@ function buildAppliance({ width, depth, opts = {} }) {
     if (opts.innerY !== undefined) innerY = opts.innerY;
     else if (opts.innerAlign === 'top') innerY = -depth / 2 + innerHeight / 2 + depth * 0.12;
     else if (opts.innerAlign === 'bottom') innerY = depth / 2 - innerHeight / 2 - depth * 0.12;
-    parts.push(rect(innerWidth, innerHeight, { className: 'shape-detail', y: innerY }));
+    parts.push(rect(innerWidth, innerHeight, { className: opts.innerClassName || CLASS_ACCENT, y: innerY }));
   }
   (opts.horizontal || []).forEach(ratio => {
     const y = depth * ratio;
-    parts.push(line(-width / 2, y, width / 2, y));
+    parts.push(line(-width / 2, y, width / 2, y, CLASS_ACCENT));
   });
   (opts.vertical || []).forEach(ratio => {
     const x = width * ratio;
-    parts.push(line(x, -depth / 2, x, depth / 2));
+    parts.push(line(x, -depth / 2, x, depth / 2, CLASS_ACCENT));
   });
   if (Array.isArray(opts.circles)) {
     opts.circles.forEach(cfg => {
       if (!cfg) return;
       const radiusValue = cfg.radius || Math.min(width, depth) * 0.2;
       parts.push(circle(radiusValue, {
-        className: cfg.className || 'shape-detail',
+        className: cfg.className || CLASS_ACCENT,
         cx: cfg.cx || 0,
         cy: cfg.cy || 0
       }));
     });
   } else if (opts.circle) {
     parts.push(circle(opts.circle.radius || Math.min(width, depth) * 0.2, {
-      className: opts.circle.className || 'shape-detail',
+      className: opts.circle.className || CLASS_ACCENT,
       cx: opts.circle.cx || 0,
       cy: opts.circle.cy || 0
     }));
   }
   (opts.paths || []).forEach(def => {
     if (!def || !def.d) return;
-    parts.push(path(def.d, def.className || 'shape-detail'));
+    parts.push(path(def.d, def.className || CLASS_ACCENT));
   });
   (opts.frontArcs || []).forEach(arc => {
     if (!arc) return;
@@ -1340,14 +1352,14 @@ function buildAppliance({ width, depth, opts = {} }) {
     const y = depth / 2 - inset;
     const x0 = center - arcWidth / 2;
     const x1 = center + arcWidth / 2;
-    parts.push(path(`M ${fmt(x0)} ${fmt(y)} A ${fmt(radiusValue)} ${fmt(radiusValue)} 0 0 1 ${fmt(x1)} ${fmt(y)}`, arc.className || 'shape-detail'));
+    parts.push(path(`M ${fmt(x0)} ${fmt(y)} A ${fmt(radiusValue)} ${fmt(radiusValue)} 0 0 1 ${fmt(x1)} ${fmt(y)}`, arc.className || CLASS_ACCENT));
   });
   if (opts.handle) {
     const side = opts.handle.side === 'left' ? -1 : 1;
     const inset = opts.handle.inset ?? Math.min(width, depth) * 0.18;
     const handleLength = opts.handle.length ?? depth * 0.45;
     const x = side * (width / 2 - inset);
-    parts.push(line(x, -handleLength / 2, x, handleLength / 2));
+    parts.push(line(x, -handleLength / 2, x, handleLength / 2, CLASS_ACCENT));
   }
   return join(parts);
 }
