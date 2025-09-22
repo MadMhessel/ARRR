@@ -204,7 +204,73 @@
     const GRID_MAX_METERS = 20;
     const utils = {
         showToast(msg, ms = 1500) { dom.toast.textContent = msg; dom.toast.classList.add('show'); clearTimeout(this.showToast.t); this.showToast.t = setTimeout(() => dom.toast.classList.remove('show'), ms); },
-        toSVGPoint(x, y) { const p = dom.svg.createSVGPoint(); p.x = x; p.y = y; return p.matrixTransform(dom.svg.getScreenCTM().inverse()); },
+        toSVGPoint(x, y) {
+            const svg = dom.svg;
+            const safePoint = {
+                x: Number.isFinite(x) ? x : 0,
+                y: Number.isFinite(y) ? y : 0,
+            };
+            if (!svg) return { ...safePoint };
+
+            const getMatrix = () => {
+                try {
+                    return typeof svg.getScreenCTM === 'function' ? svg.getScreenCTM() : null;
+                } catch {
+                    return null;
+                }
+            };
+
+            const ctm = getMatrix();
+            const invertMatrix = matrix => {
+                if (!matrix || typeof matrix.inverse !== 'function') return null;
+                try {
+                    return matrix.inverse();
+                } catch {
+                    return null;
+                }
+            };
+
+            const transformWithMatrix = (matrix, point) => {
+                if (!matrix) return null;
+                const resultX = matrix.a * point.x + matrix.c * point.y + matrix.e;
+                const resultY = matrix.b * point.x + matrix.d * point.y + matrix.f;
+                if (!Number.isFinite(resultX) || !Number.isFinite(resultY)) return null;
+                return { x: resultX, y: resultY };
+            };
+
+            const inverted = invertMatrix(ctm);
+
+            if (typeof svg.createSVGPoint === 'function' && inverted) {
+                try {
+                    const p = svg.createSVGPoint();
+                    p.x = safePoint.x;
+                    p.y = safePoint.y;
+                    const res = p.matrixTransform(inverted);
+                    if (res && Number.isFinite(res.x) && Number.isFinite(res.y)) {
+                        return { x: res.x, y: res.y };
+                    }
+                } catch {
+                    // Fallback to manual matrix multiplication below.
+                }
+            }
+
+            const manual = transformWithMatrix(inverted, safePoint);
+            if (manual) return manual;
+
+            if (typeof DOMPoint === 'function' && inverted) {
+                try {
+                    const domPoint = new DOMPoint(safePoint.x, safePoint.y);
+                    const transformed = domPoint.matrixTransform(inverted);
+                    if (transformed && Number.isFinite(transformed.x) && Number.isFinite(transformed.y)) {
+                        return { x: transformed.x, y: transformed.y };
+                    }
+                } catch {
+                    // Ignore DOMPoint failures.
+                }
+            }
+
+            return { ...safePoint };
+        },
         screenDeltaToSVG(dx, dy) { const p0 = this.toSVGPoint(0, 0); const p1 = this.toSVGPoint(dx, dy); return { dx: p1.x - p0.x, dy: p1.y - p0.y }; },
         clamp: (v, min, max) => Math.max(min, Math.min(max, v)),
         rafThrottle(fn) { let r = null, lastArgs = null; return function (...args) { lastArgs = args; if (r) return; r = requestAnimationFrame(() => { fn(...lastArgs); r = null; }); } }
