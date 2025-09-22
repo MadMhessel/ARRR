@@ -187,7 +187,7 @@
     };
     const OPENING_SPECS = {
         door: { widthMeters: 0.9, stroke: '#676D72' },
-        window: { widthMeters: 1.2, stroke: '#676D72', fill: 'rgba(234,243,231,0.25)' },
+        window: { widthMeters: 1.2, stroke: '#1E6AD6', fill: 'rgba(30,106,214,0.2)' },
     };
     const DOOR_VARIANTS = {
         single: { label: 'Одинарная дверь 90', widthMeters: 0.9, minCm: 70, maxCm: 110, stepCm: 5, allowHinge: true, allowSwing: true },
@@ -1278,7 +1278,7 @@
         const transforms = [`translate(${hingeOffset.toFixed(3)}, 0)`];
         if (mirror) transforms.push('scale(-1,1)');
         const sweepFlag = swingSign > 0 ? 1 : 0;
-        const lineAttrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
+        const lineAttrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" pointer-events="stroke"`;
         const dash = `${sheetMmToUnits(6).toFixed(3)} ${sheetMmToUnits(4).toFixed(3)}`;
         const hingeLine = `<line x1="0" y1="${(-leafThickness / 2).toFixed(3)}" x2="0" y2="${(leafThickness / 2).toFixed(3)}" ${lineAttrs}/>`;
         const leafLine = `<line x1="0" y1="0" x2="0" y2="${(swingSign * widthUnits).toFixed(3)}" ${lineAttrs} stroke-dasharray="${dash}"/>`;
@@ -1288,7 +1288,7 @@
 
     function renderDoorVariantMarkup(compModel, variant, { widthUnits, leafThickness, detailWidth, stroke }) {
         if (!(widthUnits > 0)) return '';
-        const attrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
+        const attrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" pointer-events="stroke"`;
         const dash = `${sheetMmToUnits(6).toFixed(3)} ${sheetMmToUnits(4).toFixed(3)}`;
         const swingSign = compModel.swing === 'out' ? -1 : 1;
         const variantKey = compModel.variant || 'single';
