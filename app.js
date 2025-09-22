@@ -37,6 +37,7 @@
         gridPattern: document.getElementById('grid'),
         gridRect: document.getElementById('grid-surface'),
         gridLinesGroup: document.getElementById('grid-lines'),
+        floorBackground: document.getElementById('floor-background'),
         floorUnderlay: document.getElementById('floor-underlay'),
         layersPanel: document.getElementById('layers-panel'),
         layersList: document.getElementById('layers-list'),
@@ -2212,6 +2213,15 @@
         renderGridLines();
     }
 
+    function updateFloorBackground() {
+        if (!state.viewBox || !dom.floorBackground) return;
+        const { x, y, width, height } = state.viewBox;
+        dom.floorBackground.setAttribute('x', roundTo(x, 3));
+        dom.floorBackground.setAttribute('y', roundTo(y, 3));
+        dom.floorBackground.setAttribute('width', roundTo(width, 3));
+        dom.floorBackground.setAttribute('height', roundTo(height, 3));
+    }
+
     function updateFloorUnderlay() {
         if (!state.viewBox || !dom.floorUnderlay) return;
         const { x, y, width, height } = state.viewBox;
@@ -2318,6 +2328,7 @@
     function updateViewBox() {
         if (!state.viewBox) return;
         dom.svg.setAttribute('viewBox', `${state.viewBox.x} ${state.viewBox.y} ${state.viewBox.width} ${state.viewBox.height}`);
+        updateFloorBackground();
         updateGridViewport();
         updateFloorUnderlay();
         refreshWallStrokeWidths();
@@ -3805,6 +3816,7 @@
             height: dom.svg.viewBox.baseVal.height
         };
 
+        updateFloorBackground();
         updateFloorUnderlay();
         updateGridViewport();
         refreshWallStrokeWidths();
