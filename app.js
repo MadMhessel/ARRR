@@ -37,6 +37,7 @@
         gridPattern: document.getElementById('grid'),
         gridRect: document.getElementById('grid-surface'),
         gridLinesGroup: document.getElementById('grid-lines'),
+        floorUnderlay: document.getElementById('floor-underlay'),
         layersPanel: document.getElementById('layers-panel'),
         layersList: document.getElementById('layers-list'),
         main: document.getElementById('main'),
@@ -1196,7 +1197,6 @@
         if (!(widthUnits > 0)) return '';
         const transforms = [`translate(${hingeOffset.toFixed(3)}, 0)`];
         if (mirror) transforms.push('scale(-1,1)');
-        if (swingSign < 0) transforms.push('scale(1,-1)');
         const sweepFlag = swingSign > 0 ? 1 : 0;
         const lineAttrs = `stroke="${stroke}" stroke-width="${detailWidth.toFixed(3)}" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"`;
         const dash = `${sheetMmToUnits(6).toFixed(3)} ${sheetMmToUnits(4).toFixed(3)}`;
@@ -1308,6 +1308,7 @@
         maskEl.setAttribute('id', baseId);
         maskEl.setAttribute('maskUnits', 'userSpaceOnUse');
         maskEl.setAttribute('maskContentUnits', 'userSpaceOnUse');
+        maskEl.setAttribute('mask-type', 'alpha');
         dom.defs?.appendChild(maskEl);
         entry = { id: baseId, mask: maskEl, openingsGroup };
         wallMaskMap.set(wallEl, entry);
@@ -2210,6 +2211,16 @@
         }
         renderGridLines();
     }
+
+    function updateFloorUnderlay() {
+        if (!state.viewBox || !dom.floorUnderlay) return;
+        const { x, y, width, height } = state.viewBox;
+        const margin = Math.max(state.gridSize || 0, Math.min(width, height) * 0.15);
+        dom.floorUnderlay.setAttribute('x', roundTo(x - margin, 3));
+        dom.floorUnderlay.setAttribute('y', roundTo(y - margin, 3));
+        dom.floorUnderlay.setAttribute('width', roundTo(width + margin * 2, 3));
+        dom.floorUnderlay.setAttribute('height', roundTo(height + margin * 2, 3));
+    }
     function applyGridPatternSize(sizePx) {
         if (!Number.isFinite(sizePx) || sizePx <= 0) return;
         const normalized = Math.round(sizePx * 1000) / 1000;
@@ -2308,6 +2319,7 @@
         if (!state.viewBox) return;
         dom.svg.setAttribute('viewBox', `${state.viewBox.x} ${state.viewBox.y} ${state.viewBox.width} ${state.viewBox.height}`);
         updateGridViewport();
+        updateFloorUnderlay();
         refreshWallStrokeWidths();
     }
     function startPan(e) {
@@ -3793,6 +3805,7 @@
             height: dom.svg.viewBox.baseVal.height
         };
 
+        updateFloorUnderlay();
         updateGridViewport();
         refreshWallStrokeWidths();
 
