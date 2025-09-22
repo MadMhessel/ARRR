@@ -1,3 +1,4 @@
+/* eslint-disable no-irregular-whitespace */
 /* templates.schematic.pro.distinct.js
  * Расширенный «плановый» слой: у КАЖДОЙ модели добавлены узнаваемые детали,
  * чтобы отличить предметы «с первого взгляда» при топ-видe.
@@ -53,7 +54,6 @@
   })();
 
   // === 2) SVG примитивы (все центрируем на (0,0)) ===
-  const PI = Math.PI;
   function roundedRect(w,h,r,cls='shape'){ const x=-w/2,y=-h/2; const rx=Math.max(0,r|0); return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" ry="${rx}" class="${cls}"/>`; }
   function rect(w,h,cls='shape'){ return roundedRect(w,h,0,cls); }
   function circleR(r,cls='shape'){ return `<circle cx="0" cy="0" r="${r}" class="${cls}"/>`; }
@@ -71,7 +71,7 @@
     return res;
   }
   // Короткие штрихи вдоль грани (сегменты «посадки»)
-  function edgeTicks(w,h,side='top',count=3,len=6,offset=8,cls='detail'){
+  function edgeTicks(w,h,side='top',count=3,_len=6,offset=8,cls='detail'){
     const res=[];
     if (side==='top'){
       const y=-h/2; for(let i=1;i<=count;i++){ const x=-w/2 + i*(w/(count+1)); res.push(line(x,y, x,y-offset, cls)); }
@@ -327,5 +327,5 @@
     };
   }
 
-  console.log('[schematic-distinct] ready.');
+  console.info('[schematic-distinct] ready.');
 })();

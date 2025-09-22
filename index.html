@@ -48,7 +48,6 @@
                     <button id="btnExport" title="Экспорт JSON" data-icon="i-export">Экспорт</button>
                     <input id="fileImport" type="file" accept="application/json" hidden>
                     <button id="btnImport" title="Импорт JSON">Импорт</button>
-                    <button id="btnShare" title="Скопировать ссылку">Поделиться</button>
                     <button id="toggle-render-mode" type="button" data-icon="i-render-mode" aria-pressed="false">Режим: План</button>
                     <!-- Кнопка для запуска анализа планировки -->
                     <button id="btnAnalysis" title="Анализ планировки" data-icon="i-analyze">Анализ</button>
@@ -304,9 +303,6 @@
             <section id="analysis-panel" class="panel" aria-label="Результаты анализа">
                 <div class="panel-header">
                     <h3>Анализ</h3>
-                    <div class="panel-actions">
-                        <button id="analysis-refresh" type="button" title="Пересчитать анализ">↻</button>
-                    </div>
                 </div>
                 <div id="analysis-summary"></div>
                 <table id="analysis-rooms-table">

@@ -62,7 +62,6 @@
         btnExport: document.getElementById('btnExport'),
         btnImport: document.getElementById('btnImport'),
         fileImport: document.getElementById('fileImport'),
-        btnShare: document.getElementById('btnShare'),
         renderModeToggle: document.getElementById('toggle-render-mode'),
         btnAnalysis: document.getElementById('btnAnalysis'),
         btnCsv: document.getElementById('btnCsv'),
@@ -89,7 +88,6 @@
         measureClear: document.getElementById('measure-clear'),
         analysisSummary: document.getElementById('analysis-summary'),
         analysisRoomsBody: document.getElementById('analysis-rooms-body'),
-        analysisRefresh: document.getElementById('analysis-refresh'),
         normativeCorridorGuest: document.getElementById('normative-corridor-guest'),
         normativeCorridorStaff: document.getElementById('normative-corridor-staff'),
         normativeRadius: document.getElementById('normative-radius'),
@@ -677,7 +675,7 @@
                         const cy = bbox.y + bbox.height / 2;
                         return Math.hypot(cx, cy);
                     }
-                } catch (err) {
+                } catch {
                     // getBBox может выбросить, например, если элемент скрыт
                 }
                 return Number.POSITIVE_INFINITY;
@@ -803,7 +801,7 @@
             const variantKey = (value && value.startsWith('door-')) ? value.slice(5) : 'single';
             compModel.type = 'door';
             compModel.variant = DOOR_VARIANTS[variantKey] ? variantKey : 'single';
-            const variant = normaliseDoorComponent(compModel);
+            normaliseDoorComponent(compModel);
             const widthCm = clampDoorWidthCm(compModel.variant, compModel.width * 100);
             compModel.width = widthCm / 100;
             state.doorDefaults = {
@@ -920,7 +918,7 @@
         try {
             // getBBox может бросить исключение, если элемент не является SVG
             bbox = state.selectedObject.getBBox();
-        } catch (e) {
+        } catch {
             bbox = null;
         }
         // Если удалось получить bbox, масштабируем viewBox так, чтобы объект занял ~1/2 экрана
@@ -1887,7 +1885,6 @@
         if (!(thicknessUnits > 0)) {
             thicknessUnits = sheetMmToUnits(wallPreset.thickness * SHEET_MM_PER_METER);
         }
-        const halfThickness = thicknessUnits / 2;
         let widthMeters = Number.isFinite(compModel.width) && compModel.width > 0 ? compModel.width : spec.widthMeters;
         if (!Number.isFinite(widthMeters) || widthMeters <= 0) {
             widthMeters = spec.widthMeters;
@@ -2708,7 +2705,7 @@
                     const bbox = target.getBBox();
                     if (!bbox) return null;
                     return { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height };
-                } catch (e) {
+                } catch {
                     const m = getModel(el);
                     if (!m) return null;
                     const w = m.ow * m.sx;
@@ -2780,9 +2777,9 @@
                 const summary = `Помещений: ${result.rooms.length}, площадь ${result.sumArea.toFixed(1)} м², мест ${result.totalSeats}, коллизий ${result.collisions}`;
                 utils.showToast(summary, Math.max(3000, summary.length * 60));
             }
-        } catch (err) {
-            console.error(err);
-            utils.showToast('Ошибка анализа: ' + err.message, 5000);
+        } catch (_err) {
+            console.error(_err);
+            utils.showToast('Ошибка анализа: ' + _err.message, 5000);
         }
     }
 
@@ -2917,14 +2914,14 @@
                 { tpl: 'armchair', x: roomWidth / 2 + 80, y: roomHeight - 80 }
             ];
             objects.forEach(obj => {
-                const el = createLayoutObject(obj.tpl, obj.x, obj.y);
+                createLayoutObject(obj.tpl, obj.x, obj.y);
                 // По умолчанию createLayoutObject уже commit-ит добавление
             });
             updateLayersList();
             commit('template');
             utils.showToast('Шаблон загружен');
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            console.error(_err);
             utils.showToast('Не удалось загрузить шаблон');
         }
     }
@@ -2988,8 +2985,8 @@
             link.click();
             URL.revokeObjectURL(link.href);
             utils.showToast('Смета CSV экспортирована');
-        } catch (err) {
-            console.error(err);
+        } catch (_err) {
+            console.error(_err);
             utils.showToast('Ошибка экспорта CSV');
         }
     }
@@ -3358,7 +3355,7 @@
                     setModel(el, m2);
                     selectObject(el);
                     commit('paste');
-                } catch (err) {}
+                } catch { /* ignore clipboard parse errors */ }
                 return;
             }
         }
@@ -3681,7 +3678,7 @@
         }
         dom.btnExport.addEventListener('click', () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(snapshot(), null, 2)], { type: 'application/json' })); a.download = 'layout.json'; a.click(); URL.revokeObjectURL(a.href); });
         dom.btnImport.addEventListener('click', () => dom.fileImport.click());
-        dom.fileImport.addEventListener('change', e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const data = JSON.parse(r.result); restore(data); commit('import'); utils.showToast('План импортирован'); } catch (err) { utils.showToast('Ошибка импорта'); } }; r.readAsText(f); });
+        dom.fileImport.addEventListener('change', e => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const data = JSON.parse(r.result); restore(data); commit('import'); utils.showToast('План импортирован'); } catch { utils.showToast('Ошибка импорта'); } }; r.readAsText(f); });
         dom.renderModeToggle?.addEventListener('click', () => {
             const next = state.renderMode === 'schematic' ? 'rich' : 'schematic';
             setRenderMode(next);
@@ -3710,8 +3707,8 @@
                 }
                 try {
                     clearHost();
-                } catch (err) {
-                    console.error('Не удалось очистить план', err);
+                } catch (_err) {
+                    console.error('Не удалось очистить план', _err);
                     utils.showToast('Не удалось очистить план');
                 } finally {
                     dom.btnClearHost.blur();

@@ -999,7 +999,7 @@ function buildBooth({ width, depth, opts = {} }) {
   ]);
 }
 
-function buildTableRound({ width, depth, opts = {} }) {
+function buildTableRound({ width, opts = {} }) {
   const radius = width / 2;
   const parts = [circle(radius, { className: 'shape shape-fill' })];
   const showAxis = opts.axis !== false;
@@ -1509,6 +1509,9 @@ const TEMPLATE_MIGRATION_MAP = {
 const TEMPLATE_MIGRATION_RULES = [];
 
 if (typeof globalThis !== 'undefined') {
+  globalThis.PLAN_LIBRARY = PLAN_LIBRARY;
+  globalThis.FURNITURE_CATEGORIES = FURNITURE_CATEGORIES;
+  globalThis.ITEM_TEMPLATES = ITEM_TEMPLATES;
   globalThis.TEMPLATE_MIGRATION_MAP = TEMPLATE_MIGRATION_MAP;
   globalThis.TEMPLATE_MIGRATION_RULES = TEMPLATE_MIGRATION_RULES;
 }
