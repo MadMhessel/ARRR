@@ -15,7 +15,7 @@ This document enumerates the legacy template identifiers that existed before the
 | ac-indoor | climate-ac-100x30 | – |
 | armchair | chair-armchair-90 | – |
 | banquette-160 | seat-banquette-160x60 | – |
-| banquette-220 | seat-banquette-220x60 | – |
+| banquette-220 | seat-banquette-120x60 | Обновлён типоразмер 120×60. |
 | bar-back-shelf-180 | counter-back-180x40 | – |
 | bar-counter-island | counter-island-180x90 | Multiple legacy templates now reuse this canonical asset. |
 | bar-counter-island-180x90 | counter-island-180x90 | Multiple legacy templates now reuse this canonical asset. |
@@ -37,15 +37,15 @@ This document enumerates the legacy template identifiers that existed before the
 | cafe-table-round-60 | table-round-60 | – |
 | cafe-table-square-70 | table-square-70 | – |
 | cash-drawer | appliance-cashdrawer-45x35 | – |
-| chair | chair-side-45x50 | – |
+| chair | chair-side-45x45 | Обновлён базовый размер. |
 | coffee-rect | table-coffee-rect-120x60 | – |
 | coffee-round | table-coffee-round-80 | – |
 | condiment-120 | fixture-condiment-120x35 | – |
 | cooktop-4 | kitchen-cooktop-60x60 | – |
 | copier | appliance-copier-70x60 | – |
 | desk | table-work-160x80 | – |
-| dining-4 | table-rect-120x75 | – |
-| dining-6 | table-rect-160x90 | – |
+| dining-4 | table-rect-120x70 | – |
+| dining-6 | table-rect-160x80 | – |
 | dining-8 | table-rect-200x100 | – |
 | dishwasher | appliance-dishwasher-60x60 | Multiple legacy templates now reuse this canonical asset. |
 | dishwasher-pro | appliance-dishwasher-60x60 | Multiple legacy templates now reuse this canonical asset. |
@@ -56,7 +56,7 @@ This document enumerates the legacy template identifiers that existed before the
 | floor-lamp | decor-floorlamp-45x45 | – |
 | freezer-60 | appliance-freezer-60x60 | – |
 | fridge | appliance-fridge-60x70 | – |
-| grinder-80mm | appliance-small-30x30 | – |
+| grinder-80mm | appliance-grinder-30x30 | Специализированный символ кофемолки с бункером. |
 | hand-sink | kitchen-handsink-50x50 | – |
 | ice-machine-60 | appliance-ice-60x60 | – |
 | island | counter-island-180x90 | Multiple legacy templates now reuse this canonical asset. |
@@ -69,8 +69,8 @@ This document enumerates the legacy template identifiers that existed before the
 | office-chair | chair-office-70x70 | – |
 | oven | kitchen-oven-60x60 | – |
 | partition-120x10 | partition-linear-120x10 | – |
-| pastry-case-120 | appliance-display-120x70 | Multiple legacy templates now reuse this canonical asset. |
-| pastry-case-120-curved | appliance-display-120x70 | Multiple legacy templates now reuse this canonical asset. |
+| pastry-case-120 | appliance-display-120x60 | Единый фронт с дугой стекла. |
+| pastry-case-120-curved | appliance-display-120x60 | Единый фронт с дугой стекла. |
 | plant | decor-plant-60 | – |
 | planter-long-120 | decor-planter-120x30 | – |
 | pos-terminal | appliance-pos-35x35 | – |
@@ -97,8 +97,8 @@ This document enumerates the legacy template identifiers that existed before the
 | triple-sink | kitchen-triple-sink-180x60 | – |
 | tv-stand | storage-media-180x40 | – |
 | tv-wall | fixture-tv-180x20 | – |
-| undercounter-fridge-90 | appliance-undercounter-90x60 | – |
-| upright-fridge-60 | appliance-upright-60x70 | – |
+| undercounter-fridge-90 | appliance-undercounter-60x60 | Прежняя модель 90×60 → канон 60×60. |
+| upright-fridge-60 | appliance-upright-70x70 | Напольный холодильник с ручкой справа. |
 | wardrobe-2d | storage-wardrobe-120x60 | – |
 | wardrobe-3d | storage-wardrobe-180x60 | – |
 | washer | appliance-washer-60x60 | – |
