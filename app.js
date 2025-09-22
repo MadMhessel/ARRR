@@ -1846,22 +1846,32 @@
     }
     function finishCurrentWall(forceClose = false) {
         if (state.currentWallPoints.length > 1) {
-            const points = state.currentWallPoints.map(p => ({ x: p.x, y: p.y }));
-            let closed = false;
-            if (points.length > 2) {
-                const first = points[0];
-                const last = points[points.length - 1];
-                const distToFirst = distance(first, last);
-                if (distToFirst < Math.max(1, state.gridSize * 0.2)) {
-                    points[points.length - 1] = { x: first.x, y: first.y };
-                    closed = true;
-                } else if (forceClose) {
-                    points.push({ x: first.x, y: first.y });
-                    closed = true;
+            const dedupeThreshold = Math.max(1e-3, (state.gridSize || 0) * 0.002);
+            const points = [];
+            state.currentWallPoints.forEach(p => {
+                const copy = { x: p.x, y: p.y };
+                const prev = points[points.length - 1];
+                if (!prev || distance(prev, copy) > dedupeThreshold) {
+                    points.push(copy);
                 }
+            });
+            if (points.length > 1) {
+                let closed = false;
+                if (points.length > 2) {
+                    const first = points[0];
+                    const last = points[points.length - 1];
+                    const distToFirst = distance(first, last);
+                    if (distToFirst < Math.max(1, (state.gridSize || 0) * 0.2)) {
+                        points[points.length - 1] = { x: first.x, y: first.y };
+                        closed = true;
+                    } else if (forceClose) {
+                        points.push({ x: first.x, y: first.y });
+                        closed = true;
+                    }
+                }
+                createWall(points, closed);
+                commit('add_wall');
             }
-            createWall(points, closed);
-            commit('add_wall');
         }
         state.currentWallPoints = [];
         dom.wallPreview.setAttribute('points', '');
@@ -3531,6 +3541,20 @@
                 clearSelections();
                 dom.ctx.style.display = 'none';
             }
+        });
+        dom.svg.addEventListener('dblclick', e => {
+            if (state.activeTool !== 'wall') return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (!Array.isArray(state.currentWallPoints) || state.currentWallPoints.length === 0) return;
+            const p = utils.toSVGPoint(e.clientX, e.clientY);
+            const { point: snappedP } = snapSvgPoint(p, { altKey: e.altKey });
+            const last = state.currentWallPoints[state.currentWallPoints.length - 1];
+            const mergeThreshold = Math.max(1e-3, (state.gridSize || 0) * 0.002);
+            if (!last || distance(last, snappedP) > mergeThreshold) {
+                state.currentWallPoints.push(snappedP);
+            }
+            finishCurrentWall();
         });
         dom.svg.addEventListener('mousemove', utils.rafThrottle(e => {
             const tool = state.activeTool;
