@@ -52,3 +52,21 @@ node templates.schematic.patch.js
 ```
 
 После отката перезапустите страницу и очистите `localStorage`, чтобы убедиться, что все элементы и стены отображаются корректно.
+
+## Сборка и анализ
+
+- `npm install` — установка зависимостей.
+- `npm run build` — минимизированная сборка в каталог `dist/` (JS, CSS, статические файлы).
+- `npm run analyze` — сборка с сохранением метаданных (`dist/meta.json`) и HTML-отчёта `dist/bundle-report.html`.
+- `npm run lint` / `npm run lint:fix` — проверка и автоисправление кода (ESLint + unused-imports).
+- `npm run typecheck` — проверка типов (TypeScript `checkJs=false`, `strictNullChecks=true`).
+- `npm run test` — smoke-тест загрузки шаблонов и обёртки редактора в jsdom.
+
+### Инструменты статического анализа
+
+- `npx knip --reporter json > reports/knip.json` — поиск неиспользуемых файлов/экспортов.
+- `npx depcheck --json > reports/depcheck.json` — отчёт об (не)используемых зависимостях.
+- `npx madge --json app.js > reports/madge.json` — граф зависимостей и листовые узлы.
+- `npx ts-prune > reports/ts-prune.txt` — проверка экспортов TypeScript/JS (используется для мониторинга).
+
+HTML отчёт по размеру бандла лежит в `dist/bundle-report.html`, JSON-мета — в `dist/meta.json`.

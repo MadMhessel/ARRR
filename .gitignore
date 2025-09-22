@@ -1,1 +1,15 @@
 node_modules/
+dist/
+reports/
+*.log
+*.map
+*.zip
+*.png
+*.jpg
+*.webp
+*.woff*
+*.ttf
+*.psd
+*.ai
+*.pptx
+.DS_Store
