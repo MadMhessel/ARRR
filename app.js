@@ -829,7 +829,9 @@
         const inputs = [dom.propX, dom.propY, dom.propW, dom.propH, dom.propA];
         if (model && state.selectedObject) {
             dom.propControls.classList.remove('hidden');
+            dom.propControls?.removeAttribute('aria-hidden');
             dom.propPlaceholder.classList.add('hidden');
+            dom.propPlaceholder?.setAttribute('aria-hidden', 'true');
             const locked = !!model.locked;
             const width = Number.isFinite(model.ow) && Number.isFinite(model.sx) ? model.ow * model.sx : Number.NaN;
             const height = Number.isFinite(model.oh) && Number.isFinite(model.sy) ? model.oh * model.sy : Number.NaN;
@@ -846,7 +848,9 @@
             });
         } else {
             dom.propControls.classList.add('hidden');
+            dom.propControls?.setAttribute('aria-hidden', 'true');
             dom.propPlaceholder.classList.remove('hidden');
+            dom.propPlaceholder?.removeAttribute('aria-hidden');
             inputs.forEach(input => {
                 if (!input) return;
                 input.disabled = false;
