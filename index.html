@@ -117,6 +117,8 @@
                     <g id="underlay-layer">
                         <rect id="floor-underlay" class="floor-underlay" x="0" y="0" width="0" height="0"></rect>
                     </g>
+                    <!-- Слой анализа держим под стенами, чтобы не перекрывать их штриховку -->
+                    <g id="analysis-layer" pointer-events="none"></g>
                     <g id="walls-layer"></g>
                     <g id="openings-layer"></g>
                     <g id="items-layer"></g>
@@ -126,9 +128,7 @@
                         <text id="wall-length-label" class="wall-length-label" text-anchor="middle" dominant-baseline="middle" visibility="hidden">0.00 м</text>
                         <g id="snap-markers" pointer-events="none"></g>
                     </g>
-                    <!-- Слой для отображения результатов анализа (помещения, зоны, коллизии) -->
-                    <g id="analysis-layer" pointer-events="none"></g>
-                    <!-- Слой для отображения измерительных линий и аннотаций. Размещаем ПОСЛЕ слоя анализа, чтобы линии и подписи были видны поверх зон. -->
+                    <!-- Слой для отображения измерительных линий и аннотаций. Держим над анализом и стенами, чтобы подписи не перекрывались. -->
                     <g id="measurement-layer" pointer-events="none"></g>
                     <g id="ui-layer" pointer-events="none"></g>
                 </svg>
