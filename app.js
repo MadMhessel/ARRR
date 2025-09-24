@@ -1417,6 +1417,14 @@
         const baseId = wallEl.dataset.id ? `wall-mask-${wallEl.dataset.id}` : `wall-mask-${wallMaskMap.size + 1}`;
         let entry = wallMaskMap.get(wallEl);
         if (entry) {
+            if (!entry.boundsRect) {
+                const rect = entry.mask?.querySelector('[data-role="wall-mask-bounds"]')
+                    || entry.mask?.querySelector('rect');
+                if (rect) {
+                    rect.dataset.role = 'wall-mask-bounds';
+                    entry.boundsRect = rect;
+                }
+            }
             if (entry.id !== baseId) {
                 entry.id = baseId;
                 entry.mask.setAttribute('id', baseId);
@@ -1425,6 +1433,7 @@
         }
         let maskEl;
         let openingsGroup;
+        let boundsRect;
         if (dom.wallMaskTemplate) {
             maskEl = dom.wallMaskTemplate.cloneNode(true);
             maskEl.removeAttribute('id');
@@ -1432,17 +1441,23 @@
             if (openingsGroup) {
                 openingsGroup.innerHTML = '';
             }
+            boundsRect = maskEl.querySelector('[data-role="wall-mask-bounds"]')
+                || maskEl.querySelector('rect');
         }
         if (!maskEl) {
             maskEl = document.createElementNS(SVG_NS, 'mask');
-            const rect = document.createElementNS(SVG_NS, 'rect');
-            rect.setAttribute('x', '-10000');
-            rect.setAttribute('y', '-10000');
-            rect.setAttribute('width', '20000');
-            rect.setAttribute('height', '20000');
-            rect.setAttribute('fill', 'white');
-            maskEl.appendChild(rect);
+            boundsRect = document.createElementNS(SVG_NS, 'rect');
+            maskEl.appendChild(boundsRect);
         }
+        if (!boundsRect) {
+            boundsRect = maskEl.querySelector('rect');
+        }
+        if (!boundsRect) {
+            boundsRect = document.createElementNS(SVG_NS, 'rect');
+            maskEl.insertBefore(boundsRect, maskEl.firstChild || null);
+        }
+        boundsRect.dataset.role = 'wall-mask-bounds';
+        boundsRect.setAttribute('fill', 'white');
         if (!openingsGroup) {
             openingsGroup = document.createElementNS(SVG_NS, 'g');
             openingsGroup.dataset.role = 'wall-mask-openings';
@@ -1453,9 +1468,63 @@
         maskEl.setAttribute('maskContentUnits', 'userSpaceOnUse');
         maskEl.setAttribute('mask-type', 'alpha');
         dom.defs?.appendChild(maskEl);
-        entry = { id: baseId, mask: maskEl, openingsGroup };
+        entry = { id: baseId, mask: maskEl, openingsGroup, boundsRect };
         wallMaskMap.set(wallEl, entry);
         return entry;
+    }
+
+    function updateWallMaskBounds(wallEl, model = getWallModel(wallEl)) {
+        if (!wallEl || !model) return;
+        const entry = ensureWallMask(wallEl);
+        const rect = entry?.boundsRect;
+        if (!entry || !rect) return;
+        const pts = Array.isArray(model.points) ? model.points : [];
+        if (!pts.length) {
+            rect.setAttribute('x', '-1000');
+            rect.setAttribute('y', '-1000');
+            rect.setAttribute('width', '2000');
+            rect.setAttribute('height', '2000');
+            entry.mask.setAttribute('x', '-1000');
+            entry.mask.setAttribute('y', '-1000');
+            entry.mask.setAttribute('width', '2000');
+            entry.mask.setAttribute('height', '2000');
+            return;
+        }
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+        pts.forEach(pt => {
+            if (!pt) return;
+            const { x, y } = pt;
+            if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        });
+        if (!Number.isFinite(minX) || !Number.isFinite(maxX) || !Number.isFinite(minY) || !Number.isFinite(maxY)) {
+            return;
+        }
+        const width = Math.max(maxX - minX, 1);
+        const height = Math.max(maxY - minY, 1);
+        const thickness = resolveWallThickness(model);
+        const thicknessUnits = Number.isFinite(thickness.thicknessUnits) ? thickness.thicknessUnits : 0;
+        const edgeUnits = sheetMmToUnits(EDGE_WIDTH_MM);
+        const paddingBase = Math.max(thicknessUnits, edgeUnits, sheetMmToUnits(10));
+        const padding = Number.isFinite(paddingBase) && paddingBase > 0 ? paddingBase * 2 : 40;
+        const x = minX - padding;
+        const y = minY - padding;
+        const w = width + padding * 2;
+        const h = height + padding * 2;
+        rect.setAttribute('x', x.toFixed(3));
+        rect.setAttribute('y', y.toFixed(3));
+        rect.setAttribute('width', w.toFixed(3));
+        rect.setAttribute('height', h.toFixed(3));
+        entry.mask.setAttribute('x', x.toFixed(3));
+        entry.mask.setAttribute('y', y.toFixed(3));
+        entry.mask.setAttribute('width', w.toFixed(3));
+        entry.mask.setAttribute('height', h.toFixed(3));
     }
 
     function ensureWallPath(wallEl, className) {
@@ -1619,6 +1688,7 @@
         if (!pts || pts.length === 0) {
             bodyPath?.removeAttribute('d');
             edgePath?.removeAttribute('d');
+            updateWallMaskBounds(wallEl, model);
             return;
         }
         let d = `M ${pts[0].x} ${pts[0].y}`;
@@ -1628,6 +1698,7 @@
         if (model.closed && pts.length > 2) d += ' Z';
         if (bodyPath) bodyPath.setAttribute('d', d);
         if (edgePath) edgePath.setAttribute('d', d);
+        updateWallMaskBounds(wallEl, model);
         updateWallVisualStyle(wallEl, model);
         updateWallHandles(wallEl);
         updateWallComponentsPosition(wallEl);
