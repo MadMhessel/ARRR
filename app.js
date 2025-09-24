@@ -23,6 +23,9 @@
     const EDGE_WIDTH_MM = 0.6; // толщина верхнего штриха в мм на листе
     const MM_PER_METER = 1000;
     const SHEET_MM_PER_METER = MM_PER_METER / PLAN_SCALE; // 20 мм на листе на каждый метр в реальности
+    const VIEWBOX_MIN_SIZE = 10;
+    const VIEWBOX_MAX_SIZE = 40000;
+    const VIEWBOX_DEFAULT_SIZE = 1000;
     const dom = {
         svg: document.getElementById('svg'),
         itemsContainer: document.getElementById('items-layer'),
@@ -269,7 +272,7 @@
                 }
             }
 
-            const view = state.viewBox || svg.viewBox?.baseVal;
+            const view = ensureViewBox() || svg.viewBox?.baseVal;
             const rect = svg.getBoundingClientRect?.();
             if (view && rect && rect.width > 0 && rect.height > 0) {
                 const nx = (safePoint.x - rect.left) / rect.width;
@@ -791,8 +794,67 @@
     }
 
     // --- UI & SELECTION ---
-    function updateSelectionUI(el) { if (!el) return; const m = getModel(el); const w = m.ow * m.sx, h = m.oh * m.sy; const sel = el.querySelector('.selection-box'); if (sel) { sel.setAttribute('x', -w / 2 - 5); sel.setAttribute('y', -h / 2 - 5); sel.setAttribute('width', w + 10); sel.setAttribute('height', h + 10); } const rs = el.querySelector('.resize-handle'); if (rs) { rs.setAttribute('x', w / 2 - 6); rs.setAttribute('y', h / 2 - 6); } const ro = el.querySelector('.rotate-handle'); if (ro) { ro.setAttribute('cx', 0); ro.setAttribute('cy', -h / 2 - 20); } }
-    function updatePropertiesPanel(model) { if (model && state.selectedObject) { dom.propControls.classList.remove('hidden'); dom.propPlaceholder.classList.add('hidden'); dom.propX.value = Math.round(model.x); dom.propY.value = Math.round(model.y); dom.propW.value = Math.round(model.ow * model.sx); dom.propH.value = Math.round(model.oh * model.sy); dom.propA.value = Math.round(model.a); } else { dom.propControls.classList.add('hidden'); dom.propPlaceholder.classList.remove('hidden'); } }
+    function updateSelectionUI(el) {
+        if (!el) return;
+        const m = getModel(el);
+        const w = m.ow * m.sx;
+        const h = m.oh * m.sy;
+        const sel = el.querySelector('.selection-box');
+        if (sel) {
+            sel.setAttribute('x', -w / 2 - 5);
+            sel.setAttribute('y', -h / 2 - 5);
+            sel.setAttribute('width', w + 10);
+            sel.setAttribute('height', h + 10);
+        }
+        const rs = el.querySelector('.resize-handle');
+        if (rs) {
+            rs.setAttribute('x', w / 2 - 6);
+            rs.setAttribute('y', h / 2 - 6);
+        }
+        const ro = el.querySelector('.rotate-handle');
+        if (ro) {
+            ro.setAttribute('cx', 0);
+            ro.setAttribute('cy', -h / 2 - 20);
+        }
+    }
+    function formatPropertyNumber(value, precision = 2) {
+        if (!Number.isFinite(value)) return '';
+        const safePrecision = Number.isInteger(precision) && precision >= 0 ? precision : 2;
+        const rounded = Number.parseFloat(value.toFixed(safePrecision));
+        if (!Number.isFinite(rounded)) return '';
+        const str = rounded.toString();
+        return str === '-0' ? '0' : str;
+    }
+    function updatePropertiesPanel(model) {
+        const inputs = [dom.propX, dom.propY, dom.propW, dom.propH, dom.propA];
+        if (model && state.selectedObject) {
+            dom.propControls.classList.remove('hidden');
+            dom.propPlaceholder.classList.add('hidden');
+            const locked = !!model.locked;
+            const width = Number.isFinite(model.ow) && Number.isFinite(model.sx) ? model.ow * model.sx : Number.NaN;
+            const height = Number.isFinite(model.oh) && Number.isFinite(model.sy) ? model.oh * model.sy : Number.NaN;
+            if (dom.propX) dom.propX.value = formatPropertyNumber(model.x);
+            if (dom.propY) dom.propY.value = formatPropertyNumber(model.y);
+            if (dom.propW) dom.propW.value = formatPropertyNumber(width);
+            if (dom.propH) dom.propH.value = formatPropertyNumber(height);
+            if (dom.propA) dom.propA.value = formatPropertyNumber(model.a, 1);
+            inputs.forEach(input => {
+                if (!input) return;
+                input.disabled = locked;
+                if (locked) input.setAttribute('aria-disabled', 'true');
+                else input.removeAttribute('aria-disabled');
+            });
+        } else {
+            dom.propControls.classList.add('hidden');
+            dom.propPlaceholder.classList.remove('hidden');
+            inputs.forEach(input => {
+                if (!input) return;
+                input.disabled = false;
+                input.removeAttribute('aria-disabled');
+                input.value = '';
+            });
+        }
+    }
     function updateComponentPanel(target) {
         if (!dom.componentPanel) return;
         const compEl = target ? target.closest('.wall-component') : null;
@@ -994,42 +1056,43 @@
      * поместился в окне, сохраняя текущий аспект изображения.
      */
     function focusSelected() {
-        if (!state.selectedObject || !state.viewBox) return;
+        const vb = ensureViewBox();
+        if (!state.selectedObject || !vb) return;
         let bbox;
         try {
-            // getBBox может бросить исключение, если элемент не является SVG
             bbox = state.selectedObject.getBBox();
         } catch {
             bbox = null;
         }
-        // Если удалось получить bbox, масштабируем viewBox так, чтобы объект занял ~1/2 экрана
         if (bbox && bbox.width > 0 && bbox.height > 0) {
-            const marginFactor = 2; // оставляем воздух вокруг объекта
+            const marginFactor = 2;
             let newW = bbox.width * marginFactor;
             let newH = bbox.height * marginFactor;
-            // Соотношение сторон текущего вида
-            const ratio = state.viewBox.width / state.viewBox.height;
-            // Подгоняем новый прямоугольник под текущий ratio
-            if (newW / newH > ratio) {
-                // Слишком широкая рамка – увеличим высоту
-                newH = newW / ratio;
+            const ratio = vb.height > 0 ? vb.width / vb.height : 1;
+            if (newW > 0 && newH > 0) {
+                const boxRatio = newW / newH;
+                if (boxRatio > ratio) {
+                    newH = newW / ratio;
+                } else {
+                    newW = newH * ratio;
+                }
             } else {
-                // Слишком высокая рамка – увеличим ширину
-                newW = newH * ratio;
+                newW = vb.width;
+                newH = vb.height;
             }
-            state.viewBox.x = (bbox.x + bbox.width / 2) - newW / 2;
-            state.viewBox.y = (bbox.y + bbox.height / 2) - newH / 2;
-            state.viewBox.width = newW;
-            state.viewBox.height = newH;
-            updateViewBox();
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
+            vb.x = centerX - newW / 2;
+            vb.y = centerY - newH / 2;
+            vb.width = newW;
+            vb.height = newH;
         } else {
-            // fallback: центрируем в соответствии с моделью
             const m = getModel(state.selectedObject);
-            const vb = state.viewBox;
             vb.x = m.x - vb.width / 2;
             vb.y = m.y - vb.height / 2;
-            updateViewBox();
         }
+        normalizeViewBox(vb);
+        updateViewBox();
     }
     function selectObject(el) { if (state.activeTool !== 'pointer') return; clearSelections(); state.selectedObject = el ? el.closest('.layout-object') : null; if (state.selectedObject) { state.selectedObject.classList.add('selected'); dom.itemsContainer.appendChild(state.selectedObject); const model = getModel(state.selectedObject); updatePropertiesPanel(model); updateComponentPanel(null); const li = dom.layersList.querySelector(`[data-id="${model.id}"]`); if (li) li.classList.add('selected'); } }
     function selectWall(wallEl) {
@@ -1215,9 +1278,9 @@
 
     function getSvgDisplayScale() {
         if (!dom.svg) return null;
-        const view = state.viewBox || dom.svg.viewBox?.baseVal;
+        const view = ensureViewBox() || dom.svg.viewBox?.baseVal;
         if (!view) return null;
-        const rect = dom.svg.getBoundingClientRect();
+        const rect = dom.svg.getBoundingClientRect?.();
         const scaleX = rect.width ? rect.width / view.width : null;
         const scaleY = rect.height ? rect.height / view.height : null;
         const candidates = [scaleX, scaleY].filter(v => Number.isFinite(v) && v > 0);
@@ -1900,7 +1963,60 @@
         return el;
     }
     function makeInteractive(el) { interact(el).draggable({ onstart: () => { if (getModel(el).locked || state.activeTool !== 'pointer') return false; }, listeners: { move: utils.rafThrottle(e => { const m = getModel(el); const d = utils.screenDeltaToSVG(e.dx, e.dy); m.x += d.dx; m.y += d.dy; setModel(el, m); showGuidesIfNeeded(m); }), end: () => { snapSelectedToGrid(el); clearGuides(); commit('move'); } } }).resizable({ edges: { left: true, right: true, top: true, bottom: true }, onstart: () => { if (getModel(el).locked || state.activeTool !== 'pointer') return false; }, listeners: { move: utils.rafThrottle(e => { const m = getModel(el); const bw = Math.max(1, m.ow * m.sx), bh = Math.max(1, m.oh * m.sy); const dScr = utils.screenDeltaToSVG(e.delta.x || 0, e.delta.y || 0); const rad = m.a * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad); const dLoc = { lx: dScr.dx * cos + dScr.dy * sin, ly: -dScr.dx * sin + dScr.dy * cos }; let sx = m.sx, sy = m.sy; if (e.edges.left) sx = utils.clamp((bw - dLoc.lx) / m.ow, 0.1, 100); if (e.edges.right) sx = utils.clamp((bw + dLoc.lx) / m.ow, 0.1, 100); if (e.edges.top) sy = utils.clamp((bh - dLoc.ly) / m.oh, 0.1, 100); if (e.edges.bottom) sy = utils.clamp((bh + dLoc.ly) / m.oh, 0.1, 100); const ox = (e.edges.left ? m.ow / 2 : e.edges.right ? -m.ow / 2 : 0); const oy = (e.edges.top ? m.oh / 2 : e.edges.bottom ? -m.oh / 2 : 0); const dx = (m.sx - sx) * ox, dy = (m.sy - sy) * oy; m.x += dx * cos - dy * sin; m.y += dx * sin + dy * cos; m.sx = sx; m.sy = sy; setModel(el, m); }), end: () => { snapSelectedToGrid(el, true); commit('resize'); } } }); interact(el.querySelector('.rotate-handle')).draggable({ onstart: e => { if (getModel(el).locked || state.activeTool !== 'pointer') return false; e.interaction.el = el; }, listeners: { move: utils.rafThrottle(e => { const m = getModel(e.interaction.el); const p = utils.toSVGPoint(e.clientX, e.clientY); const ang = Math.atan2(p.y - m.y, p.x - m.x) * 180 / Math.PI + 90; m.a = state.isShiftHeld ? Math.round(ang / 15) * 15 : ang; setModel(e.interaction.el, m); }), end: () => { snapSelectedToGrid(el); commit('rotate'); } } }); }
-    function updateFromProperties() { if (!state.selectedObject) return; const model = getModel(state.selectedObject); let changed = false; const props = { x: parseFloat(dom.propX.value), y: parseFloat(dom.propY.value), w: parseFloat(dom.propW.value), h: parseFloat(dom.propH.value), a: parseFloat(dom.propA.value) }; if (!isNaN(props.x) && model.x !== props.x) { model.x = props.x; changed = true; } if (!isNaN(props.y) && model.y !== props.y) { model.y = props.y; changed = true; } if (!isNaN(props.a)) { const newA = props.a % 360; if (model.a !== newA) { model.a = newA; changed = true; } } if (!isNaN(props.w) && props.w > 0) { const newSx = props.w / model.ow; if (model.sx !== newSx) { model.sx = newSx; changed = true; } } if (!isNaN(props.h) && props.h > 0) { const newSy = props.h / model.oh; if (model.sy !== newSy) { model.sy = newSy; changed = true; } } if (changed) { setModel(state.selectedObject, model); commit('props_update'); } updatePropertiesPanel(model); }
+    function updateFromProperties({ commitHistory = true } = {}) {
+        if (!state.selectedObject) return;
+        const model = getModel(state.selectedObject);
+        if (!model) return;
+        if (model.locked) {
+            updatePropertiesPanel(model);
+            return;
+        }
+        let changed = false;
+        const readValue = input => parseFloat(input?.value ?? '');
+        const props = {
+            x: readValue(dom.propX),
+            y: readValue(dom.propY),
+            w: readValue(dom.propW),
+            h: readValue(dom.propH),
+            a: readValue(dom.propA),
+        };
+        if (!Number.isNaN(props.x) && props.x !== model.x) {
+            model.x = props.x;
+            changed = true;
+        }
+        if (!Number.isNaN(props.y) && props.y !== model.y) {
+            model.y = props.y;
+            changed = true;
+        }
+        if (!Number.isNaN(props.a)) {
+            let newA = props.a % 360;
+            if (!Number.isFinite(newA)) newA = 0;
+            if (model.a !== newA) {
+                model.a = newA;
+                changed = true;
+            }
+        }
+        if (!Number.isNaN(props.w) && props.w > 0 && Number.isFinite(model.ow) && model.ow) {
+            const newSx = props.w / model.ow;
+            if (model.sx !== newSx) {
+                model.sx = newSx;
+                changed = true;
+            }
+        }
+        if (!Number.isNaN(props.h) && props.h > 0 && Number.isFinite(model.oh) && model.oh) {
+            const newSy = props.h / model.oh;
+            if (model.sy !== newSy) {
+                model.sy = newSy;
+                changed = true;
+            }
+        }
+        if (changed) {
+            setModel(state.selectedObject, model);
+            if (commitHistory) commit('props_update');
+        } else {
+            updatePropertiesPanel(model);
+        }
+    }
     function toggleTool(tool) {
         state.activeTool = tool;
         // Подсветка активной кнопки для всех инструментов
@@ -2404,34 +2520,95 @@
     function showGuidesIfNeeded(m) { if (!dom.snapGuidesEl?.checked) return; const viewBox = dom.svg.viewBox.baseVal; drawGuideLine(viewBox.x, m.y, viewBox.x + viewBox.width, m.y, 'gY'); drawGuideLine(m.x, viewBox.y, m.x, viewBox.y + viewBox.height, 'gX'); }
 
     // --- PAN & ZOOM ---
+    function clampViewBoxSize(width, height, ratioHint = 1) {
+        const min = VIEWBOX_MIN_SIZE;
+        const max = VIEWBOX_MAX_SIZE;
+        let ratio = Number.isFinite(ratioHint) && ratioHint > 0 ? ratioHint : 1;
+        let w = Number.isFinite(width) && width > 0 ? width : null;
+        let h = Number.isFinite(height) && height > 0 ? height : null;
+        if (w == null && h == null) {
+            w = VIEWBOX_DEFAULT_SIZE;
+            h = VIEWBOX_DEFAULT_SIZE;
+        } else if (w == null) {
+            w = h ?? VIEWBOX_DEFAULT_SIZE;
+        } else if (h == null) {
+            h = w ?? VIEWBOX_DEFAULT_SIZE;
+        }
+        if (!(w > 0) || !(h > 0)) {
+            w = VIEWBOX_DEFAULT_SIZE;
+            h = VIEWBOX_DEFAULT_SIZE;
+        }
+        if (!Number.isFinite(ratio) || ratio <= 0) {
+            ratio = w / h;
+            if (!Number.isFinite(ratio) || ratio <= 0) ratio = 1;
+        }
+        let iterations = 0;
+        while (iterations++ < 6) {
+            let adjusted = false;
+            if (w > max) { w = max; h = w / ratio; adjusted = true; }
+            if (w < min) { w = min; h = w / ratio; adjusted = true; }
+            if (h > max) { h = max; w = h * ratio; adjusted = true; }
+            if (h < min) { h = min; w = h * ratio; adjusted = true; }
+            if (!adjusted) break;
+        }
+        w = utils.clamp(w, min, max);
+        h = utils.clamp(h, min, max);
+        return { width: w, height: h };
+    }
+    function normalizeViewBox(box) {
+        if (!box) return null;
+        const ratio = Number.isFinite(box.width) && Number.isFinite(box.height) && box.height > 0
+            ? box.width / box.height
+            : 1;
+        const { width, height } = clampViewBoxSize(box.width, box.height, ratio);
+        box.width = width;
+        box.height = height;
+        if (!Number.isFinite(box.x)) box.x = 0;
+        if (!Number.isFinite(box.y)) box.y = 0;
+        return box;
+    }
+    function ensureViewBox() {
+        if (!dom.svg) return state.viewBox || null;
+        if (!state.viewBox) {
+            const vb = dom.svg.viewBox?.baseVal;
+            state.viewBox = {
+                x: vb?.x ?? 0,
+                y: vb?.y ?? 0,
+                width: vb?.width ?? VIEWBOX_DEFAULT_SIZE,
+                height: vb?.height ?? VIEWBOX_DEFAULT_SIZE,
+            };
+        }
+        return normalizeViewBox(state.viewBox);
+    }
     function updateViewBox() {
-        if (!state.viewBox) return;
-        dom.svg.setAttribute('viewBox', `${state.viewBox.x} ${state.viewBox.y} ${state.viewBox.width} ${state.viewBox.height}`);
+        const vb = ensureViewBox();
+        if (!vb) return;
+        dom.svg.setAttribute('viewBox', `${vb.x} ${vb.y} ${vb.width} ${vb.height}`);
         updateFloorBackground();
         updateGridViewport();
         updateFloorUnderlay();
         refreshWallStrokeWidths();
     }
     function startPan(e) {
-        if (!state.viewBox) {
-            const vb = dom.svg.viewBox?.baseVal;
-            if (!vb) return;
-            state.viewBox = { x: vb.x, y: vb.y, width: vb.width, height: vb.height };
-        }
+        const vb = ensureViewBox();
+        if (!vb) return;
         state.isPanning = true;
         state.panStart = { x: e.clientX, y: e.clientY };
-        state.panViewBox = { ...state.viewBox };
+        state.panViewBox = { ...vb };
         document.body.classList.add('panning');
         dom.svg.classList.add('panning');
     }
     function panMove(e) {
         if (!state.isPanning) return;
-        const svgRect = dom.svg.getBoundingClientRect();
-        // пересчет смещения пикселей в координаты viewBox
-        const dx = (e.clientX - state.panStart.x) * (state.viewBox.width / svgRect.width);
-        const dy = (e.clientY - state.panStart.y) * (state.viewBox.height / svgRect.height);
-        state.viewBox.x = state.panViewBox.x - dx;
-        state.viewBox.y = state.panViewBox.y - dy;
+        const svgRect = dom.svg?.getBoundingClientRect?.();
+        const vb = ensureViewBox();
+        if (!svgRect || !vb || !state.panViewBox || !state.panStart) return;
+        if (svgRect.width === 0 || svgRect.height === 0) return;
+        const dx = (e.clientX - state.panStart.x) * (vb.width / svgRect.width);
+        const dy = (e.clientY - state.panStart.y) * (vb.height / svgRect.height);
+        vb.x = state.panViewBox.x - dx;
+        vb.y = state.panViewBox.y - dy;
+        normalizeViewBox(vb);
         updateViewBox();
     }
     function endPan() {
@@ -2441,12 +2618,22 @@
         dom.svg.classList.remove('panning');
     }
     function zoomAt(svgPoint, factor) {
-        const v = state.viewBox;
-        // центрируем масштабирование вокруг svgPoint
-        v.x = svgPoint.x - (svgPoint.x - v.x) * factor;
-        v.y = svgPoint.y - (svgPoint.y - v.y) * factor;
-        v.width *= factor;
-        v.height *= factor;
+        const vb = ensureViewBox();
+        if (!vb) return;
+        if (!Number.isFinite(factor) || factor <= 0) return;
+        const anchorX = Number.isFinite(svgPoint?.x) ? svgPoint.x : vb.x + vb.width / 2;
+        const anchorY = Number.isFinite(svgPoint?.y) ? svgPoint.y : vb.y + vb.height / 2;
+        const ratio = vb.height > 0 ? vb.width / vb.height : 1;
+        const targetWidth = vb.width * factor;
+        const targetHeight = vb.height * factor;
+        const { width, height } = clampViewBoxSize(targetWidth, targetHeight, ratio);
+        const widthFactor = vb.width ? width / vb.width : 1;
+        const heightFactor = vb.height ? height / vb.height : 1;
+        vb.x = anchorX - (anchorX - vb.x) * widthFactor;
+        vb.y = anchorY - (anchorY - vb.y) * heightFactor;
+        vb.width = width;
+        vb.height = height;
+        normalizeViewBox(vb);
         updateViewBox();
     }
 
@@ -3731,8 +3918,19 @@
             dom.ctx.style.top = Math.min(window.innerHeight - r.height - 8, Math.max(8, e.clientY)) + 'px';
         });
         window.addEventListener('click', () => dom.ctx.style.display = 'none');
-        dom.propControls.addEventListener('change', updateFromProperties);
-        dom.propControls.addEventListener('keydown', e => e.stopPropagation());
+        if (dom.propControls) {
+            const handlePropInput = e => {
+                e.stopPropagation();
+                updateFromProperties({ commitHistory: false });
+            };
+            const handlePropChange = e => {
+                e.stopPropagation();
+                updateFromProperties({ commitHistory: true });
+            };
+            dom.propControls.addEventListener('input', handlePropInput);
+            dom.propControls.addEventListener('change', handlePropChange);
+            dom.propControls.addEventListener('keydown', e => e.stopPropagation());
+        }
         dom.layersList.addEventListener('click', onLayersClick);
         dom.measureTableBody?.addEventListener('click', e => {
             const btn = e.target.closest('button[data-id]');
@@ -3888,17 +4086,15 @@
         syncPricingControls();
 
         // Инициализация ViewBox для поддержания масштабирования и панорамирования
+        const baseViewBox = dom.svg.viewBox?.baseVal;
         state.viewBox = {
-            x: dom.svg.viewBox.baseVal.x,
-            y: dom.svg.viewBox.baseVal.y,
-            width: dom.svg.viewBox.baseVal.width,
-            height: dom.svg.viewBox.baseVal.height
+            x: baseViewBox?.x ?? 0,
+            y: baseViewBox?.y ?? 0,
+            width: baseViewBox?.width ?? VIEWBOX_DEFAULT_SIZE,
+            height: baseViewBox?.height ?? VIEWBOX_DEFAULT_SIZE
         };
-
-        updateFloorBackground();
-        updateFloorUnderlay();
-        updateGridViewport();
-        refreshWallStrokeWidths();
+        normalizeViewBox(state.viewBox);
+        updateViewBox();
 
         // Load saved data robustly
         try {
